@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/login_screen.dart';
+import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 228, 220, 242)),
       ),
-      home:  LoginScreen(),
+      home:  ScreeningFormScreenOne(),
     );
   }
 }
