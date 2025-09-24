@@ -428,15 +428,16 @@
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                         Navigator.of( context).push(
+                          MaterialPageRoute(builder: (context) => const ScreeningFormScreenTwo()),
+                        );
                         if (_formKey.currentState!.validate()) {
                           // Handle form submission - navigate to next screen
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Form submitted successfully!')),
                           );
                         }
-                        Navigator.of( context).push(
-                          MaterialPageRoute(builder: (context) => const ScreeningFormScreenTwo()),
-                        );
+                       
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4A5568),

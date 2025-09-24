@@ -1,16 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_3.dart';
+  import 'package:flutter/material.dart';
+import 'package:school_test/screens/anganWadi_screening-forms/screening_for_angnwadi_form_3.dart';
 
-class ScreeningFormScreenTwo extends StatefulWidget {
-  const ScreeningFormScreenTwo({super.key});
 
-  @override
-  State<ScreeningFormScreenTwo> createState() => _ScreeningFormScreenTwoState();
-}
+  class ScreeningForAngnwadiFormTwo extends StatefulWidget {
+    const ScreeningForAngnwadiFormTwo({super.key});
 
-class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
-  final _formKey = GlobalKey<FormState>();
-  final Map<String, TextEditingController> _treatedNoteControllers = {};
+    @override
+    State<ScreeningForAngnwadiFormTwo> createState() => _ScreeningForAngnwadiFormTwoState();
+  }
+
+  class _ScreeningForAngnwadiFormTwoState extends State<ScreeningForAngnwadiFormTwo> {
+    final _formKey = GlobalKey<FormState>();
+   final Map<String, TextEditingController> _treatedNoteControllers = {};
   bool hasDefect = true; // Changed to true to match screenshot
   Map<String, bool> defects = {
     'Neural Tube Defect': true, // Changed to true to match screenshot
@@ -62,7 +63,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title: const Text('Screening For 4st Class'),
+        title: const Text('Screening For Anganwadi'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -72,7 +73,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
             padding: const EdgeInsets.only(right: 16.0),
             child: Center(
               child: Text(
-                '2/8',
+                '2/7',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -313,8 +314,9 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) =>ScreeningFormAngnwadiScreenThree()));
                           if (_formKey.currentState!.validate()) {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) =>ScreeningFormScreenThree()));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) =>Placeholder()));
                           }
                         },
                         style: ElevatedButton.styleFrom(
