@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
 import 'package:school_test/models/api_response.dart';
@@ -20,15 +22,20 @@ class AddSchoolScreen extends StatefulWidget {
 }
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
+  //image 
+  File? selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  
   final _formKey = GlobalKey<FormState>();
   final _schoolNameController = TextEditingController();
   final _schoolIdController = TextEditingController();
   final _principalNameController = TextEditingController();
   final _contactNoController = TextEditingController();
 
-//Location variables
- double? _currentLatitude;
-double? _currentLongitude;
+  //Location variables
+  double? _currentLatitude;
+  double? _currentLongitude;
 
   bool isLoadingDistricts = false;
   bool isLoadingTalukas = false;
@@ -42,45 +49,44 @@ double? _currentLongitude;
 
   // fetch the  current locations
   Future<void> _getCurrentLocation() async {
-  bool serviceEnabled;
-  LocationPermission permission;
+    bool serviceEnabled;
+    LocationPermission permission;
 
-  // Check if location services are enabled
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // Location services are not enabled
-    print('Location services are disabled.');
-    return;
-  }
-
-  // Check permission
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      print('Location permission denied');
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled
+      print('Location services are disabled.');
       return;
     }
+
+    // Check permission
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        print('Location permission denied');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      print('Location permissions are permanently denied.');
+      return;
+    }
+
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    setState(() {
+      _currentLatitude = position.latitude;
+      _currentLongitude = position.longitude;
+    });
+
+    print('Latitude: $_currentLatitude, Longitude: $_currentLongitude');
   }
-
-  if (permission == LocationPermission.deniedForever) {
-    print('Location permissions are permanently denied.');
-    return;
-  }
-
-  // Get current position
-  Position position = await Geolocator.getCurrentPosition(
-    desiredAccuracy: LocationAccuracy.high,
-  );
-
-  setState(() {
-    _currentLatitude = position.latitude;
-    _currentLongitude = position.longitude;
-  });
-
-  print('Latitude: $_currentLatitude, Longitude: $_currentLongitude');
-}
-
 
   //fetch Disctrict, Taluka , Village from api and populate in dropdowns
 
@@ -255,14 +261,13 @@ double? _currentLongitude;
   String? vitASupplement = 'NO';
   int? _total;
   void _updateTotal() {
-  final int boys = int.tryParse(_boysController.text) ?? 0;
-  final int girls = int.tryParse(_girlsController.text) ?? 0;
+    final int boys = int.tryParse(_boysController.text) ?? 0;
+    final int girls = int.tryParse(_girlsController.text) ?? 0;
 
-  setState(() {
-    _total = boys + girls; // assuming _total is a state variable
-  });
-}
-
+    setState(() {
+      _total = boys + girls; // assuming _total is a state variable
+    });
+  }
 
   @override
   void dispose() {
@@ -376,8 +381,7 @@ double? _currentLongitude;
                 _buildDropdown<District>(
                   value: selectedDistrict,
                   items: districts,
-                  getLabel: (district) =>
-                      district.districtName,
+                  getLabel: (district) => district.districtName,
                   onChanged: (District? newValue) async {
                     if (newValue == null) return;
 
@@ -407,7 +411,7 @@ double? _currentLongitude;
                 _buildDropdown<Taluka>(
                   value: selectedTaluka,
                   items: talukas,
-                  getLabel: (taluka) => taluka.talukaName ,
+                  getLabel: (taluka) => taluka.talukaName,
                   onChanged: (Taluka? newValue) async {
                     if (newValue == null) return;
 
@@ -435,8 +439,7 @@ double? _currentLongitude;
                 _buildDropdown<Grampanchayat>(
                   value: selectedVillage,
                   items: villages,
-                  getLabel: (village) =>
-                      village.grampanchayatName,
+                  getLabel: (village) => village.grampanchayatName,
                   onChanged: (Grampanchayat? newValue) {
                     setState(() {
                       selectedVillage = newValue;
@@ -596,7 +599,7 @@ double? _currentLongitude;
 
                 GestureDetector(
                   onTap: () {
-                  
+                    _buildPhotoUpload();
                   },
                   child: Container(
                     width: double.infinity,
@@ -634,222 +637,228 @@ double? _currentLongitude;
                 SizedBox(height: 30),
 
                 SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton(
-    onPressed: () async {
-      // 1️⃣ Validate the form
-      if (!_formKey.currentState!.validate()) return;
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // 1️⃣ Validate the form
+                      if (!_formKey.currentState!.validate()) return;
 
-      // 2️⃣ Ensure district, taluka, village are selected
-      if (selectedDistrict == null ||
-          selectedTaluka == null ||
-          selectedVillage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please select district, taluka, and village')),
-        );
-        return;
-      }
+                      // 2️⃣ Ensure district, taluka, village are selected
+                      if (selectedDistrict == null ||
+                          selectedTaluka == null ||
+                          selectedVillage == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Please select district, taluka, and village',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
 
-      // 3️⃣ Create School object
-      final school = School(
-        schoolName: _schoolNameController.text,
-        schoolCode: _schoolIdController.text,
-        schoolPrincipalName: _principalNameController.text,
-        schoolContactNo: _contactNoController.text,
+                      // 3️⃣ Create School object
+                      final school = School(
+                        schoolName: _schoolNameController.text,
+                        schoolCode: _schoolIdController.text,
+                        schoolPrincipalName: _principalNameController.text,
+                        schoolContactNo: _contactNoController.text,
 
-        districtId: selectedDistrict?.districtId,
-        districtName: selectedDistrict?.districtName,
-        talukaId: selectedTaluka?.talukaId,
-        talukaName: selectedTaluka?.talukaName,
-        grampanchayatId: selectedVillage?.grampanchayatId,
-        grampanchayatName: selectedVillage?.grampanchayatName,
-        latitude: _currentLatitude?.toString(),
-        longitude: _currentLongitude?.toString(),
+                        districtId: selectedDistrict?.districtId,
+                        districtName: selectedDistrict?.districtName,
+                        talukaId: selectedTaluka?.talukaId,
+                        talukaName: selectedTaluka?.talukaName,
+                        grampanchayatId: selectedVillage?.grampanchayatId,
+                        grampanchayatName: selectedVillage?.grampanchayatName,
+                        latitude: _currentLatitude?.toString(),
+                        longitude: _currentLongitude?.toString(),
 
-        // Classes
-        firstClass: classSelections[0],
-        secondClass: classSelections[1],
-        thirdClass: classSelections[2],
-        fourthClass: classSelections[3],
-        fifthClass: classSelections[4],
-        sixthClass: classSelections[5],
-        seventhClass: classSelections[6],
-        eighthClass: classSelections[7],
-        ninethClass: classSelections[8],
-        tenthClass: classSelections[9],
-        eleventhClass: classSelections[10],
-        twelthClass: classSelections[11],
+                        // Classes
+                        firstClass: classSelections[0],
+                        secondClass: classSelections[1],
+                        thirdClass: classSelections[2],
+                        fourthClass: classSelections[3],
+                        fifthClass: classSelections[4],
+                        sixthClass: classSelections[5],
+                        seventhClass: classSelections[6],
+                        eighthClass: classSelections[7],
+                        ninethClass: classSelections[8],
+                        tenthClass: classSelections[9],
+                        eleventhClass: classSelections[10],
+                        twelthClass: classSelections[11],
 
-        // Students
-        totalNoOFBoys: int.tryParse(_boysController.text),
-        totalNoOfGirls: int.tryParse(_girlsController.text),
-        total: (int.tryParse(_boysController.text) ?? 0) +
-               (int.tryParse(_girlsController.text) ?? 0),
+                        // Students
+                        totalNoOFBoys: int.tryParse(_boysController.text),
+                        totalNoOfGirls: int.tryParse(_girlsController.text),
+                        total:
+                            (int.tryParse(_boysController.text) ?? 0) +
+                            (int.tryParse(_girlsController.text) ?? 0),
 
-        // Programs
-        nationalDeworingProgram: nationalDeworming == 'Yes',
-        anemiaMuktaBharat: anemiaMukt == 'Yes',
-        vitASupplementationProgram: vitASupplement == 'Yes',
+                        // Programs
+                        nationalDeworingProgram: nationalDeworming == 'Yes',
+                        anemiaMuktaBharat: anemiaMukt == 'Yes',
+                        vitASupplementationProgram: vitASupplement == 'Yes',
 
-        // Anganwadi flags
-        anganwadi: false,
-        miniAnganwadi: false,
+                        // Anganwadi flags
+                        anganwadi: false,
+                        miniAnganwadi: false,
 
-        // Media & User
-        schoolPhoto: null, // convert uploaded image to Base64
-        userId: null, // logged-in user ID
-      );
+                        // Media & User
+                        schoolPhoto: null, // convert uploaded image to Base64
+                        userId: null, // logged-in user ID
+                      );
 
-      // 4️⃣ Call API
-      try {
-        final response = await addSchool(school);
+                      // 4️⃣ Call API
+                      try {
+                        final response = await addSchool(school);
 
-        // 5️⃣ Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('School added successfully!')),
-        );
+                        // 5️⃣ Show success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('School added successfully!')),
+                        );
 
-        // 6️⃣ Optional: Reset form
-        _formKey.currentState!.reset();
-        setState(() {
-          selectedDistrict = null;
-          selectedTaluka = null;
-          selectedVillage = null;
-          classSelections = List.filled(12, false);
-          _boysController.clear();
-          _girlsController.clear();
-          nationalDeworming = 'NO';
-          anemiaMukt = 'Yes';
-          vitASupplement = 'NO';
-          _currentLatitude = null;
-          _currentLongitude = null;
-          // schoolPhotoBase64 = null;
-        });
-      } catch (e) {
-        // 7️⃣ Handle errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add school: $e')),
-        );
-      }
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.blue[800],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-    child: Text(
-      'Submit',
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-    ),
-  ),
-),
+                        // 6️⃣ Optional: Reset form
+                        _formKey.currentState!.reset();
+                        setState(() {
+                          selectedDistrict = null;
+                          selectedTaluka = null;
+                          selectedVillage = null;
+                          classSelections = List.filled(12, false);
+                          _boysController.clear();
+                          _girlsController.clear();
+                          nationalDeworming = 'NO';
+                          anemiaMukt = 'Yes';
+                          vitASupplement = 'NO';
+                          _currentLatitude = null;
+                          _currentLongitude = null;
+                          // schoolPhotoBase64 = null;
+                        });
+                      } catch (e) {
+                        // 7️⃣ Handle errors
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to add school: $e')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton(
-    onPressed: () async {
-      if (_formKey.currentState!.validate()) {
-        if (selectedDistrict == null ||
-            selectedTaluka == null ||
-            selectedVillage == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select district, taluka, and village')),
-          );
-          return;
-        }
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        if (selectedDistrict == null ||
+                            selectedTaluka == null ||
+                            selectedVillage == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Please select district, taluka, and village',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
 
-        // 1️⃣ Create School object from form fields
-       // Construct School object from all form fields
-final school = School(
-  // Basic school info
-  schoolName: _schoolNameController.text,
-  schoolCode: _schoolIdController.text,
-  schoolPrincipalName: _principalNameController.text,
-  schoolContactNo: _contactNoController.text,
+                        // 1️⃣ Create School object from form fields
+                        // Construct School object from all form fields
+                        final school = School(
+                          // Basic school info
+                          schoolName: _schoolNameController.text,
+                          schoolCode: _schoolIdController.text,
+                          schoolPrincipalName: _principalNameController.text,
+                          schoolContactNo: _contactNoController.text,
 
-  // Location info
-  districtId: selectedDistrict?.districtId,
-  districtName: selectedDistrict?.districtName,
-  talukaId: selectedTaluka?.talukaId,
-  talukaName: selectedTaluka?.talukaName,
-  grampanchayatId: selectedVillage?.grampanchayatId,
-  grampanchayatName: selectedVillage?.grampanchayatName,
-  latitude: _currentLatitude?.toString(),
-  longitude: _currentLongitude?.toString(),
+                          // Location info
+                          districtId: selectedDistrict?.districtId,
+                          districtName: selectedDistrict?.districtName,
+                          talukaId: selectedTaluka?.talukaId,
+                          talukaName: selectedTaluka?.talukaName,
+                          grampanchayatId: selectedVillage?.grampanchayatId,
+                          grampanchayatName: selectedVillage?.grampanchayatName,
+                          latitude: _currentLatitude?.toString(),
+                          longitude: _currentLongitude?.toString(),
 
-  // School type
-  anganwadi: false,
-  miniAnganwadi: false,
+                          // School type
+                          anganwadi: false,
+                          miniAnganwadi: false,
 
-  // Classes offered
+                          // Classes offered
 
+                          // Student count
+                          totalNoOFBoys: int.tryParse(_boysController.text),
+                          totalNoOfGirls: int.tryParse(_girlsController.text),
+                          total: _total,
 
+                          // Media
+                          schoolPhoto:
+                              null, // assuming you convert image to base64
+                          // User info
+                          userId: null, // pass the logged-in user id
+                          // Programs
+                          nationalDeworingProgram: null,
+                          anemiaMuktaBharat: null,
+                          vitASupplementationProgram: null,
+                        );
 
+                        try {
+                          // 2️⃣ Call API
+                          final response = await addSchool(school);
 
-  // Student count
-  totalNoOFBoys: int.tryParse(_boysController.text),
-  totalNoOfGirls: int.tryParse(_girlsController.text),
-  total: _total,
+                          // 3️⃣ Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('School added successfully!'),
+                            ),
+                          );
 
-  // Media
-  schoolPhoto: null,// assuming you convert image to base64
-
-  // User info
-  userId: null,// pass the logged-in user id
-
-  // Programs
-  nationalDeworingProgram: null,
-  anemiaMuktaBharat: null,
-  vitASupplementationProgram: null,
-);
-
-
-        try {
-          // 2️⃣ Call API
-          final response = await addSchool(school);
-
-          // 3️⃣ Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('School added successfully!')),
-          );
-
-          // Optional: Clear form
-          _formKey.currentState!.reset();
-          setState(() {
-            selectedDistrict = null;
-            selectedTaluka = null;
-            selectedVillage = null;
-          });
-        } catch (e) {
-          // 4️⃣ Handle errors
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to add school: $e')),
-          );
-        }
-      }
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.blue[800],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-    child: Text(
-      'Submit',
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-    ),
-  ),
-),
+                          // Optional: Clear form
+                          _formKey.currentState!.reset();
+                          setState(() {
+                            selectedDistrict = null;
+                            selectedTaluka = null;
+                            selectedVillage = null;
+                          });
+                        } catch (e) {
+                          // 4️⃣ Handle errors
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to add school: $e')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
 
                 SizedBox(height: 40),
                 SizedBox(height: 40),
@@ -975,7 +984,86 @@ final school = School(
       ],
     );
   }
-
+  //image pick 
+  Future<void> _pickImage() async {
+    try {
+      final XFile
+      ? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() {
+          selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  // //image build 
+ Widget _buildPhotoUpload() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.blue[300]!,
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: selectedImage != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.file(
+                  selectedImage!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.cloud_upload_outlined,
+                    size: 48,
+                    color: Colors.blue[400],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Click to Upload',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    'Angan Wadi Photo',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
   String _getOrdinalSuffix(int number) {
     if (number >= 11 && number <= 13) {
       return 'th';
@@ -1021,7 +1109,7 @@ Widget _buildServiceRadio(
               value: 'NO',
               groupValue: selectedValue,
               onChanged: onChanged,
-            ),  
+            ),
             Text('NO'),
           ],
         ),
@@ -1031,57 +1119,3 @@ Widget _buildServiceRadio(
 }
 
 
-// //image build 
-//  Widget _buildPhotoUpload() {
-//     return GestureDetector(
-//       onTap: _pickImage,
-//       child: Container(
-//         height: 200,
-//         width: double.infinity,
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(8),
-//           border: Border.all(
-//             color: Colors.blue[300]!,
-//             width: 2,
-//             style: BorderStyle.solid,
-//           ),
-//         ),
-//         child: selectedImage != null
-//             ? ClipRRect(
-//                 borderRadius: BorderRadius.circular(6),
-//                 child: Image.file(
-//                   selectedImage!,
-//                   fit: BoxFit.cover,
-//                 ),
-//               )
-//             : Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-//                   Icon(
-//                     Icons.cloud_upload_outlined,
-//                     size: 48,
-//                     color: Colors.blue[400],
-//                   ),
-//                   const SizedBox(height: 8),
-//                   Text(
-//                     'Click to Upload',
-//                     style: TextStyle(
-//                       fontSize: 16,
-//                       color: Colors.blue[600],
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                   Text(
-//                     'Angan Wadi Photo',
-//                     style: TextStyle(
-//                       fontSize: 16,
-//                       color: Colors.blue[600],
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//       ),
-//     );
-//   }
