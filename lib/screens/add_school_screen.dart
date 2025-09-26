@@ -23,6 +23,8 @@ class AddSchoolScreen extends StatefulWidget {
 }
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
+
+  
   //image
   File? selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -48,35 +50,58 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
   String baseUrl = ApiConfig.baseUrl;
 
-  // fetch the  current locations
-  Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  // radio button 
+  Widget _buildServiceRadioBool(
+    String label,
+    bool? selectedValue,
+    ValueChanged<bool?> onChanged,
+  ) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 16, color: Colors.black87)),
+          Row(
+            children: [
+              Radio<bool>(value: true, groupValue: selectedValue, onChanged: onChanged),
+              Text('Yes'),
+              Radio<bool>(value: false, groupValue: selectedValue, onChanged: onChanged),
+              Text('No'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    // Check if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  // fetch the  current locations
+ Future<void> _getCurrentLocation() async {
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled
-      print('Location services are disabled.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enable location services')),
+      );
       return;
     }
 
-    // Check permission
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        print('Location permission denied');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location permission denied')),
+        );
         return;
       }
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      print('Location permissions are permanently denied.');
-      return;
-    }
-
-    // Get current position
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
@@ -86,8 +111,14 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
       _currentLongitude = position.longitude;
     });
 
-    print('Latitude: $_currentLatitude, Longitude: $_currentLongitude');
+    print('Location obtained: $_currentLatitude, $_currentLongitude');
+  } catch (e) {
+    print('Location error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to get location: $e')),
+    );
   }
+}
 
   //fetch Disctrict, Taluka , Village from api and populate in dropdowns
 
@@ -670,6 +701,21 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         );
                         return;
                       }
+                      if (_currentLatitude == null ||
+                          _currentLongitude == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Location not available. Please enable GPS and try again.',
+                            ),
+                            action: SnackBarAction(
+                              label: 'Retry',
+                              onPressed: () => _getCurrentLocation(),
+                            ),
+                          ),
+                        );
+                        return;
+                      }
 
                       // 3️⃣ Create School object
                       final school = School(
@@ -684,6 +730,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         talukaName: selectedTaluka?.talukaName,
                         grampanchayatId: selectedVillage?.grampanchayatId,
                         grampanchayatName: selectedVillage?.grampanchayatName,
+
                         latitude: _currentLatitude?.toString(),
                         longitude: _currentLongitude?.toString(),
 
@@ -709,9 +756,9 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                             (int.tryParse(_girlsController.text) ?? 0),
 
                         // Programs
-                        nationalDeworingProgram: nationalDeworming ?? false,
-                        anemiaMuktaBharat: anemiaMukt ?? true,
-                        vitASupplementationProgram: vitASupplement ??  false,
+                        nationalDeworingProgram: nationalDeworming ,
+                        anemiaMuktaBharat: anemiaMukt ,
+                        vitASupplementationProgram: vitASupplement,
 
                         // Anganwadi flags
                         anganwadi: false,
@@ -730,6 +777,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         // 5️⃣ Show success message
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('School added successfully!')),
+
                         );
 
                         // 6️⃣ Optional: Reset form
@@ -741,13 +789,15 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           classSelections = List.filled(12, false);
                           _boysController.clear();
                           _girlsController.clear();
-                          nationalDeworming = nationalDeworming ?? false;
-                          anemiaMukt = anemiaMukt ?? true;
-                          vitASupplement = vitASupplement ?? false;
+                          nationalDeworming =  false;
+                          anemiaMukt =  false;
+                          vitASupplement =  false;
                           _currentLatitude = null;
                           _currentLongitude = null;
-                          // schoolPhotoBase64 = null;
+                          // schoolI = null;
                         });
+
+                        Navigator.pop(context);
                       } catch (e) {
                         // 7️⃣ Handle errors
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -965,39 +1015,4 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   }
 }
 
-Widget _buildServiceRadioBool(
-  String label,
-  bool? selectedValue,
-  ValueChanged<bool?> onChanged,
-) {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: Colors.grey[300]!),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 16, color: Colors.black87)),
-        Row(
-          children: [
-            Radio<bool>(
-              value: true,
-              groupValue: selectedValue,
-              onChanged: onChanged,
-            ),
-            Text('Yes'),
-            Radio<bool>(
-              value: false,
-              groupValue: selectedValue,
-              onChanged: onChanged,
-            ),
-            Text('No'),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+

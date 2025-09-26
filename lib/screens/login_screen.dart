@@ -17,41 +17,106 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-    
+
+  final String baseUrl = ApiConfig.baseUrl;
+  final String endpoint = Endpoints.userLogin;
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
+  Future<ApiResponse<User>> login(String email, String password) async {
+    final url = Uri.parse("$baseUrl$endpoint");
 
-String baseUrl = ApiConfig.baseUrl;
-String endpoint = Endpoints.userLogin; // '/api/Rbsk/UserLogin';
-
-Future<ApiResponse<User>> login(String email, String password) async {
-  final url = Uri.parse("$baseUrl$endpoint");
-
-  final response = await http.post(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "email": email,
-      "password": password,
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    final User user = jsonDecode(response.body);
-
-    return ApiResponse<User>.fromJson(
-      user.toJson(),
-      (data) => User.fromJson(data),
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
     );
-  } else {
-    throw Exception("Failed to login: ${response.body}");
-  }
-}
 
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      final ApiResponse<User> apiResponse = ApiResponse.fromJson(
+        json,
+        (data) => User.fromJson(data),
+      );
+      return apiResponse;
+    } else {
+      throw Exception("Failed to login: ${response.body}");
+    }
+  }
+
+  void _handleSignIn() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (email.isEmpty) {
+      _showSnackBar('Please enter your Team ID');
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showSnackBar('Please enter your password');
+      return;
+    }
+
+    _showSnackBar('Signing in...');
+
+    try {
+      final response = await login(email, password);
+
+      if (response.success == true && response.data != null) {
+        _showSnackBar(response.responseMessage ?? 'Login successful!');
+
+        User user = response.data!;
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              userId: user.userId,
+            ),
+          ),
+        );
+      } else {
+        _showSnackBar(response.responseMessage ?? 'Login failed');
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    }
+  }
+
+  void _showPrivacyPolicy() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Privacy Policy'),
+          content: Text('Your privacy policy content goes here.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,15 +137,11 @@ Future<ApiResponse<User>> login(String email, String password) async {
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // Top status bar space
                 SizedBox(height: 40),
-                
-                // Main content
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Login title
                       Text(
                         'Login',
                         style: TextStyle(
@@ -89,10 +150,7 @@ Future<ApiResponse<User>> login(String email, String password) async {
                           color: Colors.white,
                         ),
                       ),
-                      
                       SizedBox(height: 16),
-                      
-                      // Welcome text
                       Text(
                         'Welcome to RBSK',
                         style: TextStyle(
@@ -101,9 +159,7 @@ Future<ApiResponse<User>> login(String email, String password) async {
                           color: Colors.white.withOpacity(0.9),
                         ),
                       ),
-                      
                       SizedBox(height: 60),
-                      
                       // Team ID field
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,9 +199,7 @@ Future<ApiResponse<User>> login(String email, String password) async {
                           ),
                         ],
                       ),
-                      
                       SizedBox(height: 24),
-                      
                       // Password field
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,18 +253,12 @@ Future<ApiResponse<User>> login(String email, String password) async {
                           ),
                         ],
                       ),
-                      
                       SizedBox(height: 40),
-                      
-                      // Sign In button
                       Container(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Handle sign in
-                            _handleSignIn();
-                          },
+                          onPressed: _handleSignIn,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF1E3A8A),
                             foregroundColor: Colors.white,
@@ -231,13 +279,8 @@ Future<ApiResponse<User>> login(String email, String password) async {
                     ],
                   ),
                 ),
-                
-                // Bottom privacy policy link
                 TextButton(
-                  onPressed: () {
-                    // Handle privacy policy
-                    _showPrivacyPolicy();
-                  },
+                  onPressed: _showPrivacyPolicy,
                   child: Text(
                     'Application privacy policy',
                     style: TextStyle(
@@ -247,7 +290,6 @@ Future<ApiResponse<User>> login(String email, String password) async {
                     ),
                   ),
                 ),
-                
                 SizedBox(height: 20),
               ],
             ),
@@ -255,81 +297,5 @@ Future<ApiResponse<User>> login(String email, String password) async {
         ),
       ),
     );
-  }
-
- void _handleSignIn() async {
-  String email = _emailController.text.trim();
-  String password = _passwordController.text.trim();
-
-  if (email.isEmpty) {
-    _showSnackBar('Please enter your Team ID');
-    return;
-  }
-
-  if (password.isEmpty) {
-    _showSnackBar('Please enter your password');
-    return;
-  }
-
-  _showSnackBar('Signing in...');
-
-  try {
-    final response = await login(email, password); // await login
-
-    if (response.success == true) {
-      _showSnackBar(response.responseMessage ?? 'Login successful!');
-
-      // Extract user data from response
-      User user = response.data!;
-      
-      // Navigate to HomeScreen with user ID and full user data
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(
-            userId: user.userId, // Pass user ID
-            // user: user,      // Optionally pass the full user object
-          ),
-        ),
-      );
-    } else {
-      _showSnackBar(response.responseMessage ?? 'Login failed');
-    }
-  } catch (e) {
-    _showSnackBar('Error: $e');
-  }
-}
-
-  void _showPrivacyPolicy() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Privacy Policy'),
-          content: Text('Your privacy policy content goes here.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
