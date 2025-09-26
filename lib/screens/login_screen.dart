@@ -41,10 +41,10 @@ Future<ApiResponse<User>> login(String email, String password) async {
   );
 
   if (response.statusCode == 200) {
-    final loginData = jsonDecode(response.body);
+    final User user = jsonDecode(response.body);
 
     return ApiResponse<User>.fromJson(
-      loginData,
+      user.toJson(),
       (data) => User.fromJson(data),
     );
   } else {
@@ -279,9 +279,17 @@ Future<ApiResponse<User>> login(String email, String password) async {
     if (response.success == true) {
       _showSnackBar(response.responseMessage ?? 'Login successful!');
 
-      // Navigate only if login success
+      // Extract user data from response
+      User user = response.data!;
+      
+      // Navigate to HomeScreen with user ID and full user data
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(
+            userId: user.userId, // Pass user ID
+            // user: user,      // Optionally pass the full user object
+          ),
+        ),
       );
     } else {
       _showSnackBar(response.responseMessage ?? 'Login failed');

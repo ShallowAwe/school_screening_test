@@ -15,18 +15,19 @@ import 'package:http/http.dart' as http;
 import 'package:school_test/models/taluka_model.dart';
 
 class AddSchoolScreen extends StatefulWidget {
-  const AddSchoolScreen({super.key});
+  final int? userId;
+  const AddSchoolScreen({super.key, this.userId});
 
   @override
   State<AddSchoolScreen> createState() => _AddSchoolScreenState();
 }
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
-  //image 
+  //image
   File? selectedImage;
   final ImagePicker _picker = ImagePicker();
+  String? base64Image;
 
-  
   final _formKey = GlobalKey<FormState>();
   final _schoolNameController = TextEditingController();
   final _schoolIdController = TextEditingController();
@@ -256,9 +257,10 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   final _boysController = TextEditingController();
   final _girlsController = TextEditingController();
 
-  String? nationalDeworming = 'NO';
-  String? anemiaMukt = 'Yes';
-  String? vitASupplement = 'NO';
+  bool? nationalDeworming = false; // default NO
+  bool? anemiaMukt = true; // default YES
+  bool? vitASupplement = false; // default NO
+
   int? _total;
   void _updateTotal() {
     final int boys = int.tryParse(_boysController.text) ?? 0;
@@ -539,7 +541,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                '${(int.tryParse(_boysController.text) ?? 0) + (int.tryParse(_girlsController.text) ?? 0)}',
+                                '${_total ?? 0}',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -566,21 +568,21 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                 ),
                 SizedBox(height: 16),
 
-                _buildServiceRadio(
+                _buildServiceRadioBool(
                   'National Deworming Program',
                   nationalDeworming,
                   (value) => setState(() => nationalDeworming = value),
                 ),
                 SizedBox(height: 16),
 
-                _buildServiceRadio(
+                _buildServiceRadioBool(
                   'Anemia Mukt Bharat',
                   anemiaMukt,
                   (value) => setState(() => anemiaMukt = value),
                 ),
                 SizedBox(height: 16),
 
-                _buildServiceRadio(
+                _buildServiceRadioBool(
                   'VIT A Supplementation Program',
                   vitASupplement,
                   (value) => setState(() => vitASupplement = value),
@@ -599,7 +601,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
                 GestureDetector(
                   onTap: () {
-                    _buildPhotoUpload();
+                    _buildPhotoUpload(); // opens camera/gallery chooser
                   },
                   child: Container(
                     width: double.infinity,
@@ -613,27 +615,38 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         style: BorderStyle.solid,
                       ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_a_photo,
-                          size: 40,
-                          color: Colors.grey[600],
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Click to Upload\nSchool Photo',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
+                    child: selectedImage == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 40,
+                                color: Colors.grey[600],
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Click to Upload\nSchool Photo',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              selectedImage!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
+
                 SizedBox(height: 30),
 
                 SizedBox(
@@ -696,17 +709,18 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                             (int.tryParse(_girlsController.text) ?? 0),
 
                         // Programs
-                        nationalDeworingProgram: nationalDeworming == 'Yes',
-                        anemiaMuktaBharat: anemiaMukt == 'Yes',
-                        vitASupplementationProgram: vitASupplement == 'Yes',
+                        nationalDeworingProgram: nationalDeworming ?? false,
+                        anemiaMuktaBharat: anemiaMukt ?? true,
+                        vitASupplementationProgram: vitASupplement ??  false,
 
                         // Anganwadi flags
                         anganwadi: false,
                         miniAnganwadi: false,
 
                         // Media & User
-                        schoolPhoto: null, // convert uploaded image to Base64
-                        userId: null, // logged-in user ID
+                        schoolPhoto:
+                            base64Image, // convert uploaded image to Base64
+                        userId: widget.userId!, // logged-in user ID
                       );
 
                       // 4️⃣ Call API
@@ -727,9 +741,9 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           classSelections = List.filled(12, false);
                           _boysController.clear();
                           _girlsController.clear();
-                          nationalDeworming = 'NO';
-                          anemiaMukt = 'Yes';
-                          vitASupplement = 'NO';
+                          nationalDeworming = nationalDeworming ?? false;
+                          anemiaMukt = anemiaMukt ?? true;
+                          vitASupplement = vitASupplement ?? false;
                           _currentLatitude = null;
                           _currentLongitude = null;
                           // schoolPhotoBase64 = null;
@@ -739,108 +753,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Failed to add school: $e')),
                         );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[800],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'Submit',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        if (selectedDistrict == null ||
-                            selectedTaluka == null ||
-                            selectedVillage == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Please select district, taluka, and village',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-
-                        // 1️⃣ Create School object from form fields
-                        // Construct School object from all form fields
-                        final school = School(
-                          // Basic school info
-                          schoolName: _schoolNameController.text,
-                          schoolCode: _schoolIdController.text,
-                          schoolPrincipalName: _principalNameController.text,
-                          schoolContactNo: _contactNoController.text,
-
-                          // Location info
-                          districtId: selectedDistrict?.districtId,
-                          districtName: selectedDistrict?.districtName,
-                          talukaId: selectedTaluka?.talukaId,
-                          talukaName: selectedTaluka?.talukaName,
-                          grampanchayatId: selectedVillage?.grampanchayatId,
-                          grampanchayatName: selectedVillage?.grampanchayatName,
-                          latitude: _currentLatitude?.toString(),
-                          longitude: _currentLongitude?.toString(),
-
-                          // School type
-                          anganwadi: false,
-                          miniAnganwadi: false,
-
-                          // Classes offered
-
-                          // Student count
-                          totalNoOFBoys: int.tryParse(_boysController.text),
-                          totalNoOfGirls: int.tryParse(_girlsController.text),
-                          total: _total,
-
-                          // Media
-                          schoolPhoto:
-                              null, // assuming you convert image to base64
-                          // User info
-                          userId: null, // pass the logged-in user id
-                          // Programs
-                          nationalDeworingProgram: null,
-                          anemiaMuktaBharat: null,
-                          vitASupplementationProgram: null,
-                        );
-
-                        try {
-                          // 2️⃣ Call API
-                          final response = await addSchool(school);
-
-                          // 3️⃣ Show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('School added successfully!'),
-                            ),
-                          );
-
-                          // Optional: Clear form
-                          _formKey.currentState!.reset();
-                          setState(() {
-                            selectedDistrict = null;
-                            selectedTaluka = null;
-                            selectedVillage = null;
-                          });
-                        } catch (e) {
-                          // 4️⃣ Handle errors
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to add school: $e')),
-                          );
-                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -984,86 +896,58 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
       ],
     );
   }
-  //image pick 
-  Future<void> _pickImage() async {
+
+  //image pick
+  // Pick image from gallery/camera
+  Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile
-      ? image = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-      
+      final XFile? image = await _picker.pickImage(source: source);
+
       if (image != null) {
         setState(() {
           selectedImage = File(image.path);
         });
+
+        // ✅ Convert to Base64 if you want to send to API
+        final bytes = await selectedImage!.readAsBytes();
+        base64Image = base64Encode(bytes);
+
+        print("Base64 Image length: ${base64Image!.length}"); // Debug
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print("Error picking image: $e");
     }
   }
-  
-  // //image build 
- Widget _buildPhotoUpload() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.blue[300]!,
-            width: 2,
-            style: BorderStyle.solid,
-          ),
+
+  // //image build
+  void _buildPhotoUpload() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_library),
+              title: Text("Gallery"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text("Camera"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+          ],
         ),
-        child: selectedImage != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.file(
-                  selectedImage!,
-                  fit: BoxFit.cover,
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 48,
-                    color: Colors.blue[400],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Click to Upload',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.blue[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    'Angan Wadi Photo',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.blue[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
       ),
     );
   }
+
   String _getOrdinalSuffix(int number) {
     if (number >= 11 && number <= 13) {
       return 'th';
@@ -1081,10 +965,10 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   }
 }
 
-Widget _buildServiceRadio(
+Widget _buildServiceRadioBool(
   String label,
-  String? selectedValue,
-  ValueChanged<String?> onChanged,
+  bool? selectedValue,
+  ValueChanged<bool?> onChanged,
 ) {
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1099,23 +983,21 @@ Widget _buildServiceRadio(
         Text(label, style: TextStyle(fontSize: 16, color: Colors.black87)),
         Row(
           children: [
-            Radio<String>(
-              value: 'Yes',
+            Radio<bool>(
+              value: true,
               groupValue: selectedValue,
               onChanged: onChanged,
             ),
             Text('Yes'),
-            Radio<String>(
-              value: 'NO',
+            Radio<bool>(
+              value: false,
               groupValue: selectedValue,
               onChanged: onChanged,
             ),
-            Text('NO'),
+            Text('No'),
           ],
         ),
       ],
     ),
   );
 }
-
-

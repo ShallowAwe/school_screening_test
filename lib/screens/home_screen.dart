@@ -5,13 +5,15 @@ import 'package:school_test/screens/screening_screen.dart';
 import 'package:school_test/screens/select_angan_wadi_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  int  userId;
+   HomeScreen({super.key, required this.userId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  //  int  userId = widgetQ.userId;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.school,
                 title: 'Add School',
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context)=>AddSchoolScreen()));
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context)=>AddSchoolScreen(userId: widget.userId  ,)));
                 },
               ),
               _buildCard(
