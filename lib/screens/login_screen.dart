@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:school_test/config/api_config.dart';
+import 'package:school_test/config/endpoints.dart';
+import 'package:school_test/models/api_response.dart';
+import 'package:school_test/models/user_model.dart';
 import 'package:school_test/screens/home_screen.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -7,9 +14,44 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _teamIdController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+    
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+
+String baseUrl = ApiConfig.baseUrl;
+String endpoint = Endpoints.userLogin; // '/api/Rbsk/UserLogin';
+
+Future<ApiResponse<User>> login(String email, String password) async {
+  final url = Uri.parse("$baseUrl$endpoint");
+
+  final response = await http.post(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "email": email,
+      "password": password,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    final loginData = jsonDecode(response.body);
+
+    return ApiResponse<User>.fromJson(
+      loginData,
+      (data) => User.fromJson(data),
+    );
+  } else {
+    throw Exception("Failed to login: ${response.body}");
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: TextField(
-                              controller: _teamIdController,
+                              controller: _emailController,
                               decoration: InputDecoration(
                                 hintText: 'Enter Your Team ID',
                                 hintStyle: TextStyle(
@@ -215,30 +257,39 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleSignIn() {
-    // String teamId = _teamIdController.text.trim();
-    // String password = _passwordController.text.trim();
-    
-    // if (teamId.isEmpty) {
-    //   _showSnackBar('Please enter your Team ID');
-    //   return;
-    // }
-    
-    // if (password.isEmpty) {
-    //   _showSnackBar('Please enter your password');
-    //   return;
-    // }
-    
-    // // Add your authentication logic here
-    // print('Team ID: $teamId');
-    // print('Password: $password');
-    
-    // Show loading or navigate to next screen
-    _showSnackBar('Signing in...');
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => HomeScreen()),
-    );
+ void _handleSignIn() async {
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
+
+  if (email.isEmpty) {
+    _showSnackBar('Please enter your Team ID');
+    return;
   }
+
+  if (password.isEmpty) {
+    _showSnackBar('Please enter your password');
+    return;
+  }
+
+  _showSnackBar('Signing in...');
+
+  try {
+    final response = await login(email, password); // await login
+
+    if (response.success == true) {
+      _showSnackBar(response.responseMessage ?? 'Login successful!');
+
+      // Navigate only if login success
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    } else {
+      _showSnackBar(response.responseMessage ?? 'Login failed');
+    }
+  } catch (e) {
+    _showSnackBar('Error: $e');
+  }
+}
 
   void _showPrivacyPolicy() {
     showDialog(
@@ -269,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _teamIdController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }

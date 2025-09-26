@@ -8,7 +8,7 @@ class UserApi {
   final ApiClient _apiClient = ApiClient();
 
   Future<dynamic> login(String email, String password) async {
-    final List<User> user = await _apiClient.post(
+    final User user = await _apiClient.post(
       Endpoints.userLogin,
       body: {'email': email, 'password': password},
     );

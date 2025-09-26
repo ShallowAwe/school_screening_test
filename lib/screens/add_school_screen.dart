@@ -1,4 +1,16 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:school_test/config/api_config.dart';
+import 'package:school_test/config/endpoints.dart';
+import 'package:school_test/models/api_response.dart';
+import 'package:school_test/models/district_model.dart';
+import 'package:school_test/models/grampanchayat_model.dart';
+import 'package:school_test/models/school_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:school_test/models/taluka_model.dart';
 
 class AddSchoolScreen extends StatefulWidget {
   const AddSchoolScreen({super.key});
@@ -14,12 +26,226 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   final _principalNameController = TextEditingController();
   final _contactNoController = TextEditingController();
 
+//Location variables
+ double? _currentLatitude;
+double? _currentLongitude;
 
-  
-  String? selectedDistrict = 'नागपुर';
-  String? selectedTaluka = 'हिंगणा';
-  String? selectedVillage;
+  bool isLoadingDistricts = false;
+  bool isLoadingTalukas = false;
+  bool isLoadingVillages = false;
 
+  List<District> districts = [];
+  List<Taluka> talukas = [];
+  List<Grampanchayat> villages = [];
+
+  String baseUrl = ApiConfig.baseUrl;
+
+  // fetch the  current locations
+  Future<void> _getCurrentLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Check if location services are enabled
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled
+    print('Location services are disabled.');
+    return;
+  }
+
+  // Check permission
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      print('Location permission denied');
+      return;
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    print('Location permissions are permanently denied.');
+    return;
+  }
+
+  // Get current position
+  Position position = await Geolocator.getCurrentPosition(
+    desiredAccuracy: LocationAccuracy.high,
+  );
+
+  setState(() {
+    _currentLatitude = position.latitude;
+    _currentLongitude = position.longitude;
+  });
+
+  print('Latitude: $_currentLatitude, Longitude: $_currentLongitude');
+}
+
+
+  //fetch Disctrict, Taluka , Village from api and populate in dropdowns
+
+  // 🔹 Get Districts
+  Future<List<District>> fetchDistricts() async {
+    setState(() {
+      isLoadingDistricts = true;
+    });
+
+    try {
+      final url = Uri.parse("$baseUrl${Endpoints.getDistrict}");
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+
+        // Debug: Print the API response to see the structure
+        print('Districts API Response: $decoded');
+
+        // Handle if API returns { "data": [...] } or just [...]
+        final List<dynamic> data = decoded is Map<String, dynamic>
+            ? decoded['data'] ?? []
+            : decoded;
+
+        final fetchedDistricts = data.map((e) => District.fromJson(e)).toList();
+
+        setState(() {
+          districts = fetchedDistricts;
+          isLoadingDistricts = false;
+        });
+
+        return fetchedDistricts;
+      } else {
+        setState(() {
+          isLoadingDistricts = false;
+        });
+        throw Exception("Failed to fetch districts: ${response.statusCode}");
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingDistricts = false;
+      });
+      print('Error fetching districts: $e');
+      return []; // return empty list instead of null
+    }
+  }
+
+  // 🔹 Get Talukas by DistrictId
+  Future<List<Taluka>> fetchTalukas(int districtId) async {
+    if (districtId == 0) return []; // return empty list instead of null
+
+    setState(() {
+      isLoadingTalukas = true;
+      talukas = []; // Clear previous talukas
+      selectedTaluka = null;
+      villages = []; // Clear villages when district changes
+      selectedVillage = null;
+    });
+
+    try {
+      final url = Uri.parse(
+        "$baseUrl${Endpoints.getTaluka}?districtId=$districtId",
+      );
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        print('Talukas API Response: $decoded');
+
+        // Handle API returning { "data": [...] } or just [...]
+        final List<dynamic> data = decoded is Map<String, dynamic>
+            ? decoded['data'] ?? []
+            : decoded;
+
+        final fetchedTalukas = data.map((e) => Taluka.fromJson(e)).toList();
+
+        setState(() {
+          talukas = fetchedTalukas;
+          isLoadingTalukas = false;
+        });
+
+        return fetchedTalukas;
+      } else {
+        setState(() {
+          isLoadingTalukas = false;
+        });
+        throw Exception("Failed to fetch talukas: ${response.statusCode}");
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingTalukas = false;
+      });
+      print('Error fetching talukas: $e');
+      return []; // return empty list on error
+    }
+  }
+
+  // 🔹 Get Grampanchayats by TalukaId
+  Future<List<Grampanchayat>> fetchGrampanchayats(int talukaId) async {
+    if (talukaId == 0) return []; // return empty list instead of null
+
+    setState(() {
+      isLoadingVillages = true;
+      villages = []; // Clear previous villages
+      selectedVillage = null;
+    });
+
+    try {
+      final url = Uri.parse(
+        "$baseUrl${Endpoints.getGrampanchayat}?talukaId=$talukaId",
+      );
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        print('Villages API Response: $decoded');
+
+        // Handle API returning { "data": [...] } or just [...]
+        final List<dynamic> data = decoded is Map<String, dynamic>
+            ? decoded['data'] ?? []
+            : decoded;
+
+        final fetchedVillages = data
+            .map((e) => Grampanchayat.fromJson(e))
+            .toList();
+
+        setState(() {
+          villages = fetchedVillages;
+          isLoadingVillages = false;
+        });
+
+        return fetchedVillages;
+      } else {
+        setState(() {
+          isLoadingVillages = false;
+        });
+        throw Exception("Failed to fetch villages: ${response.statusCode}");
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingVillages = false;
+      });
+      print('Error fetching villages: $e');
+      return []; // return empty list on error
+    }
+  }
+
+  void initState() {
+    super.initState();
+    _boysController.addListener(_updateTotal);
+    _girlsController.addListener(_updateTotal);
+
+    //calling district api to populate dropdown
+    fetchDistricts();
+    // calling the location service to et th current location
+    _getCurrentLocation();
+    // getTalukas(selectedDistrict != null ? districts.firstWhere((d) => d.districtName == selectedDistrict!).districtId : 0);
+    // getGrampanchayats(selectedTaluka != null ? talukas.firstWhere((element) => element.talukaName == selec!,).talukaId : 0);
+  }
+
+  District? selectedDistrict;
+  Taluka? selectedTaluka;
+  Grampanchayat? selectedVillage;
+
+  //  int? selectedTalukaId
   List<bool> classSelections = List.filled(12, false);
   final _boysController = TextEditingController();
   final _girlsController = TextEditingController();
@@ -27,15 +253,16 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   String? nationalDeworming = 'NO';
   String? anemiaMukt = 'Yes';
   String? vitASupplement = 'NO';
-  void initState() {
-    super.initState();
-    _boysController.addListener(_updateTotal);
-    _girlsController.addListener(_updateTotal);
-  }
-
+  int? _total;
   void _updateTotal() {
-    setState(() {});
-  }
+  final int boys = int.tryParse(_boysController.text) ?? 0;
+  final int girls = int.tryParse(_girlsController.text) ?? 0;
+
+  setState(() {
+    _total = boys + girls; // assuming _total is a state variable
+  });
+}
+
 
   @override
   void dispose() {
@@ -48,6 +275,41 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     _principalNameController.dispose();
     _contactNoController.dispose();
     super.dispose();
+  }
+
+  /*
+    Add School Form Fields
+  1. School Name (TextField) 
+  2. School ID / DISE code (TextField)
+  3. School Principal Name (TextField)  
+  4. School Contact No (TextField)
+  5. District/Block (Dropdown)
+  6. Taluka (Dropdown)
+  7. Village (Dropdown)
+  8. Classes 1 to 12 (Checkboxes)
+  9. Total No.of Students (TextFields)
+  10. Services (Radio Buttons)
+      - National Deworming Program (Yes/No)
+      - Anemia Mukt Bharat (Yes/No)
+      - VIT A Supplementation Program (Yes/No)
+  11. School Photo (Image Upload)
+  12. Submit Button   
+  */
+  Future<ApiResponse<dynamic>> addSchool(School school) async {
+    final url = Uri.parse("$baseUrl${Endpoints.addSchool}");
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(school.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ApiResponse<dynamic>.fromJson(data, null);
+    } else {
+      throw Exception("Failed to add school: ${response.body}");
+    }
   }
 
   @override
@@ -110,31 +372,79 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
                 _buildRequiredLabel('District/Block'),
                 SizedBox(height: 8),
-                _buildDropdown(
-                  value: selectedDistrict,
-                  items: ['नागपुर', 'मुंबई', 'पुणे'],
-                  onChanged: (value) =>
-                      setState(() => selectedDistrict = value),
-                ),
-                SizedBox(height: 20),
 
+                _buildDropdown<District>(
+                  value: selectedDistrict,
+                  items: districts,
+                  getLabel: (district) =>
+                      district.districtName,
+                  onChanged: (District? newValue) async {
+                    if (newValue == null) return;
+
+                    setState(() {
+                      selectedDistrict = newValue;
+                      selectedTaluka = null;
+                      selectedVillage = null;
+                      talukas = [];
+                      villages = [];
+                    });
+
+                    // Fetch talukas for the selected district
+                    final fetchedTalukas = await fetchTalukas(
+                      newValue.districtId,
+                    );
+                    setState(() {
+                      talukas = fetchedTalukas;
+                    });
+                  },
+                  hint: 'Select District',
+                ),
+
+                SizedBox(height: 20),
                 _buildRequiredLabel('Taluka'),
                 SizedBox(height: 8),
-                _buildDropdown(
-                  value: selectedTaluka,
-                  items: ['हिंगणा', 'कामठी', 'रामटेक'],
-                  onChanged: (value) => setState(() => selectedTaluka = value),
-                ),
-                SizedBox(height: 20),
 
+                _buildDropdown<Taluka>(
+                  value: selectedTaluka,
+                  items: talukas,
+                  getLabel: (taluka) => taluka.talukaName ,
+                  onChanged: (Taluka? newValue) async {
+                    if (newValue == null) return;
+
+                    setState(() {
+                      selectedTaluka = newValue;
+                      selectedVillage = null;
+                      villages = [];
+                    });
+
+                    // Fetch villages for the selected taluka
+                    final fetchedVillages = await fetchGrampanchayats(
+                      newValue.talukaId,
+                    );
+                    setState(() {
+                      villages = fetchedVillages;
+                    });
+                  },
+                  hint: 'Select Taluka',
+                ),
+
+                SizedBox(height: 20),
                 _buildRequiredLabel('Village'),
                 SizedBox(height: 8),
-                _buildDropdown(
+
+                _buildDropdown<Grampanchayat>(
                   value: selectedVillage,
+                  items: villages,
+                  getLabel: (village) =>
+                      village.grampanchayatName,
+                  onChanged: (Grampanchayat? newValue) {
+                    setState(() {
+                      selectedVillage = newValue;
+                    });
+                  },
                   hint: 'Select Village',
-                  items: ['Village 1', 'Village 2', 'Village 3'],
-                  onChanged: (value) => setState(() => selectedVillage = value),
                 ),
+
                 SizedBox(height: 30),
 
                 Text(
@@ -286,7 +596,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
                 GestureDetector(
                   onTap: () {
-                    // Handle photo upload
+                  
                   },
                   child: Container(
                     width: double.infinity,
@@ -324,33 +634,223 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                 SizedBox(height: 30),
 
                 SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Handle form submission
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('School added successfully!')),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[800],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'Submit',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton(
+    onPressed: () async {
+      // 1️⃣ Validate the form
+      if (!_formKey.currentState!.validate()) return;
+
+      // 2️⃣ Ensure district, taluka, village are selected
+      if (selectedDistrict == null ||
+          selectedTaluka == null ||
+          selectedVillage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select district, taluka, and village')),
+        );
+        return;
+      }
+
+      // 3️⃣ Create School object
+      final school = School(
+        schoolName: _schoolNameController.text,
+        schoolCode: _schoolIdController.text,
+        schoolPrincipalName: _principalNameController.text,
+        schoolContactNo: _contactNoController.text,
+
+        districtId: selectedDistrict?.districtId,
+        districtName: selectedDistrict?.districtName,
+        talukaId: selectedTaluka?.talukaId,
+        talukaName: selectedTaluka?.talukaName,
+        grampanchayatId: selectedVillage?.grampanchayatId,
+        grampanchayatName: selectedVillage?.grampanchayatName,
+        latitude: _currentLatitude?.toString(),
+        longitude: _currentLongitude?.toString(),
+
+        // Classes
+        firstClass: classSelections[0],
+        secondClass: classSelections[1],
+        thirdClass: classSelections[2],
+        fourthClass: classSelections[3],
+        fifthClass: classSelections[4],
+        sixthClass: classSelections[5],
+        seventhClass: classSelections[6],
+        eighthClass: classSelections[7],
+        ninethClass: classSelections[8],
+        tenthClass: classSelections[9],
+        eleventhClass: classSelections[10],
+        twelthClass: classSelections[11],
+
+        // Students
+        totalNoOFBoys: int.tryParse(_boysController.text),
+        totalNoOfGirls: int.tryParse(_girlsController.text),
+        total: (int.tryParse(_boysController.text) ?? 0) +
+               (int.tryParse(_girlsController.text) ?? 0),
+
+        // Programs
+        nationalDeworingProgram: nationalDeworming == 'Yes',
+        anemiaMuktaBharat: anemiaMukt == 'Yes',
+        vitASupplementationProgram: vitASupplement == 'Yes',
+
+        // Anganwadi flags
+        anganwadi: false,
+        miniAnganwadi: false,
+
+        // Media & User
+        schoolPhoto: null, // convert uploaded image to Base64
+        userId: null, // logged-in user ID
+      );
+
+      // 4️⃣ Call API
+      try {
+        final response = await addSchool(school);
+
+        // 5️⃣ Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('School added successfully!')),
+        );
+
+        // 6️⃣ Optional: Reset form
+        _formKey.currentState!.reset();
+        setState(() {
+          selectedDistrict = null;
+          selectedTaluka = null;
+          selectedVillage = null;
+          classSelections = List.filled(12, false);
+          _boysController.clear();
+          _girlsController.clear();
+          nationalDeworming = 'NO';
+          anemiaMukt = 'Yes';
+          vitASupplement = 'NO';
+          _currentLatitude = null;
+          _currentLongitude = null;
+          // schoolPhotoBase64 = null;
+        });
+      } catch (e) {
+        // 7️⃣ Handle errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add school: $e')),
+        );
+      }
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue[800],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    child: Text(
+      'Submit',
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),
+                SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton(
+    onPressed: () async {
+      if (_formKey.currentState!.validate()) {
+        if (selectedDistrict == null ||
+            selectedTaluka == null ||
+            selectedVillage == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please select district, taluka, and village')),
+          );
+          return;
+        }
+
+        // 1️⃣ Create School object from form fields
+       // Construct School object from all form fields
+final school = School(
+  // Basic school info
+  schoolName: _schoolNameController.text,
+  schoolCode: _schoolIdController.text,
+  schoolPrincipalName: _principalNameController.text,
+  schoolContactNo: _contactNoController.text,
+
+  // Location info
+  districtId: selectedDistrict?.districtId,
+  districtName: selectedDistrict?.districtName,
+  talukaId: selectedTaluka?.talukaId,
+  talukaName: selectedTaluka?.talukaName,
+  grampanchayatId: selectedVillage?.grampanchayatId,
+  grampanchayatName: selectedVillage?.grampanchayatName,
+  latitude: _currentLatitude?.toString(),
+  longitude: _currentLongitude?.toString(),
+
+  // School type
+  anganwadi: false,
+  miniAnganwadi: false,
+
+  // Classes offered
+
+
+
+
+  // Student count
+  totalNoOFBoys: int.tryParse(_boysController.text),
+  totalNoOfGirls: int.tryParse(_girlsController.text),
+  total: _total,
+
+  // Media
+  schoolPhoto: null,// assuming you convert image to base64
+
+  // User info
+  userId: null,// pass the logged-in user id
+
+  // Programs
+  nationalDeworingProgram: null,
+  anemiaMuktaBharat: null,
+  vitASupplementationProgram: null,
+);
+
+
+        try {
+          // 2️⃣ Call API
+          final response = await addSchool(school);
+
+          // 3️⃣ Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('School added successfully!')),
+          );
+
+          // Optional: Clear form
+          _formKey.currentState!.reset();
+          setState(() {
+            selectedDistrict = null;
+            selectedTaluka = null;
+            selectedVillage = null;
+          });
+        } catch (e) {
+          // 4️⃣ Handle errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to add school: $e')),
+          );
+        }
+      }
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue[800],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    child: Text(
+      'Submit',
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),
+
                 SizedBox(height: 40),
                 SizedBox(height: 40),
               ],
@@ -413,11 +913,12 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     );
   }
 
-  Widget _buildDropdown({
-    String? value,
+  Widget _buildDropdown<T>({
+    required T? value,
+    required List<T> items,
+    required String Function(T) getLabel,
+    required ValueChanged<T?> onChanged,
     String? hint,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -426,25 +927,21 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
+        child: DropdownButton<T>(
           value: value,
+          isExpanded: true,
           hint: hint != null
               ? Padding(
                   padding: EdgeInsets.only(left: 16),
                   child: Text(hint, style: TextStyle(color: Colors.grey[500])),
                 )
               : null,
-          isExpanded: true,
-          icon: Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.keyboard_arrow_down, color: Colors.blue),
-          ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
+          items: items.map((T item) {
+            return DropdownMenuItem<T>(
               value: item,
               child: Padding(
                 padding: EdgeInsets.only(left: 16),
-                child: Text(item),
+                child: Text(getLabel(item)),
               ),
             );
           }).toList(),
@@ -524,7 +1021,7 @@ Widget _buildServiceRadio(
               value: 'NO',
               groupValue: selectedValue,
               onChanged: onChanged,
-            ),
+            ),  
             Text('NO'),
           ],
         ),
@@ -532,3 +1029,59 @@ Widget _buildServiceRadio(
     ),
   );
 }
+
+
+// //image build 
+//  Widget _buildPhotoUpload() {
+//     return GestureDetector(
+//       onTap: _pickImage,
+//       child: Container(
+//         height: 200,
+//         width: double.infinity,
+//         decoration: BoxDecoration(
+//           color: Colors.white,
+//           borderRadius: BorderRadius.circular(8),
+//           border: Border.all(
+//             color: Colors.blue[300]!,
+//             width: 2,
+//             style: BorderStyle.solid,
+//           ),
+//         ),
+//         child: selectedImage != null
+//             ? ClipRRect(
+//                 borderRadius: BorderRadius.circular(6),
+//                 child: Image.file(
+//                   selectedImage!,
+//                   fit: BoxFit.cover,
+//                 ),
+//               )
+//             : Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   Icon(
+//                     Icons.cloud_upload_outlined,
+//                     size: 48,
+//                     color: Colors.blue[400],
+//                   ),
+//                   const SizedBox(height: 8),
+//                   Text(
+//                     'Click to Upload',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       color: Colors.blue[600],
+//                       fontWeight: FontWeight.w500,
+//                     ),
+//                   ),
+//                   Text(
+//                     'Angan Wadi Photo',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       color: Colors.blue[600],
+//                       fontWeight: FontWeight.w500,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//       ),
+//     );
+//   }
