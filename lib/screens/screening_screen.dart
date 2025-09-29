@@ -16,7 +16,7 @@ import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
 class ScreenningSchoolScreen extends StatefulWidget {
- final  int? userid;
+  final int? userid;
   const ScreenningSchoolScreen({super.key, this.userid});
 
   @override
@@ -462,10 +462,12 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                     _buildDropdown<School>(
                       hint: "Select School",
                       value: selectedSchool,
-                      items: schools,
-                      getLabel: (school) => '${school.schoolName}',
+                      // Filter the items here
+                      items: schools.where((s) => s.flag == 'School').toList(),
+                      getLabel: (school) => school.schoolName,
                       onChanged: (School? newValue) async {
                         if (newValue == null) return;
+
                         setState(() {
                           selectedSchool = newValue;
                           selectedClass = null;
@@ -473,6 +475,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                           isLoadingSchoolDetails = true;
                           schoolDetailsError = null;
                         });
+
                         try {
                           final details = await fetchSchoolDetails(
                             newValue.schoolId,
@@ -489,8 +492,6 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                           });
                         }
                       },
-                      // isFetchingSchools: isLoadingSchools,
-                      // errorMessage: schoolFetchError,
                     ),
 
                     // Show school information and class selection only after school ID is selected
@@ -657,199 +658,199 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   }
 
   Widget _buildClassSelection(int userId) {
-  final availableClasses = getAvailableClasses();
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // School info display matching existing UI style
-      Divider(color: Colors.grey[300],thickness: 1,),
-      const SizedBox(height: 10),
-      if (selectedSchool != null && schoolDetails != null) ...[
-        Text(
-          'School ID / DISE code: ${selectedSchool!.schoolId}',
-          style: const TextStyle(
-            fontSize: 17,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-         Text(
-          'School Name: ${schoolDetails!.schoolName}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Total Students: ${schoolDetails!.total}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-             Text(
-          'Total Boys: ${schoolDetails!.totalNoOFBoys}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(width: 40),
-         Text(
-          'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-          ],
-        )
-      ],
-      Divider(color: Colors.grey[300],thickness: 1),
-      
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Select Class',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+    final availableClasses = getAvailableClasses();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // School info display matching existing UI style
+        Divider(color: Colors.grey[300], thickness: 1),
+        const SizedBox(height: 10),
+        if (selectedSchool != null && schoolDetails != null) ...[
+          Text(
+            'School ID / DISE code: ${selectedSchool!.schoolId}',
+            style: const TextStyle(
+              fontSize: 17,
               color: Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              if (selectedClass == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please select a class first'),
-                  ),
-                );
-                return;
-              }
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => StudentInfoScreen(
-                    schoolId: selectedSchool!.schoolId,
-                    className: selectedClass!, 
-                    userId: userId,
-                  ),
-                ),
-              );
-            },
-            child: const Text(
-              'View',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.blue,
-                fontWeight: FontWeight.w500,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            'School Name: ${schoolDetails!.schoolName}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Total Students: ${schoolDetails!.total}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                'Total Boys: ${schoolDetails!.totalNoOFBoys}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 40),
+              Text(
+                'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
-      ),
-      const SizedBox(height: 16),
-      isLoadingSchoolDetails
-          ? const Center(child: CircularProgressIndicator())
-          : schoolDetailsError != null
-          ? Text(
-              schoolDetailsError!,
-              style: const TextStyle(color: Colors.red),
-            )
-          : availableClasses.isEmpty
-          ? const Text(
-              'No classes available',
-              style: TextStyle(color: Colors.grey),
-            )
-          : GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 2.5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+        Divider(color: Colors.grey[300], thickness: 1),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Select Class',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
               ),
-              itemCount: availableClasses.length,
-              itemBuilder: (context, index) {
-                final className = availableClasses[index];
-                final isSelected = selectedClass == className;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedClass = className;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected ? Colors.blue : Colors.grey[300]!,
-                        width: isSelected ? 2 : 1,
-                      ),
+            ),
+            GestureDetector(
+              onTap: () {
+                if (selectedClass == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please select a class first'),
                     ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.blue
-                                : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.blue
-                                  : Colors.grey[400]!,
-                              width: 2,
-                            ),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 12,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            className,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected
-                                  ? Colors.blue
-                                  : Colors.black87,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      ],
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StudentInfoScreen(
+                      schoolId: selectedSchool!.schoolId,
+                      className: selectedClass!,
+                      userId: userId,
                     ),
                   ),
                 );
               },
+              child: const Text(
+                'View',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-    ],
-  );
-}
+          ],
+        ),
+        const SizedBox(height: 16),
+        isLoadingSchoolDetails
+            ? const Center(child: CircularProgressIndicator())
+            : schoolDetailsError != null
+            ? Text(
+                schoolDetailsError!,
+                style: const TextStyle(color: Colors.red),
+              )
+            : availableClasses.isEmpty
+            ? const Text(
+                'No classes available',
+                style: TextStyle(color: Colors.grey),
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 2.5,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: availableClasses.length,
+                itemBuilder: (context, index) {
+                  final className = availableClasses[index];
+                  final isSelected = selectedClass == className;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedClass = className;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? Colors.blue : Colors.grey[300]!,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.blue
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors.grey[400]!,
+                                width: 2,
+                              ),
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 12,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              className,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors.black87,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ],
+    );
+  }
 
   Widget _buildStartScreeningButton() {
     final isEnabled = selectedClass != null;
