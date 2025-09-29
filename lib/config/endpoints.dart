@@ -6,5 +6,6 @@ class Endpoints {
   static const String getDistrict = '/api/Rbsk/GetDistrict';
   static const String getTaluka = '/api/Rbsk/GetTalukaByDistrictId';
   static const String getGrampanchayat = '/api/Rbsk/GetGrampanchayatByTalukaId';
+  static const String schoolByGrampanchayatId = '/api/Rbsk/GetSchoolByGrampanchayatId';
   // Add other endpoints from the collection as needed
 }

@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Start Screening\nFor School',
                 onTap: () {
                   // Navigate to Start Screening For School
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ScreenningSchoolScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ScreenningSchoolScreen(userid: widget.userId ,)));
                 },
               ),
               _buildCard(

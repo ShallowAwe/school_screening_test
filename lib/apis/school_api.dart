@@ -6,20 +6,20 @@ import '../config/endpoints.dart';
 class SchoolApi {
   final ApiClient _apiClient = ApiClient();
 
-  Future<School> getSchool(int schoolId) async {
+  Future<SchoolDetails> getSchool(int schoolId) async {
     final response = await _apiClient.get(
       Endpoints.getSchool,
       queryParams: {'schoolId': schoolId.toString()},
     );
-    return School.fromJson(response);
+    return SchoolDetails.fromJson(response);
   }
 
 /// it need to adjusted according to other apis  
-  Future<School> addSchool(School school) async {
+  Future<SchoolDetails> addSchool(SchoolDetails school) async {
     final response = await _apiClient.post(
       Endpoints.addSchool,
       body: school.toJson(),
     );
-    return School.fromJson(response);
+    return SchoolDetails.fromJson(response);
   }
 }

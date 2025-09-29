@@ -333,7 +333,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   11. School Photo (Image Upload)
   12. Submit Button   
   */
-  Future<ApiResponse<dynamic>> addSchool(School school) async {
+  Future<ApiResponse<dynamic>> addSchool(SchoolDetails school) async {
     final url = Uri.parse("$baseUrl${Endpoints.addSchool}");
 
     final response = await http.post(
@@ -718,7 +718,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                       }
 
                       // 3️⃣ Create School object
-                      final school = School(
+                      final school = SchoolDetails(
                         schoolName: _schoolNameController.text,
                         schoolCode: _schoolIdController.text,
                         schoolPrincipalName: _principalNameController.text,

@@ -3,7 +3,7 @@
 Map<String, dynamic> map = jsonDecode(<myJSONString>);
 var mySchoolNode = School.fromJson(map);
 */ 
-class School {
+class SchoolDetails {
     String? schoolName;
     String? schoolCode;
     String? schoolPrincipalName;
@@ -39,9 +39,9 @@ class School {
     bool? anemiaMuktaBharat;
     bool? vitASupplementationProgram;
 
-    School({this.schoolName, this.schoolCode, this.schoolPrincipalName, this.schoolContactNo, this.districtId, this.districtName, this.talukaId, this.talukaName, this.grampanchayatId, this.grampanchayatName, this.anganwadi, this.miniAnganwadi, this.firstClass, this.secondClass, this.thirdClass, this.fourthClass, this.fifthClass, this.sixthClass, this.seventhClass, this.eighthClass, this.ninethClass, this.tenthClass, this.eleventhClass, this.twelthClass, this.totalNoOFBoys, this.totalNoOfGirls, this.total, this.latitude, this.longitude, this.schoolPhoto, this.userId, this.nationalDeworingProgram, this.anemiaMuktaBharat, this.vitASupplementationProgram}); 
+    SchoolDetails({this.schoolName, this.schoolCode, this.schoolPrincipalName, this.schoolContactNo, this.districtId, this.districtName, this.talukaId, this.talukaName, this.grampanchayatId, this.grampanchayatName, this.anganwadi, this.miniAnganwadi, this.firstClass, this.secondClass, this.thirdClass, this.fourthClass, this.fifthClass, this.sixthClass, this.seventhClass, this.eighthClass, this.ninethClass, this.tenthClass, this.eleventhClass, this.twelthClass, this.totalNoOFBoys, this.totalNoOfGirls, this.total, this.latitude, this.longitude, this.schoolPhoto, this.userId, this.nationalDeworingProgram, this.anemiaMuktaBharat, this.vitASupplementationProgram}); 
 
-    School.fromJson(Map<String, dynamic> json) {
+    SchoolDetails.fromJson(Map<String, dynamic> json) {
         schoolName = json['schoolName'];
         schoolCode = json['schoolCode'];
         schoolPrincipalName = json['schoolPrincipalName'];
