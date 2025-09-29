@@ -887,7 +887,10 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                     MaterialPageRoute(
                       builder: (context) => ScreeningFormScreenOne(
                         // school: selectedSchool!,
-                        // className: selectedClass!,
+                        userid: widget.userid!,
+                        schoolId: selectedSchool!.schoolId,
+                        schoolName: selectedSchool!.schoolName,
+                        className: selectedClass!,
                         // screenedChildren: screenedData,
                       ),
                     ),

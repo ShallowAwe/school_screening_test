@@ -1,65 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form7.dart';
+// Import your next screen here
+// import 'package:school_test/screens/school_screnning_screens/screening_for_class_form7.dart';
 
 class ScreeningForClassFormSix extends StatefulWidget {
-  const ScreeningForClassFormSix({super.key});
+  final Map<String, dynamic> previousData;
+  
+  const ScreeningForClassFormSix({
+    super.key,
+    required this.previousData,
+  });
 
   @override
   State<ScreeningForClassFormSix> createState() => _ScreeningForClassFormSixState();
 }
 
 class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
-  Map<String, bool> diseases = {
-    'Growing up concerns': false,
-    'Substance abuse': false,
-    'Feel depressed': false,
-    'Delay in menstrual cycles': false,
-    'Irregular periods': false,
-    'Pain or burning sensation while urinating': false,
-    'Discharge / foul smelling discharge from the genitourinary area': false,
-    'Pain during menstruation': false,
-    'Others': false,
-  };
-
-  // Treatment options for each disease (true = treated, false = refer)
-  Map<String, bool> treatmentOptions = {};
-  Map<String, String> referralOptions = {};
-  Map<String, TextEditingController> treatmentNoteControllers = {};
-
-  // Referral dropdown options
-  List<String> referralList = [
-    'RH',
-    'SDH',
-    'DH',
-    'GMC',
-    'IGMC',
-    'MJMJY & MOUY',
-    'DEIC',
-    'Samaj Kalyan Nagpur',
+  // Adolescent specific questions configuration with API field names and prefixes
+  final List<Map<String, String>> adolescentConfig = [
+    {
+      'display': 'Growing Up Concerns',
+      'field': 'growingUpConcerns',
+      'prefix': 'growing',
+      'treatedField': 'growingTreated',
+      'referField': 'growingRefer',
+    },
+    {
+      'display': 'Substance Abuse',
+      'field': 'substanceAbuse',
+      'prefix': 'substance',
+      'treatedField': 'substanceTreated',
+      'referField': 'substanceRefer',
+    },
+    {
+      'display': 'Feel Depressed',
+      'field': 'feelDepressed',
+      'prefix': 'feel',
+      'treatedField': 'feelTreated',
+      'referField': 'feelRefer',
+    },
+    {
+      'display': 'Delay in Menstrual Cycles',
+      'field': 'delayInMenstrualCycles',
+      'prefix': 'delay',
+      'treatedField': 'delayTreated',
+      'referField': 'delayRefer',
+    },
+    {
+      'display': 'Irregular Periods',
+      'field': 'irregularPeriods',
+      'prefix': 'irregular',
+      'treatedField': 'irregularTreated',
+      'referField': 'irregularRefer',
+    },
+    {
+      'display': 'Pain or Burning Sensation While Urinating',
+      'field': 'painOrBurningSensationWhileUrinating',
+      'prefix': 'painOrBurning',
+      'treatedField': 'painOrBurningTreated',
+      'referField': 'painOrBurningRefer',
+    },
+    {
+      'display': 'Discharge',
+      'field': 'discharge',
+      'prefix': 'discharge',
+      'treatedField': 'dischargeTreated',
+      'referField': 'dischargeRefer',
+    },
+    {
+      'display': 'Pain During Menstruation',
+      'field': 'painDuringMenstruation',
+      'prefix': 'painDuring',
+      'treatedField': 'painDuringTreated',
+      'referField': 'painDuringRefer',
+    },
+    {
+      'display': 'Others',
+      'field': 'other_asq',
+      'prefix': 'other_asq',
+      'treatedField': 'other_asqTreated',
+      'referField': 'other_asqRefer',
+    },
   ];
 
-  // No/Yes selection state
-  bool hasNoDiseases = true;
-  bool hasYesDiseases = false;
+  // Referral dropdown options with API field names
+  final List<Map<String, String>> referralList = [
+    {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
+    {'display': 'RH', 'field': 'RH'},
+    {'display': 'SDH', 'field': 'SDH'},
+    {'display': 'DH', 'field': 'DH'},
+    {'display': 'GMC', 'field': 'GMC'},
+    {'display': 'IGMC', 'field': 'IGMC'},
+    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    {'display': 'DEIC', 'field': 'DEIC'},
+  ];
+
+  // State management
+  Map<String, bool> adolescentIssues = {};
+  Map<String, bool> treatmentOptions = {}; // true = treated, false = refer
+  Map<String, String> referralOptions = {};
+  Map<String, TextEditingController> noteControllers = {};
+
+  bool hasNoIssues = true;
+  bool hasYesIssues = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with "No" selected
-    hasNoDiseases = true;
-    hasYesDiseases = false;
-    // Clear all disease selections when starting with No
-    diseases.updateAll((key, value) => false);
-
-    // Initialize treatment options and controllers for each disease
-    diseases.keys.forEach((disease) {
-      treatmentOptions[disease] = true; // Default to "Treated"
-      referralOptions[disease] = '';
-      treatmentNoteControllers[disease] = TextEditingController();
-    });
+    
+    // Initialize state for each adolescent issue
+    for (var issue in adolescentConfig) {
+      String key = issue['field']!;
+      adolescentIssues[key] = false;
+      treatmentOptions[key] = true; // Default to treated
+      referralOptions[key] = '';
+      noteControllers[key] = TextEditingController();
+    }
   }
 
-  void _showReferralPopup(String diseaseKey) {
+  void _showReferralPopup(String issueKey, String prefix) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -73,7 +132,6 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Close button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -84,26 +142,24 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                   ],
                 ),
                 SizedBox(height: 8),
-                // Referral options
                 ...referralList.asMap().entries.map((entry) {
                   int index = entry.key;
-                  String referral = entry.value;
+                  Map<String, String> referral = entry.value;
 
                   return Column(
                     children: [
                       GestureDetector(
                         onTap: () {
                           setState(() {
-                            referralOptions[diseaseKey] = referral;
+                            referralOptions[issueKey] = referral['display']!;
                           });
                           Navigator.of(context).pop();
                         },
                         child: Container(
                           width: double.infinity,
-                          padding:
-                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                           child: Text(
-                            '${index + 1}. $referral',
+                            '${index + 1}. ${referral['display']}',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.black87,
@@ -124,6 +180,107 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
     );
   }
 
+  Map<String, dynamic> _buildOutputData() {
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+    
+    // Add adolescent specific questionnaire flag
+    outputData['adolescentSpecificQuestionnare'] = hasYesIssues;
+    
+    // Add issue-specific data
+    for (var issueConf in adolescentConfig) {
+      String field = issueConf['field']!;
+      String prefix = issueConf['prefix']!;
+      String treatedField = issueConf['treatedField']!;
+      String referField = issueConf['referField']!;
+      
+      if (adolescentIssues[field] == true) {
+        // Issue is selected
+        outputData[field] = true;
+        
+        // Add treatment/refer flags
+        outputData[treatedField] = treatmentOptions[field] == true;
+        outputData[referField] = treatmentOptions[field] == false;
+        
+        // Add referral options if refer is selected
+        if (treatmentOptions[field] == false) {
+          for (var referral in referralList) {
+            String referralField = referral['field']!;
+            String selectedReferral = referralOptions[field] ?? '';
+            
+            // Special handling for different prefix patterns
+            String fullReferralField;
+            if (prefix == 'other_asq') {
+              if (referralField == 'MJMJYAndMOUY') {
+                fullReferralField = '${prefix}MJMJYAndMOUY';
+              } else if (referralField == 'SKNagpur') {
+                fullReferralField = '${prefix}Refer_SKNagpur';
+              } else {
+                fullReferralField = '${prefix}Refer_$referralField';
+              }
+            } else if (referralField == 'SKNagpur') {
+              fullReferralField = '${referField}_SKNagpur';
+            } else {
+              fullReferralField = '${prefix}_Refer_$referralField';
+            }
+            
+            outputData[fullReferralField] = selectedReferral == referral['display'];
+          }
+        } else {
+          // Set all referral options to false if treated
+          for (var referral in referralList) {
+            String referralField = referral['field']!;
+            String fullReferralField;
+            if (prefix == 'other_asq') {
+              if (referralField == 'MJMJYAndMOUY') {
+                fullReferralField = '${prefix}MJMJYAndMOUY';
+              } else if (referralField == 'SKNagpur') {
+                fullReferralField = '${prefix}Refer_SKNagpur';
+              } else {
+                fullReferralField = '${prefix}Refer_$referralField';
+              }
+            } else if (referralField == 'SKNagpur') {
+              fullReferralField = '${referField}_SKNagpur';
+            } else {
+              fullReferralField = '${prefix}_Refer_$referralField';
+            }
+            outputData[fullReferralField] = false;
+          }
+        }
+        
+        // Add note
+        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
+      } else {
+        // Issue not selected - set all to false
+        outputData[field] = false;
+        outputData[treatedField] = false;
+        outputData[referField] = false;
+        
+        for (var referral in referralList) {
+          String referralField = referral['field']!;
+          String fullReferralField;
+          if (prefix == 'other_asq') {
+            if (referralField == 'MJMJYAndMOUY') {
+              fullReferralField = '${prefix}MJMJYAndMOUY';
+            } else if (referralField == 'SKNagpur') {
+              fullReferralField = '${prefix}Refer_SKNagpur';
+            } else {
+              fullReferralField = '${prefix}Refer_$referralField';
+            }
+          } else if (referralField == 'SKNagpur') {
+            fullReferralField = '${referField}_SKNagpur';
+          } else {
+            fullReferralField = '${prefix}_Refer_$referralField';
+          }
+          outputData[fullReferralField] = false;
+        }
+        
+        outputData['${field}_Note'] = '';
+      }
+    }
+    
+    return outputData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,7 +293,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Screening For 5st Class',
+          'Screening For 1st Class',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -169,9 +326,9 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'E. Adolescent Specific\nQuestionnaire(10 -19 Years)',
+                  'E. Adolescent Specific\nQuestionnaire',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -183,26 +340,22 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          hasNoDiseases = true;
-                          hasYesDiseases = false;
-                          // Clear all disease selections when No is selected
-                          diseases.updateAll((key, value) => false);
+                          hasNoIssues = true;
+                          hasYesIssues = false;
+                          adolescentIssues.updateAll((key, value) => false);
                         });
                       },
                       child: Container(
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasNoDiseases
-                              ? Color(0xFF2196F3)
-                              : Colors.transparent,
+                          color: hasNoIssues ? Color(0xFF2196F3) : Colors.transparent,
                           border: Border.all(
-                            color:
-                                hasNoDiseases ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasNoIssues ? Color(0xFF2196F3) : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
-                        child: hasNoDiseases
+                        child: hasNoIssues
                             ? Icon(Icons.check, color: Colors.white, size: 16)
                             : null,
                       ),
@@ -213,25 +366,21 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          hasNoDiseases = false;
-                          hasYesDiseases = true;
+                          hasNoIssues = false;
+                          hasYesIssues = true;
                         });
                       },
                       child: Container(
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasYesDiseases
-                              ? Color(0xFF2196F3)
-                              : Colors.transparent,
+                          color: hasYesIssues ? Color(0xFF2196F3) : Colors.transparent,
                           border: Border.all(
-                            color: hasYesDiseases
-                                ? Color(0xFF2196F3)
-                                : Colors.grey,
+                            color: hasYesIssues ? Color(0xFF2196F3) : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
-                        child: hasYesDiseases
+                        child: hasYesIssues
                             ? Icon(Icons.check, color: Colors.white, size: 16)
                             : null,
                       ),
@@ -243,13 +392,14 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
 
             SizedBox(height: 24),
 
-            // Show disease list only if "Yes" is selected
-            if (hasYesDiseases) ...[
-              // Disease List
-              ...diseases.entries.toList().asMap().entries.map((entry) {
+            // Show adolescent issues list only if "Yes" is selected
+            if (hasYesIssues) ...[
+              ...adolescentConfig.asMap().entries.map((entry) {
                 int index = entry.key;
-                MapEntry<String, bool> disease = entry.value;
-                String diseaseKey = disease.key;
+                Map<String, String> issueConf = entry.value;
+                String issueKey = issueConf['field']!;
+                String displayName = issueConf['display']!;
+                String prefix = issueConf['prefix']!;
 
                 return Column(
                   children: [
@@ -257,7 +407,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                       children: [
                         Expanded(
                           child: Text(
-                            '${index + 1}. ${disease.key}',
+                            '${index + 1}. $displayName',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.black87,
@@ -267,12 +417,11 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              diseases[disease.key] = !disease.value;
-                              if (!disease.value) {
-                                // Reset treatment options when disease is deselected
-                                treatmentOptions[diseaseKey] = true;
-                                referralOptions[diseaseKey] = '';
-                                treatmentNoteControllers[diseaseKey]?.clear();
+                              adolescentIssues[issueKey] = !adolescentIssues[issueKey]!;
+                              if (!adolescentIssues[issueKey]!) {
+                                treatmentOptions[issueKey] = true;
+                                referralOptions[issueKey] = '';
+                                noteControllers[issueKey]?.clear();
                               }
                             });
                           },
@@ -280,28 +429,26 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: disease.value
+                              color: adolescentIssues[issueKey]!
                                   ? Color(0xFF2196F3)
                                   : Colors.transparent,
                               border: Border.all(
-                                color: disease.value
+                                color: adolescentIssues[issueKey]!
                                     ? Color(0xFF2196F3)
                                     : Colors.grey,
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(2),
                             ),
-                            child: disease.value
-                                ? Icon(Icons.check,
-                                    color: Colors.white, size: 18)
+                            child: adolescentIssues[issueKey]!
+                                ? Icon(Icons.check, color: Colors.white, size: 18)
                                 : null,
                           ),
                         ),
                       ],
                     ),
 
-                    // Treatment options for each disease when selected
-                    if (disease.value) ...[
+                    if (adolescentIssues[issueKey]!) ...[
                       SizedBox(height: 16),
                       Padding(
                         padding: EdgeInsets.only(left: 20),
@@ -316,27 +463,26 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
-                                      treatmentOptions[diseaseKey] = true;
-                                      referralOptions[diseaseKey] = '';
+                                      treatmentOptions[issueKey] = true;
+                                      referralOptions[issueKey] = '';
                                     });
                                   },
                                   child: Container(
                                     width: 20,
                                     height: 20,
                                     decoration: BoxDecoration(
-                                      color: treatmentOptions[diseaseKey]!
+                                      color: treatmentOptions[issueKey]!
                                           ? Color(0xFF2196F3)
                                           : Colors.transparent,
                                       border: Border.all(
-                                        color: treatmentOptions[diseaseKey]!
+                                        color: treatmentOptions[issueKey]!
                                             ? Color(0xFF2196F3)
                                             : Colors.grey,
                                       ),
                                       borderRadius: BorderRadius.circular(2),
                                     ),
-                                    child: treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check,
-                                            color: Colors.white, size: 14)
+                                    child: treatmentOptions[issueKey]!
+                                        ? Icon(Icons.check, color: Colors.white, size: 14)
                                         : null,
                                   ),
                                 ),
@@ -346,42 +492,38 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
-                                      treatmentOptions[diseaseKey] = false;
+                                      treatmentOptions[issueKey] = false;
                                     });
-                                    _showReferralPopup(diseaseKey);
+                                    _showReferralPopup(issueKey, prefix);
                                   },
                                   child: Container(
                                     width: 20,
                                     height: 20,
                                     decoration: BoxDecoration(
-                                      color: !treatmentOptions[diseaseKey]!
+                                      color: !treatmentOptions[issueKey]!
                                           ? Color(0xFF2196F3)
                                           : Colors.transparent,
                                       border: Border.all(
-                                        color: !treatmentOptions[diseaseKey]!
+                                        color: !treatmentOptions[issueKey]!
                                             ? Color(0xFF2196F3)
                                             : Colors.grey,
                                       ),
                                       borderRadius: BorderRadius.circular(2),
                                     ),
-                                    child: !treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check,
-                                            color: Colors.white, size: 14)
+                                    child: !treatmentOptions[issueKey]!
+                                        ? Icon(Icons.check, color: Colors.white, size: 14)
                                         : null,
                                   ),
                                 ),
-                                // Show selected referral value next to the checkbox
-                                if (!treatmentOptions[diseaseKey]! &&
-                                    referralOptions[diseaseKey]!
-                                        .isNotEmpty) ...[
+                                if (!treatmentOptions[issueKey]! &&
+                                    referralOptions[issueKey]!.isNotEmpty) ...[
                                   SizedBox(width: 12),
                                   Expanded(
                                     child: Container(
                                       padding: EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color:
-                                            Color(0xFF2196F3).withOpacity(0.1),
+                                        color: Color(0xFF2196F3).withOpacity(0.1),
                                         border: Border.all(
                                           color: Color(0xFF2196F3),
                                           width: 1,
@@ -389,7 +531,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        referralOptions[diseaseKey]!,
+                                        referralOptions[issueKey]!,
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Color(0xFF2196F3),
@@ -403,29 +545,28 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                             ),
                             SizedBox(height: 16),
                             Text(
-                              'Enter Treated Note',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.black87),
+                              treatmentOptions[issueKey]!
+                                  ? 'Enter Treated Note'
+                                  : 'Enter Refer Note',
+                              style: TextStyle(fontSize: 16, color: Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Container(
-                              height: 60,
                               child: TextField(
-                                controller:
-                                    treatmentNoteControllers[diseaseKey],
+                                controller: noteControllers[issueKey],
                                 maxLines: 3,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide:
-                                        BorderSide(color: Colors.red, width: 2),
+                                        BorderSide(color: Color(0xFF2196F3), width: 2),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   contentPadding: EdgeInsets.all(12),
@@ -454,7 +595,6 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Handle previous action
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -480,30 +620,30 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                        Map<String, dynamic> combinedData = _buildOutputData();
+                        
+                        // Debug print
+                        print('Combined Data from Form 6: $combinedData');
+                        
+                        // Navigate to next page with combined data
+                        // Uncomment when you create the next screen
+                        
                         Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ScreeningForClassFormSeven(),
+                          MaterialPageRoute(
+                            builder: (context) => ScreeningForClassFormSeven(
+                              previousData: combinedData,
                             ),
-                          );  
-                        // Handle next action
-                        if (hasYesDiseases) {
-                          // Print selected diseases and their treatment details
-                          diseases.entries
-                              .where((e) => e.value)
-                              .forEach((disease) {
-                            print('Disease: ${disease.key}');
-                            print(
-                                '  - Treatment: ${treatmentOptions[disease.key]! ? "Treated" : "Refer"}');
-                            if (!treatmentOptions[disease.key]!) {
-                              print(
-                                  '  - Referred to: ${referralOptions[disease.key]}');
-                            }
-                            print(
-                                '  - Note: ${treatmentNoteControllers[disease.key]?.text}');
-                          });
-                        } else {
-                          print('No diseases selected');
-                        }
+                          ),
+                        );
+                        
+                        
+                        // // Temporary: Show success message
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text('Form completed successfully! Check console for data.'),
+                        //     backgroundColor: Colors.green,
+                        //   ),
+                        // );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF3F51B5),
@@ -532,11 +672,9 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
 
   @override
   void dispose() {
-    // Dispose all controllers
-    treatmentNoteControllers.values.forEach((controller) {
+    noteControllers.values.forEach((controller) {
       controller.dispose();
     });
     super.dispose();
   }
 }
-

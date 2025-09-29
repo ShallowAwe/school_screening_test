@@ -284,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     'Application privacy policy',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withAlpha(204),
                       fontSize: 14,
                       decoration: TextDecoration.underline,
                     ),
