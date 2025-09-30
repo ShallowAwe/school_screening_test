@@ -185,100 +185,144 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
     );
   }
 
-  Map<String, dynamic> _buildOutputData() {
-    Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+ Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  
+  // Add developmental delay flag (PascalCase)
+  outputData['DevelopmentalDelayIncludingDisability'] = hasYesDiseases;
+  
+  // Add disease-specific data
+  for (var diseaseConf in diseaseConfig) {
+    String field = diseaseConf['field']!;
+    String prefix = diseaseConf['prefix']!;
+    String treatedField = diseaseConf['treatedField']!;
+    String referField = diseaseConf['referField']!;
     
-    // Add developmental delay flag
-    outputData['developmentalDelayIncludingDisability'] = hasYesDiseases;
-    
-    // Add disease-specific data
-    for (var diseaseConf in diseaseConfig) {
-      String field = diseaseConf['field']!;
-      String prefix = diseaseConf['prefix']!;
-      String treatedField = diseaseConf['treatedField']!;
-      String referField = diseaseConf['referField']!;
+    if (diseases[field] == true) {
+      // Disease is selected
+      outputData[_toPascalCase(field)] = true;
       
-      if (diseases[field] == true) {
-        // Disease is selected
-        outputData[field] = true;
-        
-        // Add treatment/refer flags
-        outputData[treatedField] = treatmentOptions[field] == true;
-        outputData[referField] = treatmentOptions[field] == false;
-        
-        // Add referral options if refer is selected
-        if (treatmentOptions[field] == false) {
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String selectedReferral = referralOptions[field] ?? '';
-            
-            // Special handling for different prefix patterns
-            String fullReferralField;
-            if (prefix == 'other_ddid') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            
-            outputData[fullReferralField] = selectedReferral == referral['display'];
-          }
-        } else {
-          // Set all referral options to false if treated
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String fullReferralField;
-            if (prefix == 'other_ddid') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            outputData[fullReferralField] = false;
-          }
-        }
-        
-        // Add note
-        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-      } else {
-        // Disease not selected - set all to false
-        outputData[field] = false;
-        outputData[treatedField] = false;
-        outputData[referField] = false;
-        
-        for (var referral in referralList) {
-          String referralField = referral['field']!;
-          String fullReferralField;
-          if (prefix == 'other_ddid') {
-            if (referralField == 'MJMJYAndMOUY') {
-              fullReferralField = '${prefix}MJMJYAndMOUY';
-            } else {
-              fullReferralField = '${prefix}Refer_$referralField';
-            }
-          } else if (referralField == 'SKNagpur') {
-            fullReferralField = '${referField}_SKNagpur';
-          } else {
-            fullReferralField = '${prefix}_Refer_$referralField';
-          }
-          outputData[fullReferralField] = false;
-        }
-        
-        outputData['${field}_Note'] = '';
+      // Add treatment/refer flags
+      outputData[_toPascalCase(treatedField)] = treatmentOptions[field] == true;
+      outputData[_toPascalCase(referField)] = treatmentOptions[field] == false;
+      
+      // Add referral options
+      String selectedReferral = referralOptions[field] ?? '';
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = selectedReferral == referral['display'];
       }
+      
+      // Add note
+      outputData['${_toPascalCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+    } else {
+      // Disease not selected - set all to false
+      outputData[_toPascalCase(field)] = false;
+      outputData[_toPascalCase(treatedField)] = false;
+      outputData[_toPascalCase(referField)] = false;
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = false;
+      }
+      
+      outputData['${_toPascalCase(field)}_Note'] = '';
     }
-    
-    return outputData;
   }
+  
+  return outputData;
+}
+
+String _toPascalCase(String input) {
+  // Handle main disease fields
+  if (input == 'visionImpairment') return 'VisionImpairment';
+  if (input == 'hearingImpairment') return 'HearingImpairment';
+  if (input == 'neuromotorImpairment') return 'NeuromotorImpairment';
+  if (input == 'motorDelay') return 'MotorDelay';
+  if (input == 'cognitiveDelay') return 'CognitiveDelay';
+  if (input == 'speechAndLanguageDelay') return 'SpeechAndLanguageDelay';
+  if (input == 'behaviouralDisorder') return 'BehaviouralDisorder';
+  if (input == 'learningDisorder') return 'LearningDisorder';
+  if (input == 'attentionDeficitHyperactivityDisorder') return 'AttentionDeficitHyperactivityDisorder';
+  if (input == 'other_ddid') return 'other_ddid';
+  
+  // Handle treated fields
+  if (input == 'visionTreated') return 'VisionTreated';
+  if (input == 'hearingTreated') return 'HearingTreated';
+  if (input == 'neuromotorTreated') return 'NeuromotorTreated';
+  if (input == 'motorDealyTrated') return 'MotorDealyTrated'; // Note: typo in C# model
+  if (input == 'cognitiveTrated') return 'CognitiveTrated';
+  if (input == 'speechTreated') return 'SpeechTreated';
+  if (input == 'behaviouralTreated') return 'BehaviouralTreated';
+  if (input == 'learningTreated') return 'LearningTreated';
+  if (input == 'attentionTreated') return 'AttentionTreated';
+  if (input == 'other_ddidTreated') return 'other_ddidTreated';
+  
+  // Handle refer fields
+  if (input == 'visionRefer') return 'VisionRefer';
+  if (input == 'hearingRefer') return 'HearingRefer';
+  if (input == 'neuromotorRefer') return 'NeuromotorRefer';
+  if (input == 'motorDelayRefer') return 'MotorDelayRefer';
+  if (input == 'cognitiveRefer') return 'CognitiveRefer';
+  if (input == 'speechRefer') return 'SpeechRefer';
+  if (input == 'behavoiuralRefer') return 'BehavoiuralRefer'; // Note: typo in C# model
+  if (input == 'learningRefer') return 'LearningRefer';
+  if (input == 'attentionRefer') return 'AttentionRefer';
+  if (input == 'other_ddidRefer') return 'other_ddidRefer';
+  
+  return input;
+}
+
+String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
+  // Based on C# model patterns:
+  // Vision: Vision_Refer_RH, VisionRefer_SKNagpur
+  // Hearing: Hearing_Refer_RH, HearingRefer_SKNagpur
+  // Neuro: Neuro_Refer_RH, NeuromotorRefer_SKNagpur
+  // Motor: Motor_Refer_RH, MotorDelayRefer_SKNagpur
+  // Cognitive: Cognitive_Refer_RH, CognitiveRefer_SKNagpur
+  // Speech: Speech_Refer_RH, SpeechRefer_SKNagpur
+  // Behavoiural: Behavoiural_Refer_RH, BehavoiuralRefer_SKNagpur (note typo in C#)
+  // Learning: Learning_Refer_RH, LearningRefer_SKNagpur
+  // Attention: Attention_Refer_RH, AttentionRefer_SKNagpur
+  // other_ddid: other_ddidRefer_RH, other_ddidRefer_SKNagpur, other_ddidMJMJYAndMOUY
+  
+  if (referralField == 'SKNagpur') {
+    // SKNagpur has different pattern
+    if (prefix == 'other_ddid') {
+      return 'other_ddidRefer_SKNagpur';
+    }
+    return '${_toPascalCase(diseaseField)}Refer_SKNagpur';
+  } else if (referralField == 'MJMJYAndMOUY') {
+    // Special case for MJMJYAndMOUY
+    if (prefix == 'other_ddid') {
+      return 'other_ddidMJMJYAndMOUY';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
+  } else {
+    // Regular pattern: prefix_Refer_RH
+    if (prefix == 'other_ddid') {
+      return 'other_ddidRefer_$referralField';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+  }
+}
+
+String _getPrefixForRefer(String prefix) {
+  // Convert prefix to match C# model
+  if (prefix == 'vision') return 'Vision';
+  if (prefix == 'hearing') return 'Hearing';
+  if (prefix == 'neuro') return 'Neuro';
+  if (prefix == 'motor') return 'Motor';
+  if (prefix == 'cognitive') return 'Cognitive';
+  if (prefix == 'speech') return 'Speech';
+  if (prefix == 'behavoiural') return 'Behavoiural'; // Note: matches C# typo
+  if (prefix == 'learning') return 'Learning';
+  if (prefix == 'attention') return 'Attention';
+  return prefix;
+}
 
   @override
   Widget build(BuildContext context) {

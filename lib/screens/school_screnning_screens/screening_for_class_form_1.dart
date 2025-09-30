@@ -532,29 +532,31 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        // ✅ Validate DOB
+                        // Validate DOB
                         if (selectedDob == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("Please select Date of Birth"),
+                              backgroundColor: Colors.red,
                             ),
                           );
                           return;
                         }
 
                         int age = _calculateAge(selectedDob!);
-                        if (age < 4 || age > 6) {
+                        if (age < 4 || age > 18) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                "Age must be between 4 and 6 years",
+                                "Age must be between 4 and 18 years",
                               ),
+                              backgroundColor: Colors.red,
                             ),
                           );
                           return;
                         }
 
-                        // ✅ Validate Blood Pressure
+                        // Validate Blood Pressure
                         bool hasSelectedBP = bloodPressureSelections.contains(
                           true,
                         );
@@ -562,49 +564,123 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("Please select Blood Pressure"),
+                              backgroundColor: Colors.red,
                             ),
                           );
                           return;
                         }
 
-                        // ✅ Collect all data
+                        // Parse numeric values with validation
+                        double? weight = double.tryParse(
+                          _weightController.text,
+                        );
+                        int? height = int.tryParse(_heightController.text);
+                        double? leftEye = double.tryParse(
+                          _leftEyeController.text,
+                        );
+                        double? rightEye = double.tryParse(
+                          _rightEyeController.text,
+                        );
+
+                        if (weight == null ||
+                            height == null ||
+                            leftEye == null ||
+                            rightEye == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Please enter valid numeric values",
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
                         final formData = {
-                          "schoolName": schoolName,
-                          "schoolId": schoolId,
-                          "userId": userId,
-                          "className": className,
-                          "childName": _childNameController.text,
-                          "dob":
-                              "${selectedDob!.day}/${selectedDob!.month}/${selectedDob!.year}",
-                          "age": age,
-                          "gender": selectedGender,
-                          "aadhaar": _aadhaarController.text,
-                          "fatherName": _fatherNameController.text,
-                          "contact": _contactController.text,
-                          "weight": _weightController.text,
-                          "height": _heightController.text,
-                          "bmi": bmi.toStringAsFixed(2),
-                          "bmiClassification": bmiClassification,
-                          "bloodPressure": bloodPressureOptions
-                              .asMap()
-                              .entries
-                              .where(
-                                (entry) => bloodPressureSelections[entry.key],
-                              )
-                              .map((entry) => entry.value)
-                              .toList(),
-                          "leftEye": _leftEyeController.text,
-                          "rightEye": _rightEyeController.text,
+                          // IDs (PascalCase)
+                          'SchoolId': widget.schoolId,
+                          'UserId': widget.userid,
+
+                          // Class flags
+                          'anganwadi': false,
+                          'MiniAnganwadi': false,
+                          'firstclass': widget.className.toLowerCase().contains(
+                            '1st',
+                          ),
+                          'SecondClass': widget.className
+                              .toLowerCase()
+                              .contains('2nd'),
+                          'ThirdClass': widget.className.toLowerCase().contains(
+                            '3rd',
+                          ),
+                          'FourthClass': widget.className
+                              .toLowerCase()
+                              .contains('4th'),
+                          'FifthClass': widget.className.toLowerCase().contains(
+                            '5th',
+                          ),
+                          'SixthClass': widget.className.toLowerCase().contains(
+                            '6th',
+                          ),
+                          'SeventhClass': widget.className
+                              .toLowerCase()
+                              .contains('7th'),
+                          'EighthClass': widget.className
+                              .toLowerCase()
+                              .contains('8th'),
+                          'NinthClass': widget.className.toLowerCase().contains(
+                            '9th',
+                          ),
+                          'TenthClass': widget.className.toLowerCase().contains(
+                            '10th',
+                          ),
+                          'EleventhClass': widget.className
+                              .toLowerCase()
+                              .contains('11th'),
+                          'TwelthClass': widget.className
+                              .toLowerCase()
+                              .contains('12th'),
+
+                          // Demographics (PascalCase)
+                          'ChildName': _childNameController.text.trim(),
+                          'Age': age.toString(),
+                          'Gender': selectedGender,
+                          'AadhaarNo': _aadhaarController.text.trim(),
+                          'FathersName': _fatherNameController.text.trim(),
+                          'FathersContactNo': _contactController.text.trim(),
+
+                          // Measurements
+                          'WeightInKg': weight,
+                          'HeightInCm': height,
+
+                          // Weight/Height status
+                          'WeightHeightNormal': bmi >= 18.5 && bmi < 25,
+                          'WeightHeightSAM': bmi < 16,
+                          'WeightHeightMAM': bmi >= 16 && bmi < 18.5,
+                          'WeightHeightSUW': bmi < 16,
+                          'WeightHeightMUW': bmi >= 16 && bmi < 18.5,
+                          'WeightHeightStunted': bmi < 18.5,
+
+                          // Blood Pressure
+                          'BloodPressure': true,
+                          'BPNormal': bloodPressureSelections[0],
+                          'BPPrehypertension': bloodPressureSelections[1],
+                          'BPStage1HTN': bloodPressureSelections[2],
+                          'BPStage2HTN': bloodPressureSelections[3],
+
+                          // Vision
+                          'AcuityOfVision': (leftEye + rightEye) / 2,
+                          'AcuityOfLeftEye': leftEye,
+                          'AcuityOfRightEye': rightEye,
                         };
 
-                        // Print all data
                         print("Form Data: $formData");
 
-                        // Navigate to next screen
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => ScreeningFormScreenTwo(
-                              previousFormData: formData
+                              previousFormData: formData,
                             ),
                           ),
                         );
@@ -614,6 +690,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                             content: Text(
                               'Please complete all required fields!',
                             ),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }

@@ -180,106 +180,139 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
     );
   }
 
-  Map<String, dynamic> _buildOutputData() {
-    Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+ Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  
+  // Add adolescent specific questionnaire flag (PascalCase)
+  outputData['AdolescentSpecificQuestionnare'] = hasYesIssues;
+  
+  // Add issue-specific data
+  for (var issueConf in adolescentConfig) {
+    String field = issueConf['field']!;
+    String prefix = issueConf['prefix']!;
+    String treatedField = issueConf['treatedField']!;
+    String referField = issueConf['referField']!;
     
-    // Add adolescent specific questionnaire flag
-    outputData['adolescentSpecificQuestionnare'] = hasYesIssues;
-    
-    // Add issue-specific data
-    for (var issueConf in adolescentConfig) {
-      String field = issueConf['field']!;
-      String prefix = issueConf['prefix']!;
-      String treatedField = issueConf['treatedField']!;
-      String referField = issueConf['referField']!;
+    if (adolescentIssues[field] == true) {
+      // Issue is selected
+      outputData[_toPascalCase(field)] = true;
       
-      if (adolescentIssues[field] == true) {
-        // Issue is selected
-        outputData[field] = true;
-        
-        // Add treatment/refer flags
-        outputData[treatedField] = treatmentOptions[field] == true;
-        outputData[referField] = treatmentOptions[field] == false;
-        
-        // Add referral options if refer is selected
-        if (treatmentOptions[field] == false) {
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String selectedReferral = referralOptions[field] ?? '';
-            
-            // Special handling for different prefix patterns
-            String fullReferralField;
-            if (prefix == 'other_asq') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else if (referralField == 'SKNagpur') {
-                fullReferralField = '${prefix}Refer_SKNagpur';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            
-            outputData[fullReferralField] = selectedReferral == referral['display'];
-          }
-        } else {
-          // Set all referral options to false if treated
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String fullReferralField;
-            if (prefix == 'other_asq') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else if (referralField == 'SKNagpur') {
-                fullReferralField = '${prefix}Refer_SKNagpur';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            outputData[fullReferralField] = false;
-          }
-        }
-        
-        // Add note
-        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-      } else {
-        // Issue not selected - set all to false
-        outputData[field] = false;
-        outputData[treatedField] = false;
-        outputData[referField] = false;
-        
-        for (var referral in referralList) {
-          String referralField = referral['field']!;
-          String fullReferralField;
-          if (prefix == 'other_asq') {
-            if (referralField == 'MJMJYAndMOUY') {
-              fullReferralField = '${prefix}MJMJYAndMOUY';
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${prefix}Refer_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}Refer_$referralField';
-            }
-          } else if (referralField == 'SKNagpur') {
-            fullReferralField = '${referField}_SKNagpur';
-          } else {
-            fullReferralField = '${prefix}_Refer_$referralField';
-          }
-          outputData[fullReferralField] = false;
-        }
-        
-        outputData['${field}_Note'] = '';
+      // Add treatment/refer flags
+      outputData[_toPascalCase(treatedField)] = treatmentOptions[field] == true;
+      outputData[_toPascalCase(referField)] = treatmentOptions[field] == false;
+      
+      // Add referral options
+      String selectedReferral = referralOptions[field] ?? '';
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = selectedReferral == referral['display'];
       }
+      
+      // Add note
+      outputData['${_toPascalCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+    } else {
+      // Issue not selected - set all to false
+      outputData[_toPascalCase(field)] = false;
+      outputData[_toPascalCase(treatedField)] = false;
+      outputData[_toPascalCase(referField)] = false;
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = false;
+      }
+      
+      outputData['${_toPascalCase(field)}_Note'] = '';
     }
-    
-    return outputData;
   }
+  
+  return outputData;
+}
+
+String _toPascalCase(String input) {
+  // Handle main issue fields
+  if (input == 'growingUpConcerns') return 'GrowingUpConcerns';
+  if (input == 'substanceAbuse') return 'SubstanceAbuse';
+  if (input == 'feelDepressed') return 'FeelDepressed';
+  if (input == 'delayInMenstrualCycles') return 'DelayInMenstrualCycles';
+  if (input == 'irregularPeriods') return 'IrregularPeriods';
+  if (input == 'painOrBurningSensationWhileUrinating') return 'PainOrBurningSensationWhileUrinating';
+  if (input == 'discharge') return 'Discharge';
+  if (input == 'painDuringMenstruation') return 'PainDuringMenstruation';
+  if (input == 'other_asq') return 'other_asq';
+  
+  // Handle treated fields
+  if (input == 'growingTreated') return 'GrowingTreated';
+  if (input == 'substanceTreated') return 'SubstanceTreated';
+  if (input == 'feelTreated') return 'FeelTreated';
+  if (input == 'delayTreated') return 'DelayTreated';
+  if (input == 'irregularTreated') return 'IrregularTreated';
+  if (input == 'painOrBurningTreated') return 'PainOrBurningTreated';
+  if (input == 'dischargeTreated') return 'DischargeTreated';
+  if (input == 'painDuringTreated') return 'PainDuringTreated';
+  if (input == 'other_asqTreated') return 'other_asqTreated';
+  
+  // Handle refer fields
+  if (input == 'growingRefer') return 'GrowingRefer';
+  if (input == 'substanceRefer') return 'SubstanceRefer';
+  if (input == 'feelRefer') return 'FeelRefer';
+  if (input == 'delayRefer') return 'DelayRefer';
+  if (input == 'irregularRefer') return 'IrregularRefer';
+  if (input == 'painOrBurningRefer') return 'PainOrBurningRefer';
+  if (input == 'dischargeRefer') return 'DischargeRefer';
+  if (input == 'painDuringRefer') return 'PainDuringRefer';
+  if (input == 'other_asqRefer') return 'other_asqRefer';
+  
+  return input;
+}
+
+String _getReferralFieldName(String prefix, String referralField, String issueField) {
+  // Based on C# model patterns:
+  // Growing: Growing_Refer_RH, GrowingRefer_SKNagpur
+  // Substance: Substance_Refer_RH, SubstanceRefer_SKNagpur
+  // Feel: Feel_Refer_RH, FeelRefer_SKNagpur
+  // Delay: Delay_Refer_RH, DelayRefer_SKNagpur
+  // Irregular: Irregular_Refer_RH, IrregularRefer_SKNagpur
+  // PainOrBurning: PainOrBurning_Refer_RH, PainOrBurningRefer_SKNagpur
+  // Discharge: Discharge_Refer_RH, DischargeRefer_SKNagpur
+  // PainDuring: PainDuring_Refer_RH, PainDuringRefer_SKNagpur
+  // other_asq: other_asqRefer_RH, other_asqRefer_SKNagpur, other_asqMJMJYAndMOUY
+  
+  if (referralField == 'SKNagpur') {
+    // SKNagpur has different pattern
+    if (prefix == 'other_asq') {
+      return 'other_asqRefer_SKNagpur';
+    }
+    return '${_toPascalCase(issueField)}Refer_SKNagpur';
+  } else if (referralField == 'MJMJYAndMOUY') {
+    // Special case for MJMJYAndMOUY
+    if (prefix == 'other_asq') {
+      return 'other_asqMJMJYAndMOUY';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
+  } else {
+    // Regular pattern: prefix_Refer_RH
+    if (prefix == 'other_asq') {
+      return 'other_asqRefer_$referralField';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+  }
+}
+
+String _getPrefixForRefer(String prefix) {
+  // Convert prefix to match C# model
+  if (prefix == 'growing') return 'Growing';
+  if (prefix == 'substance') return 'Substance';
+  if (prefix == 'feel') return 'Feel';
+  if (prefix == 'delay') return 'Delay';
+  if (prefix == 'irregular') return 'Irregular';
+  if (prefix == 'painOrBurning') return 'PainOrBurning';
+  if (prefix == 'discharge') return 'Discharge';
+  if (prefix == 'painDuring') return 'PainDuring';
+  return prefix;
+}
 
   @override
   Widget build(BuildContext context) {

@@ -178,101 +178,133 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
     );
   }
 
-  Map<String, dynamic> _buildOutputData() {
-    Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+ Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  
+  // Add diseases flag - lowercase 'd'
+  outputData['diseases'] = hasYesDiseases;
+  
+  // Process each disease
+  for (var diseaseConf in diseaseConfig) {
+    String field = diseaseConf['field']!;
+    String prefix = diseaseConf['prefix']!;
+    String treatedField = diseaseConf['treatedField']!;
+    String referField = diseaseConf['referField']!;
     
-    // Add diseases flag
-    outputData['diseases'] = hasYesDiseases;
-    
-    // Add disease-specific data
-    for (var diseaseConf in diseaseConfig) {
-      String field = diseaseConf['field']!;
-      String prefix = diseaseConf['prefix']!;
-      String treatedField = diseaseConf['treatedField']!;
-      String referField = diseaseConf['referField']!;
+    if (diseases[field] == true) {
+      // Disease is selected
+      outputData[_toCamelCase(field)] = true;
       
-      if (diseases[field] == true) {
-        // Disease is selected
-        outputData[field] = true;
-        
-        // Add treatment/refer flags
-        outputData[treatedField] = treatmentOptions[field] == true;
-        outputData[referField] = treatmentOptions[field] == false;
-        
-        // Add referral options if refer is selected
-        if (treatmentOptions[field] == false) {
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String selectedReferral = referralOptions[field] ?? '';
-            
-            // Special handling for different prefix patterns
-            String fullReferralField;
-            if (prefix == 'other_disease') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            
-            outputData[fullReferralField] = selectedReferral == referral['display'];
-          }
-        } else {
-          // Set all referral options to false if treated
-          for (var referral in referralList) {
-            String referralField = referral['field']!;
-            String fullReferralField;
-            if (prefix == 'other_disease') {
-              if (referralField == 'MJMJYAndMOUY') {
-                fullReferralField = '${prefix}MJMJYAndMOUY';
-              } else {
-                fullReferralField = '${prefix}Refer_$referralField';
-              }
-            } else if (referralField == 'SKNagpur') {
-              fullReferralField = '${referField}_SKNagpur';
-            } else {
-              fullReferralField = '${prefix}_Refer_$referralField';
-            }
-            outputData[fullReferralField] = false;
-          }
-        }
-        
-        // Add note
-        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-      } else {
-        // Disease not selected - set all to false
-        outputData[field] = false;
-        outputData[treatedField] = false;
-        outputData[referField] = false;
-        
-        for (var referral in referralList) {
-          String referralField = referral['field']!;
-          String fullReferralField;
-          if (prefix == 'other_disease') {
-            if (referralField == 'MJMJYAndMOUY') {
-              fullReferralField = '${prefix}MJMJYAndMOUY';
-            } else {
-              fullReferralField = '${prefix}Refer_$referralField';
-            }
-          } else if (referralField == 'SKNagpur') {
-            fullReferralField = '${referField}_SKNagpur';
-          } else {
-            fullReferralField = '${prefix}_Refer_$referralField';
-          }
-          outputData[fullReferralField] = false;
-        }
-        
-        outputData['${field}_Note'] = '';
+      // Add treatment/refer flags
+      outputData[_toCamelCase(treatedField)] = treatmentOptions[field] == true;
+      outputData[_toCamelCase(referField)] = treatmentOptions[field] == false;
+      
+      // Add referral options
+      String selectedReferral = referralOptions[field] ?? '';
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = selectedReferral == referral['display'];
       }
+      
+      // Add note
+      outputData['${_toCamelCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+    } else {
+      // Disease not selected - set all to false
+      outputData[_toCamelCase(field)] = false;
+      outputData[_toCamelCase(treatedField)] = false;
+      outputData[_toCamelCase(referField)] = false;
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = false;
+      }
+      
+      outputData['${_toCamelCase(field)}_Note'] = '';
     }
-    
-    return outputData;
   }
+  
+  return outputData;
+}
 
+// Rename and fix the function
+String _toCamelCase(String input) {
+  // Return as-is for exact matches (already in correct camelCase)
+  if (input == 'skinConditionsNotLeprosy') return 'skinConditionsNotLeprosy';
+  if (input == 'otitisMedia') return 'otitisMedia';
+  if (input == 'rehumaticHeartDisease') return 'rehumaticHeartDisease';
+  if (input == 'reactiveAirwayDisease') return 'reactiveAirwayDisease';
+  if (input == 'dentalConditions') return 'dentalConditions';
+  if (input == 'childhoodLeprosyDisease') return 'childhoodLeprosyDisease';
+  if (input == 'childhoodTuberculosis') return 'childhoodTuberculosis';
+  if (input == 'childhoodTuberculosisExtraPulmonary') return 'childhoodTuberculosisExtraPulmonary';
+  if (input == 'other_disease') return 'other_disease';
+  
+  // Treated fields
+  if (input == 'skinTrated') return 'skinTrated';
+  if (input == 'otitisMediaTreated') return 'otitisMediaTreated';
+  if (input == 'rehumaticTrated') return 'rehumaticTrated';
+  if (input == 'reactiveTreated') return 'reactiveTreated';
+  if (input == 'dentalTrated') return 'dentalTrated';
+  if (input == 'childhoodTreated') return 'childhoodTreated';
+  if (input == 'cTuberculosisTreated') return 'cTuberculosisTreated';
+  if (input == 'cTuExtraTreated') return 'cTuExtraTreated';
+  if (input == 'other_diseaseTreated') return 'other_diseaseTreated';
+  
+  // Refer fields
+  if (input == 'skinRefer') return 'skinRefer';
+  if (input == 'otitisMediaRefer') return 'otitisMediaRefer';
+  if (input == 'rehumaticRefer') return 'rehumaticRefer';
+  if (input == 'reactiveRefer') return 'reactiveRefer';
+  if (input == 'dentalRefer') return 'dentalRefer';
+  if (input == 'childhoodRefer') return 'childhoodRefer';
+  if (input == 'cTuberculosisRefer') return 'cTuberculosisRefer';
+  if (input == 'cTuExtraRefer') return 'cTuExtraRefer';
+  if (input == 'other_diseaseRefer') return 'other_diseaseRefer';
+  
+  return input;
+}
+
+String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
+  // Pattern from C# model:
+  // SKNagpur: {DiseaseName}Refer_SKNagpur (e.g., SkinRefer_SKNagpur)
+  // Others: {Prefix}_Refer_{Referral} (e.g., Sk_Refer_RH)
+  // Exception: MJMJYAndMOUY for other_disease becomes other_diseaseMJMJYAndMOUY
+  
+  if (referralField == 'SKNagpur') {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseRefer_SKNagpur';
+    }
+    // Capitalize first letter for the disease name part
+    String capitalizedField = diseaseField[0].toUpperCase() + diseaseField.substring(1);
+    return '${capitalizedField}Refer_SKNagpur';
+  } else if (referralField == 'MJMJYAndMOUY') {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseMJMJYAndMOUY';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
+  } else {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseRefer_$referralField';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+  }
+}
+
+String _getPrefixForRefer(String prefix) {
+  // These match the C# model exactly
+  if (prefix == 'sk') return 'Sk';
+  if (prefix == 'otm') return 'Otm';
+  if (prefix == 're') return 'Re';
+  if (prefix == 'ra') return 'Ra';
+  if (prefix == 'de') return 'De';
+  if (prefix == 'ch') return 'Ch';
+  if (prefix == 'cTu') return 'CTu';
+  if (prefix == 'cTuExtra') return 'CTuExtra';
+  return prefix;
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(

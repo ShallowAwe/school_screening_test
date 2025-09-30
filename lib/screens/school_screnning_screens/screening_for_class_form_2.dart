@@ -448,151 +448,151 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
     );
   }
 
-  Map<String, dynamic> _prepareFormData() {
-    Map<String, dynamic> formData = Map.from(widget.previousFormData);
-    
-    formData['defectsAtBirth'] = hasDefect;
-    
-    // Neural Tube Defects
-    formData['neuralTubeDefects'] = defects['Neural Tube Defect'] ?? false;
-    formData['neuralTreated'] = defectTreatment['Neural Tube Defect'] == 'Treated';
-    formData['neuralRefer'] = defectTreatment['Neural Tube Defect'] == 'Refer';
-    formData['neuralRefer_SkNagpur'] = referralOptions['Neural Tube Defect'] == 'SK Nagpur';
-    formData['neural_Refer_RH'] = referralOptions['Neural Tube Defect'] == 'RH';
-    formData['neural_Refer_SDH'] = referralOptions['Neural Tube Defect'] == 'SDH';
-    formData['neural_Refer_DH'] = referralOptions['Neural Tube Defect'] == 'DH';
-    formData['neural_Refer_GMC'] = referralOptions['Neural Tube Defect'] == 'GMC';
-    formData['neural_Refer_IGMC'] = referralOptions['Neural Tube Defect'] == 'IGMC';
-    formData['neural_Refer_MJMJYAndMOUY'] = referralOptions['Neural Tube Defect'] == 'MJMJY & MOUY';
-    formData['neural_Refer_DEIC'] = referralOptions['Neural Tube Defect'] == 'DEIC';
-    formData['neuralTubeDefects_Note'] = _noteControllers['Neural Tube Defect']?.text ?? '';
-    
-    // Down's Syndrome
-    formData['downsSyndrome'] = defects['Down\'s Syndrome'] ?? false;
-    formData['downsTreated'] = defectTreatment['Down\'s Syndrome'] == 'Treated';
-    formData['downsRefer'] = defectTreatment['Down\'s Syndrome'] == 'Refer';
-    formData['downsRefer_SKNagpur'] = referralOptions['Down\'s Syndrome'] == 'SK Nagpur';
-    formData['downs_Refer_RH'] = referralOptions['Down\'s Syndrome'] == 'RH';
-    formData['downs_Refer_SDH'] = referralOptions['Down\'s Syndrome'] == 'SDH';
-    formData['downs_Refer_DH'] = referralOptions['Down\'s Syndrome'] == 'DH';
-    formData['downs_Refer_GMC'] = referralOptions['Down\'s Syndrome'] == 'GMC';
-    formData['downs_Refer_IGMC'] = referralOptions['Down\'s Syndrome'] == 'IGMC';
-    formData['downs_Refer_MJMJYAndMOUY'] = referralOptions['Down\'s Syndrome'] == 'MJMJY & MOUY';
-    formData['downs_Refer_DEIC'] = referralOptions['Down\'s Syndrome'] == 'DEIC';
-    formData['downsSyndrome_Note'] = _noteControllers['Down\'s Syndrome']?.text ?? '';
-    
-    // Cleft Lip & Palate
-    formData['cleftLipAndPalate'] = defects['Cleft Lip & Palate'] ?? false;
-    formData['cleftTreated'] = defectTreatment['Cleft Lip & Palate'] == 'Treated';
-    formData['cleftRefer'] = defectTreatment['Cleft Lip & Palate'] == 'Refer';
-    formData['cleftRefer_SKNagpur'] = referralOptions['Cleft Lip & Palate'] == 'SK Nagpur';
-    formData['cleft_Refer_RH'] = referralOptions['Cleft Lip & Palate'] == 'RH';
-    formData['cleft_Refer_SDH'] = referralOptions['Cleft Lip & Palate'] == 'SDH';
-    formData['cleft_Refer_DH'] = referralOptions['Cleft Lip & Palate'] == 'DH';
-    formData['cleft_Refer_GMC'] = referralOptions['Cleft Lip & Palate'] == 'GMC';
-    formData['cleft_Refer_IGMC'] = referralOptions['Cleft Lip & Palate'] == 'IGMC';
-    formData['cleft_Refer_MJMJYAndMOUY'] = referralOptions['Cleft Lip & Palate'] == 'MJMJY & MOUY';
-    formData['cleft_Refer_DEIC'] = referralOptions['Cleft Lip & Palate'] == 'DEIC';
-    formData['cleftLipAndPalate_Note'] = _noteControllers['Cleft Lip & Palate']?.text ?? '';
-    
-    // Talipes
-    formData['talipes'] = defects['Talipes (club foot)'] ?? false;
-    formData['talipesTreated'] = defectTreatment['Talipes (club foot)'] == 'Treated';
-    formData['talipesRefer'] = defectTreatment['Talipes (club foot)'] == 'Refer';
-    formData['talipesRefer_SKNagpur'] = referralOptions['Talipes (club foot)'] == 'SK Nagpur';
-    formData['talipes_Refer_RH'] = referralOptions['Talipes (club foot)'] == 'RH';
-    formData['talipes_Refer_SDH'] = referralOptions['Talipes (club foot)'] == 'SDH';
-    formData['talipes_Refer_DH'] = referralOptions['Talipes (club foot)'] == 'DH';
-    formData['talipes_Refer_GMC'] = referralOptions['Talipes (club foot)'] == 'GMC';
-    formData['talipes_Refer_IGMC'] = referralOptions['Talipes (club foot)'] == 'IGMC';
-    formData['talipes_Refer_MJMJYAndMOUY'] = referralOptions['Talipes (club foot)'] == 'MJMJY & MOUY';
-    formData['talipes_Refer_DEIC'] = referralOptions['Talipes (club foot)'] == 'DEIC';
-    formData['talipes_Note'] = _noteControllers['Talipes (club foot)']?.text ?? '';
-    
-    // Developmental Dysplasia of Hip
-    formData['developmentalDysplasiaOfHip'] = defects['Developmental Dysplasia of Hip'] ?? false;
-    formData['developmentalTreated'] = defectTreatment['Developmental Dysplasia of Hip'] == 'Treated';
-    formData['developmentalRefer'] = defectTreatment['Developmental Dysplasia of Hip'] == 'Refer';
-    formData['developmentalRefer_SKNagpur'] = referralOptions['Developmental Dysplasia of Hip'] == 'SK Nagpur';
-    formData['developmental_Refer_RH'] = referralOptions['Developmental Dysplasia of Hip'] == 'RH';
-    formData['developmental_Refer_SDH'] = referralOptions['Developmental Dysplasia of Hip'] == 'SDH';
-    formData['developmental_Refer_DH'] = referralOptions['Developmental Dysplasia of Hip'] == 'DH';
-    formData['developmental_Refer_GMC'] = referralOptions['Developmental Dysplasia of Hip'] == 'GMC';
-    formData['developmental_Refer_IGMC'] = referralOptions['Developmental Dysplasia of Hip'] == 'IGMC';
-    formData['developmental_Refer_MJMJYAndMOUY'] = referralOptions['Developmental Dysplasia of Hip'] == 'MJMJY & MOUY';
-    formData['developmental_Refer_DEIC'] = referralOptions['Developmental Dysplasia of Hip'] == 'DEIC';
-    formData['developmentalDysplasiaOfHip_Note'] = _noteControllers['Developmental Dysplasia of Hip']?.text ?? '';
-    
-    // Congenital Cataract
-    formData['congenitalCataract'] = defects['Congenital Cataract'] ?? false;
-    formData['cataractTreated'] = defectTreatment['Congenital Cataract'] == 'Treated';
-    formData['cataractRefer'] = defectTreatment['Congenital Cataract'] == 'Refer';
-    formData['cataractRefer_SKNagpur'] = referralOptions['Congenital Cataract'] == 'SK Nagpur';
-    formData['cataract_Refer_RH'] = referralOptions['Congenital Cataract'] == 'RH';
-    formData['cataract_Refer_SDH'] = referralOptions['Congenital Cataract'] == 'SDH';
-    formData['cataract_Refer_DH'] = referralOptions['Congenital Cataract'] == 'DH';
-    formData['cataract_Refer_GMC'] = referralOptions['Congenital Cataract'] == 'GMC';
-    formData['cataract_Refer_IGMC'] = referralOptions['Congenital Cataract'] == 'IGMC';
-    formData['cataract_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Cataract'] == 'MJMJY & MOUY';
-    formData['cataract_Refer_DEIC'] = referralOptions['Congenital Cataract'] == 'DEIC';
-    formData['congenitalCataract_Note'] = _noteControllers['Congenital Cataract']?.text ?? '';
-    
-    // Congenital Deafness
-    formData['congenitalDeafness'] = defects['Congenital Deafness'] ?? false;
-    formData['deafnessTreated'] = defectTreatment['Congenital Deafness'] == 'Treated';
-    formData['deafnessRefer'] = defectTreatment['Congenital Deafness'] == 'Refer';
-    formData['deafnessRefer_SKNagpur'] = referralOptions['Congenital Deafness'] == 'SK Nagpur';
-    formData['deafness_Refer_RH'] = referralOptions['Congenital Deafness'] == 'RH';
-    formData['deafness_Refer_SDH'] = referralOptions['Congenital Deafness'] == 'SDH';
-    formData['deafness_Refer_DH'] = referralOptions['Congenital Deafness'] == 'DH';
-    formData['deafness_Refer_GMC'] = referralOptions['Congenital Deafness'] == 'GMC';
-    formData['deafness_Refer_IGMC'] = referralOptions['Congenital Deafness'] == 'IGMC';
-    formData['deafness_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Deafness'] == 'MJMJY & MOUY';
-    formData['deafness_Refer_DEIC'] = referralOptions['Congenital Deafness'] == 'DEIC';
-    formData['congenitalDeafness_Note'] = _noteControllers['Congenital Deafness']?.text ?? '';
-    
-    // Congenital Heart Disease
-    formData['congenitalHeartDisease'] = defects['Congenital Heart Disease'] ?? false;
-    formData['heartTreated'] = defectTreatment['Congenital Heart Disease'] == 'Treated';
-    formData['heartRefer'] = defectTreatment['Congenital Heart Disease'] == 'Refer';
-    formData['heartRefer_SKNagpur'] = referralOptions['Congenital Heart Disease'] == 'SK Nagpur';
-    formData['heart_Refer_RH'] = referralOptions['Congenital Heart Disease'] == 'RH';
-    formData['heart_Refer_SDH'] = referralOptions['Congenital Heart Disease'] == 'SDH';
-    formData['heart_Refer_DH'] = referralOptions['Congenital Heart Disease'] == 'DH';
-    formData['heart_Refer_GMC'] = referralOptions['Congenital Heart Disease'] == 'GMC';
-    formData['heart_Refer_IGMC'] = referralOptions['Congenital Heart Disease'] == 'IGMC';
-    formData['heart_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Heart Disease'] == 'MJMJY & MOUY';
-    formData['heart_Refer_DEIC'] = referralOptions['Congenital Heart Disease'] == 'DEIC';
-    formData['congenitalHeartDisease_Note'] = _noteControllers['Congenital Heart Disease']?.text ?? '';
-    
-    // Retinopathy of Prematurity
-    formData['retinopathyOfPrematurity'] = defects['Retinopathy of Prematurity'] ?? false;
-    formData['retinopathyTreated'] = defectTreatment['Retinopathy of Prematurity'] == 'Treated';
-    formData['retinopathyRefer'] = defectTreatment['Retinopathy of Prematurity'] == 'Refer';
-    formData['retinopathyRefer_SKNagpur'] = referralOptions['Retinopathy of Prematurity'] == 'SK Nagpur';
-    formData['retinopathy_Refer_RH'] = referralOptions['Retinopathy of Prematurity'] == 'RH';
-    formData['retinopathy_Refer_SDH'] = referralOptions['Retinopathy of Prematurity'] == 'SDH';
-    formData['retinopathy_Refer_DH'] = referralOptions['Retinopathy of Prematurity'] == 'DH';
-    formData['retinopathy_Refer_GMC'] = referralOptions['Retinopathy of Prematurity'] == 'GMC';
-    formData['retinopathy_Refer_IGMC'] = referralOptions['Retinopathy of Prematurity'] == 'IGMC';
-    formData['retinopathy_Refer_MJMJYAndMOUY'] = referralOptions['Retinopathy of Prematurity'] == 'MJMJY & MOUY';
-    formData['retinopathy_Refer_DEIC'] = referralOptions['Retinopathy of Prematurity'] == 'DEIC';
-    formData['retinopathyOfPrematurity_Note'] = _noteControllers['Retinopathy of Prematurity']?.text ?? '';
-    
-    // Other
-    formData['otherDefects'] = defects['Other'] ?? false;
-    formData['otherTreated'] = defectTreatment['Other'] == 'Treated';
-    formData['otherRefer'] = defectTreatment['Other'] == 'Refer';
-    formData['otherRefer_SKNagpur'] = referralOptions['Other'] == 'SK Nagpur';
-    formData['other_Refer_RH'] = referralOptions['Other'] == 'RH';
-    formData['other_Refer_SDH'] = referralOptions['Other'] == 'SDH';
-    formData['other_Refer_DH'] = referralOptions['Other'] == 'DH';
-    formData['other_Refer_GMC'] = referralOptions['Other'] == 'GMC';
-    formData['other_Refer_IGMC'] = referralOptions['Other'] == 'IGMC';
-    formData['other_Refer_MJMJYAndMOUY'] = referralOptions['Other'] == 'MJMJY & MOUY';
-    formData['other_Refer_DEIC'] = referralOptions['Other'] == 'DEIC';
-    formData['otherDefects_Note'] = _noteControllers['Other']?.text ?? '';
-    
-    return formData;
-  }
+ Map<String, dynamic> _prepareFormData() {
+  Map<String, dynamic> formData = Map.from(widget.previousFormData);
+  
+  formData['defectsAtBirth'] = hasDefect;
+  
+  // Neural Tube Defects
+  formData['neuralTubeDefects'] = defects['Neural Tube Defect'] ?? false;
+  formData['neuralTreated'] = defectTreatment['Neural Tube Defect'] == 'Treated';
+  formData['neuralRefer'] = defectTreatment['Neural Tube Defect'] == 'Refer';
+  formData['neuralRefer_SkNagpur'] = referralOptions['Neural Tube Defect'] == 'SK Nagpur';
+  formData['neural_Refer_RH'] = referralOptions['Neural Tube Defect'] == 'RH';
+  formData['neural_Refer_SDH'] = referralOptions['Neural Tube Defect'] == 'SDH';
+  formData['neural_Refer_DH'] = referralOptions['Neural Tube Defect'] == 'DH';
+  formData['neural_Refer_GMC'] = referralOptions['Neural Tube Defect'] == 'GMC';
+  formData['neural_Refer_IGMC'] = referralOptions['Neural Tube Defect'] == 'IGMC';
+  formData['neural_Refer_MJMJYAndMOUY'] = referralOptions['Neural Tube Defect'] == 'MJMJY & MOUY';
+  formData['neural_Refer_DEIC'] = referralOptions['Neural Tube Defect'] == 'DEIC';
+  formData['neuralTubeDefects_Note'] = _noteControllers['Neural Tube Defect']?.text ?? '';
+  
+  // Down's Syndrome
+  formData['downsSyndrome'] = defects['Down\'s Syndrome'] ?? false;
+  formData['downsTreated'] = defectTreatment['Down\'s Syndrome'] == 'Treated';
+  formData['downsRefer'] = defectTreatment['Down\'s Syndrome'] == 'Refer';
+  formData['downsRefer_SKNagpur'] = referralOptions['Down\'s Syndrome'] == 'SK Nagpur';
+  formData['downs_Refer_RH'] = referralOptions['Down\'s Syndrome'] == 'RH';
+  formData['downs_Refer_SDH'] = referralOptions['Down\'s Syndrome'] == 'SDH';
+  formData['downs_Refer_DH'] = referralOptions['Down\'s Syndrome'] == 'DH';
+  formData['downs_Refer_GMC'] = referralOptions['Down\'s Syndrome'] == 'GMC';
+  formData['downs_Refer_IGMC'] = referralOptions['Down\'s Syndrome'] == 'IGMC';
+  formData['downs_Refer_MJMJYAndMOUY'] = referralOptions['Down\'s Syndrome'] == 'MJMJY & MOUY';
+  formData['downs_Refer_DEIC'] = referralOptions['Down\'s Syndrome'] == 'DEIC';
+  formData['downsSyndrome_Note'] = _noteControllers['Down\'s Syndrome']?.text ?? '';
+  
+  // Cleft Lip & Palate
+  formData['cleftLipAndPalate'] = defects['Cleft Lip & Palate'] ?? false;
+  formData['cleftTreated'] = defectTreatment['Cleft Lip & Palate'] == 'Treated';
+  formData['cleftRefer'] = defectTreatment['Cleft Lip & Palate'] == 'Refer';
+  formData['cleftRefer_SKNagpur'] = referralOptions['Cleft Lip & Palate'] == 'SK Nagpur';
+  formData['cleft_Refer_RH'] = referralOptions['Cleft Lip & Palate'] == 'RH';
+  formData['cleft_Refer_SDH'] = referralOptions['Cleft Lip & Palate'] == 'SDH';
+  formData['cleft_Refer_DH'] = referralOptions['Cleft Lip & Palate'] == 'DH';
+  formData['cleft_Refer_GMC'] = referralOptions['Cleft Lip & Palate'] == 'GMC';
+  formData['cleft_Refer_IGMC'] = referralOptions['Cleft Lip & Palate'] == 'IGMC';
+  formData['cleft_Refer_MJMJYAndMOUY'] = referralOptions['Cleft Lip & Palate'] == 'MJMJY & MOUY';
+  formData['cleft_Refer_DEIC'] = referralOptions['Cleft Lip & Palate'] == 'DEIC';
+  formData['cleftLipAndPalate_Note'] = _noteControllers['Cleft Lip & Palate']?.text ?? '';
+  
+  // Talipes (Note: C# model has "TalipesClubFoot" and "Talipse" typo for referrals)
+  formData['talipesClubFoot'] = defects['Talipes (club foot)'] ?? false;
+  formData['talipesTreated'] = defectTreatment['Talipes (club foot)'] == 'Treated';
+  formData['talipseRefer'] = defectTreatment['Talipes (club foot)'] == 'Refer'; // Note typo in C# model
+  formData['talipseRefer_SKNagpur'] = referralOptions['Talipes (club foot)'] == 'SK Nagpur';
+  formData['talipse_Refer_RH'] = referralOptions['Talipes (club foot)'] == 'RH';
+  formData['talipse_Refer_SDH'] = referralOptions['Talipes (club foot)'] == 'SDH';
+  formData['talipse_Refer_DH'] = referralOptions['Talipes (club foot)'] == 'DH';
+  formData['talipse_Refer_GMC'] = referralOptions['Talipes (club foot)'] == 'GMC';
+  formData['talipse_Refer_IGMC'] = referralOptions['Talipes (club foot)'] == 'IGMC';
+  formData['talipse_Refer_MJMJYAndMOUY'] = referralOptions['Talipes (club foot)'] == 'MJMJY & MOUY';
+  formData['talipse_Refer_DEIC'] = referralOptions['Talipes (club foot)'] == 'DEIC';
+  formData['talipesClubFoot_Note'] = _noteControllers['Talipes (club foot)']?.text ?? '';
+  
+  // Developmental Dysplasia of Hip (Note typo in C#: "Dvelopmental")
+  formData['dvelopmentalDysplasiaOfHip'] = defects['Developmental Dysplasia of Hip'] ?? false;
+  formData['hipTreated'] = defectTreatment['Developmental Dysplasia of Hip'] == 'Treated';
+  formData['hipRefer'] = defectTreatment['Developmental Dysplasia of Hip'] == 'Refer';
+  formData['hipRefer_SKNagpur'] = referralOptions['Developmental Dysplasia of Hip'] == 'SK Nagpur';
+  formData['hip_Refer_RH'] = referralOptions['Developmental Dysplasia of Hip'] == 'RH';
+  formData['hip_Refer_SDH'] = referralOptions['Developmental Dysplasia of Hip'] == 'SDH';
+  formData['hip_Refer_DH'] = referralOptions['Developmental Dysplasia of Hip'] == 'DH';
+  formData['hip_Refer_GMC'] = referralOptions['Developmental Dysplasia of Hip'] == 'GMC';
+  formData['hip_Refer_IGMC'] = referralOptions['Developmental Dysplasia of Hip'] == 'IGMC';
+  formData['hip_Refer_MJMJYAndMOUY'] = referralOptions['Developmental Dysplasia of Hip'] == 'MJMJY & MOUY';
+  formData['hip_Refer_DEIC'] = referralOptions['Developmental Dysplasia of Hip'] == 'DEIC';
+  formData['dvelopmentalDysplasiaOfHip_Note'] = _noteControllers['Developmental Dysplasia of Hip']?.text ?? '';
+  
+  // Congenital Cataract (Note typo in C#: "Catract")
+  formData['congenitalCatract'] = defects['Congenital Cataract'] ?? false;
+  formData['congenitalTarget'] = defectTreatment['Congenital Cataract'] == 'Treated';
+  formData['congenitalRefer'] = defectTreatment['Congenital Cataract'] == 'Refer';
+  formData['congenitalRefer_SKNagpur'] = referralOptions['Congenital Cataract'] == 'SK Nagpur';
+  formData['co_Refer_RH'] = referralOptions['Congenital Cataract'] == 'RH';
+  formData['co_Refer_SDH'] = referralOptions['Congenital Cataract'] == 'SDH';
+  formData['co_Refer_DH'] = referralOptions['Congenital Cataract'] == 'DH';
+  formData['co_Refer_GMC'] = referralOptions['Congenital Cataract'] == 'GMC';
+  formData['co_Refer_IGMC'] = referralOptions['Congenital Cataract'] == 'IGMC';
+  formData['co_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Cataract'] == 'MJMJY & MOUY';
+  formData['co_Refer_DEIC'] = referralOptions['Congenital Cataract'] == 'DEIC';
+  formData['congenitalCatract_Note'] = _noteControllers['Congenital Cataract']?.text ?? '';
+  
+  // Congenital Deafness
+  formData['congenitalDeafness'] = defects['Congenital Deafness'] ?? false;
+  formData['deafnessTarget'] = defectTreatment['Congenital Deafness'] == 'Treated';
+  formData['deafnessRefer'] = defectTreatment['Congenital Deafness'] == 'Refer';
+  formData['deafnessRefer_SKNagpur'] = referralOptions['Congenital Deafness'] == 'SK Nagpur';
+  formData['cd_Refer_RH'] = referralOptions['Congenital Deafness'] == 'RH';
+  formData['cd_Refer_SDH'] = referralOptions['Congenital Deafness'] == 'SDH';
+  formData['cd_Refer_DH'] = referralOptions['Congenital Deafness'] == 'DH';
+  formData['cd_Refer_GMC'] = referralOptions['Congenital Deafness'] == 'GMC';
+  formData['cd_Refer_IGMC'] = referralOptions['Congenital Deafness'] == 'IGMC';
+  formData['cd_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Deafness'] == 'MJMJY & MOUY';
+  formData['cd_Refer_DEIC'] = referralOptions['Congenital Deafness'] == 'DEIC';
+  formData['congenitalDeafness_Note'] = _noteControllers['Congenital Deafness']?.text ?? '';
+  
+  // Congenital Heart Disease (Note: C# uses "Congential" typo)
+  formData['congentialHeartDisease'] = defects['Congenital Heart Disease'] ?? false;
+  formData['heartDiseaseTarget'] = defectTreatment['Congenital Heart Disease'] == 'Treated';
+  formData['heartDiseaseRefer'] = defectTreatment['Congenital Heart Disease'] == 'Refer';
+  formData['heartDiseaseRefer_SKNagpur'] = referralOptions['Congenital Heart Disease'] == 'SK Nagpur';
+  formData['hd_Refer_RH'] = referralOptions['Congenital Heart Disease'] == 'RH';
+  formData['hd_Refer_SDH'] = referralOptions['Congenital Heart Disease'] == 'SDH';
+  formData['hd_Refer_DH'] = referralOptions['Congenital Heart Disease'] == 'DH';
+  formData['hd_Refer_GMC'] = referralOptions['Congenital Heart Disease'] == 'GMC';
+  formData['hd_Refer_IGMC'] = referralOptions['Congenital Heart Disease'] == 'IGMC';
+  formData['hd_Refer_MJMJYAndMOUY'] = referralOptions['Congenital Heart Disease'] == 'MJMJY & MOUY';
+  formData['hd_Refer_DEIC'] = referralOptions['Congenital Heart Disease'] == 'DEIC';
+  formData['congentialHeartDisease_Note'] = _noteControllers['Congenital Heart Disease']?.text ?? '';
+  
+  // Retinopathy of Prematurity
+  formData['retinopathyOfPrematurity'] = defects['Retinopathy of Prematurity'] ?? false;
+  formData['retinopathyTreated'] = defectTreatment['Retinopathy of Prematurity'] == 'Treated';
+  formData['retinopathyRefer'] = defectTreatment['Retinopathy of Prematurity'] == 'Refer';
+  formData['retinopathyRefer_SKNagpur'] = referralOptions['Retinopathy of Prematurity'] == 'SK Nagpur';
+  formData['rp_Refer_RH'] = referralOptions['Retinopathy of Prematurity'] == 'RH';
+  formData['rp_Refer_SDH'] = referralOptions['Retinopathy of Prematurity'] == 'SDH';
+  formData['rp_Refer_DH'] = referralOptions['Retinopathy of Prematurity'] == 'DH';
+  formData['rp_Refer_GMC'] = referralOptions['Retinopathy of Prematurity'] == 'GMC';
+  formData['rp_Refer_IGMC'] = referralOptions['Retinopathy of Prematurity'] == 'IGMC';
+  formData['rp_Refer_MJMJYAndMOUY'] = referralOptions['Retinopathy of Prematurity'] == 'MJMJY & MOUY';
+  formData['rp_Refer_DEIC'] = referralOptions['Retinopathy of Prematurity'] == 'DEIC';
+  formData['retinopathyOfPrematurity_Note'] = _noteControllers['Retinopathy of Prematurity']?.text ?? '';
+  
+  // Other
+  formData['other'] = defects['Other'] ?? false;
+  formData['otherTreated'] = defectTreatment['Other'] == 'Treated';
+  formData['otherRefer'] = defectTreatment['Other'] == 'Refer';
+  formData['otherRefer_SKNagpur'] = referralOptions['Other'] == 'SK Nagpur';
+  formData['other_Refer_RH'] = referralOptions['Other'] == 'RH';
+  formData['other_Refer_SDH'] = referralOptions['Other'] == 'SDH';
+  formData['other_Refer_DH'] = referralOptions['Other'] == 'DH';
+  formData['other_Refer_GMC'] = referralOptions['Other'] == 'GMC';
+  formData['other_Refer_IGMC'] = referralOptions['Other'] == 'IGMC';
+  formData['other_Refer_MJMJYAndMOUY'] = referralOptions['Other'] == 'MJMJY & MOUY';
+  formData['other_Refer_DEIC'] = referralOptions['Other'] == 'DEIC';
+  formData['other_Note'] = _noteControllers['Other']?.text ?? '';
+  
+  return formData;
+}
 }

@@ -16,11 +16,11 @@ class ScreeningForClassFormSeven extends StatefulWidget {
 class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven> {
   // Disability configuration with API field names
   final Map<String, String> disabilityConfig = {
-    'display': 'Disability',
-    'field': 'disibility', // Note: keeping the typo as per your API
-    'treatedField': 'disibilityTreated',
-    'referField': 'disibilityRefer',
-  };
+  'display': 'Disability',
+  'field': 'Disibility',           // Capital D
+  'treatedField': 'DisibilityTreated',  // Capital D
+  'referField': 'DisibilityRefer',      // Capital D
+};
 
   // Referral dropdown options with API field names
   final List<Map<String, String>> referralList = [
