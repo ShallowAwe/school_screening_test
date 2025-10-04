@@ -3,64 +3,117 @@ import 'package:school_test/screens/anganWadi_screening-forms/screenign_for_angn
 import 'package:school_test/screens/school_screnning_screens/screenign_for_class_form5.dart';
 
 class ScreeningForAngnwadiClassFormFour extends StatefulWidget {
-  const ScreeningForAngnwadiClassFormFour({super.key});
+  final Map<String, dynamic> previousData;
+  const ScreeningForAngnwadiClassFormFour({super.key, required this.previousData});
 
   @override
   State<ScreeningForAngnwadiClassFormFour> createState() => _ScreeningForAngnwadiClassFormFourState();
 }
 
 class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadiClassFormFour> {
-   Map<String, bool> diseases = {
-    'Skin Conditions Not Leprosy': false,
-    'Otitis Media': false,
-    'Rheumatic Heart Disease': false,
-    'Reactive Airway Disease': false,
-    'Dental Conditions': false,
-    'Childhood Leprosy Disease': false,
-    'Childhood Tuberculosis': false,
-    'Childhood Tuberculosis (Extra Pulmonary)': false,
-    'Others': false,
-  };
-
-  // Treatment options for each disease (true = treated, false = refer)
-  Map<String, bool> treatmentOptions = {};
-  Map<String, String> referralOptions = {};
-  Map<String, TextEditingController> treatmentNoteControllers = {};
-
-  // Referral dropdown options
-  List<String> referralList = [
-    'RH',
-    'SDH',
-    'DH',
-    'GMC',
-    'IGMC',
-    'MJMJY & MOUY',
-    'DEIC',
-    'Samaj Kalyan Nagpur',
+   // Disease configuration with API field names and prefixes
+  final List<Map<String, String>> diseaseConfig = [
+    {
+      'display': 'Skin Conditions Not Leprosy',
+      'field': 'skinConditionsNotLeprosy',
+      'prefix': 'sk',
+      'treatedField': 'skinTrated',
+      'referField': 'skinRefer',
+    },
+    {
+      'display': 'Otitis Media',
+      'field': 'otitisMedia',
+      'prefix': 'otm',
+      'treatedField': 'otitisMediaTreated',
+      'referField': 'otitisMediaRefer',
+    },
+    {
+      'display': 'Rheumatic Heart Disease',
+      'field': 'rehumaticHeartDisease',
+      'prefix': 're',
+      'treatedField': 'rehumaticTrated',
+      'referField': 'rehumaticRefer',
+    },
+    {
+      'display': 'Reactive Airway Disease',
+      'field': 'reactiveAirwayDisease',
+      'prefix': 'ra',
+      'treatedField': 'reactiveTreated',
+      'referField': 'reactiveRefer',
+    },
+    {
+      'display': 'Dental Conditions',
+      'field': 'dentalConditions',
+      'prefix': 'de',
+      'treatedField': 'dentalTrated',
+      'referField': 'dentalRefer',
+    },
+    {
+      'display': 'Childhood Leprosy Disease',
+      'field': 'childhoodLeprosyDisease',
+      'prefix': 'ch',
+      'treatedField': 'childhoodTreated',
+      'referField': 'childhoodRefer',
+    },
+    {
+      'display': 'Childhood Tuberculosis',
+      'field': 'childhoodTuberculosis',
+      'prefix': 'cTu',
+      'treatedField': 'cTuberculosisTreated',
+      'referField': 'cTuberculosisRefer',
+    },
+    {
+      'display': 'Childhood Tuberculosis (Extra Pulmonary)',
+      'field': 'childhoodTuberculosisExtraPulmonary',
+      'prefix': 'cTuExtra',
+      'treatedField': 'cTuExtraTreated',
+      'referField': 'cTuExtraRefer',
+    },
+    {
+      'display': 'Others',
+      'field': 'other_disease',
+      'prefix': 'other_disease',
+      'treatedField': 'other_diseaseTreated',
+      'referField': 'other_diseaseRefer',
+    },
   ];
 
-  // No/Yes selection state
+  // Referral dropdown options with API field names
+  final List<Map<String, String>> referralList = [
+    {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
+    {'display': 'RH', 'field': 'RH'},
+    {'display': 'SDH', 'field': 'SDH'},
+    {'display': 'DH', 'field': 'DH'},
+    {'display': 'GMC', 'field': 'GMC'},
+    {'display': 'IGMC', 'field': 'IGMC'},
+    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    {'display': 'DEIC', 'field': 'DEIC'},
+  ];
+
+  // State management
+  Map<String, bool> diseases = {};
+  Map<String, bool> treatmentOptions = {}; // true = treated, false = refer
+  Map<String, String> referralOptions = {};
+  Map<String, TextEditingController> noteControllers = {};
+
   bool hasNoDiseases = true;
   bool hasYesDiseases = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with "No" selected
-    hasNoDiseases = true;
-    hasYesDiseases = false;
-    // Clear all disease selections when starting with No
-    diseases.updateAll((key, value) => false);
-
-    // Initialize treatment options and controllers for each disease
-    diseases.keys.forEach((disease) {
-      treatmentOptions[disease] = true; // Default to "Treated"
-      referralOptions[disease] = '';
-      treatmentNoteControllers[disease] = TextEditingController();
-    });
+    
+    // Initialize state for each disease
+    for (var disease in diseaseConfig) {
+      String key = disease['field']!;
+      diseases[key] = false;
+      treatmentOptions[key] = true; // Default to treated
+      referralOptions[key] = '';
+      noteControllers[key] = TextEditingController();
+    }
   }
 
-  void _showReferralPopup(String diseaseKey) {
+  void _showReferralPopup(String diseaseKey, String prefix) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -74,7 +127,6 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Close button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -85,26 +137,24 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                   ],
                 ),
                 SizedBox(height: 8),
-                // Referral options
                 ...referralList.asMap().entries.map((entry) {
                   int index = entry.key;
-                  String referral = entry.value;
+                  Map<String, String> referral = entry.value;
 
                   return Column(
                     children: [
                       GestureDetector(
                         onTap: () {
                           setState(() {
-                            referralOptions[diseaseKey] = referral;
+                            referralOptions[diseaseKey] = referral['display']!;
                           });
                           Navigator.of(context).pop();
                         },
                         child: Container(
                           width: double.infinity,
-                          padding:
-                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                           child: Text(
-                            '${index + 1}. $referral',
+                            '${index + 1}. ${referral['display']}',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.black87,
@@ -125,6 +175,133 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
     );
   }
 
+ Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  
+  // Add diseases flag - lowercase 'd'
+  outputData['diseases'] = hasYesDiseases;
+  
+  // Process each disease
+  for (var diseaseConf in diseaseConfig) {
+    String field = diseaseConf['field']!;
+    String prefix = diseaseConf['prefix']!;
+    String treatedField = diseaseConf['treatedField']!;
+    String referField = diseaseConf['referField']!;
+    
+    if (diseases[field] == true) {
+      // Disease is selected
+      outputData[_toCamelCase(field)] = true;
+      
+      // Add treatment/refer flags
+      outputData[_toCamelCase(treatedField)] = treatmentOptions[field] == true;
+      outputData[_toCamelCase(referField)] = treatmentOptions[field] == false;
+      
+      // Add referral options
+      String selectedReferral = referralOptions[field] ?? '';
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = selectedReferral == referral['display'];
+      }
+      
+      // Add note
+      outputData['${_toCamelCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+    } else {
+      // Disease not selected - set all to false
+      outputData[_toCamelCase(field)] = false;
+      outputData[_toCamelCase(treatedField)] = false;
+      outputData[_toCamelCase(referField)] = false;
+      
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        outputData[fullReferralField] = false;
+      }
+      
+      outputData['${_toCamelCase(field)}_Note'] = '';
+    }
+  }
+  
+  return outputData;
+}
+
+// Rename and fix the function
+String _toCamelCase(String input) {
+  // Return as-is for exact matches (already in correct camelCase)
+  if (input == 'skinConditionsNotLeprosy') return 'skinConditionsNotLeprosy';
+  if (input == 'otitisMedia') return 'otitisMedia';
+  if (input == 'rehumaticHeartDisease') return 'rehumaticHeartDisease';
+  if (input == 'reactiveAirwayDisease') return 'reactiveAirwayDisease';
+  if (input == 'dentalConditions') return 'dentalConditions';
+  if (input == 'childhoodLeprosyDisease') return 'childhoodLeprosyDisease';
+  if (input == 'childhoodTuberculosis') return 'childhoodTuberculosis';
+  if (input == 'childhoodTuberculosisExtraPulmonary') return 'childhoodTuberculosisExtraPulmonary';
+  if (input == 'other_disease') return 'other_disease';
+  
+  // Treated fields
+  if (input == 'skinTrated') return 'skinTrated';
+  if (input == 'otitisMediaTreated') return 'otitisMediaTreated';
+  if (input == 'rehumaticTrated') return 'rehumaticTrated';
+  if (input == 'reactiveTreated') return 'reactiveTreated';
+  if (input == 'dentalTrated') return 'dentalTrated';
+  if (input == 'childhoodTreated') return 'childhoodTreated';
+  if (input == 'cTuberculosisTreated') return 'cTuberculosisTreated';
+  if (input == 'cTuExtraTreated') return 'cTuExtraTreated';
+  if (input == 'other_diseaseTreated') return 'other_diseaseTreated';
+  
+  // Refer fields
+  if (input == 'skinRefer') return 'skinRefer';
+  if (input == 'otitisMediaRefer') return 'otitisMediaRefer';
+  if (input == 'rehumaticRefer') return 'rehumaticRefer';
+  if (input == 'reactiveRefer') return 'reactiveRefer';
+  if (input == 'dentalRefer') return 'dentalRefer';
+  if (input == 'childhoodRefer') return 'childhoodRefer';
+  if (input == 'cTuberculosisRefer') return 'cTuberculosisRefer';
+  if (input == 'cTuExtraRefer') return 'cTuExtraRefer';
+  if (input == 'other_diseaseRefer') return 'other_diseaseRefer';
+  
+  return input;
+}
+
+String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
+  // Pattern from C# model:
+  // SKNagpur: {DiseaseName}Refer_SKNagpur (e.g., SkinRefer_SKNagpur)
+  // Others: {Prefix}_Refer_{Referral} (e.g., Sk_Refer_RH)
+  // Exception: MJMJYAndMOUY for other_disease becomes other_diseaseMJMJYAndMOUY
+  
+  if (referralField == 'SKNagpur') {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseRefer_SKNagpur';
+    }
+    // Capitalize first letter for the disease name part
+    String capitalizedField = diseaseField[0].toUpperCase() + diseaseField.substring(1);
+    return '${capitalizedField}Refer_SKNagpur';
+  } else if (referralField == 'MJMJYAndMOUY') {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseMJMJYAndMOUY';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
+  } else {
+    if (prefix == 'other_disease') {
+      return 'other_diseaseRefer_$referralField';
+    }
+    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+  }
+}
+
+String _getPrefixForRefer(String prefix) {
+  // These match the C# model exactly
+  if (prefix == 'sk') return 'Sk';
+  if (prefix == 'otm') return 'Otm';
+  if (prefix == 're') return 'Re';
+  if (prefix == 'ra') return 'Ra';
+  if (prefix == 'de') return 'De';
+  if (prefix == 'ch') return 'Ch';
+  if (prefix == 'cTu') return 'CTu';
+  if (prefix == 'cTuExtra') return 'CTuExtra';
+  return prefix;
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +314,8 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Screening For Angnwadi',
+        "Screening For ${widget.previousData['className']}",
+          //
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -149,7 +327,7 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
             padding: EdgeInsets.only(right: 16.0),
             child: Center(
               child: Text(
-                '4/7',
+                '4/8',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -186,7 +364,6 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                         setState(() {
                           hasNoDiseases = true;
                           hasYesDiseases = false;
-                          // Clear all disease selections when No is selected
                           diseases.updateAll((key, value) => false);
                         });
                       },
@@ -194,12 +371,9 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasNoDiseases
-                              ? Color(0xFF2196F3)
-                              : Colors.transparent,
+                          color: hasNoDiseases ? Color(0xFF2196F3) : Colors.transparent,
                           border: Border.all(
-                            color:
-                                hasNoDiseases ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasNoDiseases ? Color(0xFF2196F3) : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -222,13 +396,9 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasYesDiseases
-                              ? Color(0xFF2196F3)
-                              : Colors.transparent,
+                          color: hasYesDiseases ? Color(0xFF2196F3) : Colors.transparent,
                           border: Border.all(
-                            color: hasYesDiseases
-                                ? Color(0xFF2196F3)
-                                : Colors.grey,
+                            color: hasYesDiseases ? Color(0xFF2196F3) : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -246,11 +416,12 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
 
             // Show disease list only if "Yes" is selected
             if (hasYesDiseases) ...[
-              // Disease List
-              ...diseases.entries.toList().asMap().entries.map((entry) {
+              ...diseaseConfig.asMap().entries.map((entry) {
                 int index = entry.key;
-                MapEntry<String, bool> disease = entry.value;
-                String diseaseKey = disease.key;
+                Map<String, String> diseaseConf = entry.value;
+                String diseaseKey = diseaseConf['field']!;
+                String displayName = diseaseConf['display']!;
+                String prefix = diseaseConf['prefix']!;
 
                 return Column(
                   children: [
@@ -258,7 +429,7 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                       children: [
                         Expanded(
                           child: Text(
-                            '${index + 1}. ${disease.key}',
+                            '${index + 1}. $displayName',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.black87,
@@ -268,12 +439,11 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              diseases[disease.key] = !disease.value;
-                              if (!disease.value) {
-                                // Reset treatment options when disease is deselected
+                              diseases[diseaseKey] = !diseases[diseaseKey]!;
+                              if (!diseases[diseaseKey]!) {
                                 treatmentOptions[diseaseKey] = true;
                                 referralOptions[diseaseKey] = '';
-                                treatmentNoteControllers[diseaseKey]?.clear();
+                                noteControllers[diseaseKey]?.clear();
                               }
                             });
                           },
@@ -281,28 +451,26 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: disease.value
+                              color: diseases[diseaseKey]!
                                   ? Color(0xFF2196F3)
                                   : Colors.transparent,
                               border: Border.all(
-                                color: disease.value
+                                color: diseases[diseaseKey]!
                                     ? Color(0xFF2196F3)
                                     : Colors.grey,
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(2),
                             ),
-                            child: disease.value
-                                ? Icon(Icons.check,
-                                    color: Colors.white, size: 18)
+                            child: diseases[diseaseKey]!
+                                ? Icon(Icons.check, color: Colors.white, size: 18)
                                 : null,
                           ),
                         ),
                       ],
                     ),
 
-                    // Treatment options for each disease when selected
-                    if (disease.value) ...[
+                    if (diseases[diseaseKey]!) ...[
                       SizedBox(height: 16),
                       Padding(
                         padding: EdgeInsets.only(left: 20),
@@ -336,8 +504,7 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check,
-                                            color: Colors.white, size: 14)
+                                        ? Icon(Icons.check, color: Colors.white, size: 14)
                                         : null,
                                   ),
                                 ),
@@ -349,7 +516,7 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                                     setState(() {
                                       treatmentOptions[diseaseKey] = false;
                                     });
-                                    _showReferralPopup(diseaseKey);
+                                    _showReferralPopup(diseaseKey, prefix);
                                   },
                                   child: Container(
                                     width: 20,
@@ -366,23 +533,19 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: !treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check,
-                                            color: Colors.white, size: 14)
+                                        ? Icon(Icons.check, color: Colors.white, size: 14)
                                         : null,
                                   ),
                                 ),
-                                // Show selected referral value next to the checkbox
                                 if (!treatmentOptions[diseaseKey]! &&
-                                    referralOptions[diseaseKey]!
-                                        .isNotEmpty) ...[
+                                    referralOptions[diseaseKey]!.isNotEmpty) ...[
                                   SizedBox(width: 12),
                                   Expanded(
                                     child: Container(
                                       padding: EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color:
-                                            Color(0xFF2196F3).withOpacity(0.1),
+                                        color: Color(0xFF2196F3).withOpacity(0.1),
                                         border: Border.all(
                                           color: Color(0xFF2196F3),
                                           width: 1,
@@ -404,29 +567,28 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                             ),
                             SizedBox(height: 16),
                             Text(
-                              'Enter Treated Note',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.black87),
+                              treatmentOptions[diseaseKey]!
+                                  ? 'Enter Treated Note'
+                                  : 'Enter Refer Note',
+                              style: TextStyle(fontSize: 16, color: Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Container(
-                              height: 60,
                               child: TextField(
-                                controller:
-                                    treatmentNoteControllers[diseaseKey],
+                                controller: noteControllers[diseaseKey],
                                 maxLines: 3,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide:
-                                        BorderSide(color: Colors.red, width: 2),
+                                        BorderSide(color: Color(0xFF2196F3), width: 2),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   contentPadding: EdgeInsets.all(12),
@@ -455,11 +617,10 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Handle previous action
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A5F7A),
+                        backgroundColor: const Color(0xFF4A5568),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -481,34 +642,22 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                         Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ScreenignForAngnwadiFormFive(),
+                        Map<String, dynamic> combinedData = _buildOutputData();
+                        
+                        // Debug print
+                        print('Combined Data: $combinedData');
+                        
+                        // Navigate to next page with combined data
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ScreenignForClassFormFive(
+                              previousData: combinedData,
                             ),
-                          );  
-                        // Handle next action
-                        if (hasYesDiseases ) {
-                         
-                          // Print selected diseases and their treatment details
-                          diseases.entries
-                              .where((e) => e.value)
-                              .forEach((disease) {
-                            print('Disease: ${disease.key}');
-                            print(
-                                '  - Treatment: ${treatmentOptions[disease.key]! ? "Treated" : "Refer"}');
-                            if (!treatmentOptions[disease.key]!) {
-                              print(
-                                  '  - Referred to: ${referralOptions[disease.key]}');
-                            }
-                            print(
-                                '  - Note: ${treatmentNoteControllers[disease.key]?.text}');
-                          });
-                        } else {
-                          print('No diseases selected');
-                        }
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:const Color(0xFF4A5F7A),
+                        backgroundColor: const Color(0xFF4A5568),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -534,11 +683,9 @@ class _ScreeningForAngnwadiClassFormFourState extends State<ScreeningForAngnwadi
 
   @override
   void dispose() {
-    // Dispose all controllers
-    treatmentNoteControllers.values.forEach((controller) {
+    noteControllers.values.forEach((controller) {
       controller.dispose();
     });
     super.dispose();
   }
 }
-

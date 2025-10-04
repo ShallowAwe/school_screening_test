@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_anganwadi_form_2.dart';
 
 class ScreeningForAnganWadiFormOne extends StatefulWidget {
-  const ScreeningForAnganWadiFormOne({Key? key}) : super(key: key);
+  final String? schoolName;
+
+  final int? userid;
+  final int? schoolId;
+  final String? className;
+  const ScreeningForAnganWadiFormOne({
+    Key? key,
+    required this.schoolName,
+    required this.userid,
+    required this.schoolId,
+    required this.className,
+  }) : super(key: key);
 
   @override
   State<ScreeningForAnganWadiFormOne> createState() =>
@@ -18,6 +30,12 @@ class _ScreeningForAnganWadiFormOneState
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
 
+  /// form validator key
+  final _formKey = GlobalKey<FormState>();
+
+  /// formatters
+  final _aadhaarFormatter = FilteringTextInputFormatter.digitsOnly;
+  final _contactFormatter = FilteringTextInputFormatter.digitsOnly;
   DateTime? selectedDate;
   String selectedGender = 'Male';
   String selectedClassification = 'SAM';
@@ -27,8 +45,19 @@ class _ScreeningForAnganWadiFormOneState
     'MAM',
     'SUW',
     'MUW',
-    'Stunted'
+    'Stunted',
   ];
+
+  //calculate age function
+  int _calculateAge(DateTime dob) {
+    DateTime today = DateTime.now();
+    int age = today.year - dob.year;
+    if (today.month < dob.month ||
+        (today.month == dob.month && today.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +83,7 @@ class _ScreeningForAnganWadiFormOneState
             child: Center(
               child: Text(
                 '1/7',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ),
@@ -66,147 +92,154 @@ class _ScreeningForAnganWadiFormOneState
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Child Name
-            _buildTextField(
-              label: 'Child Name',
-              controller: _childNameController,
-              placeholder: 'Enter Child Name',
-              isRequired: true,
-            ),
-            const SizedBox(height: 20),
-
-            // Select Age
-            _buildLabel('Select Age', isRequired: true),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: _selectDate,
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      selectedDate != null
-                          ? '${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}'
-                          : '15-9-2023',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down,
-                        color: Color(0xFF2196F3)),
-                  ],
-                ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Child Name
+              _buildTextField(
+                label: 'Child Name',
+                controller: _childNameController,
+                placeholder: 'Enter Child Name',
+                isRequired: true,
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Gender
-            _buildLabel('Gender'),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildRadioButton('Male'),
-                const SizedBox(width: 40),
-                _buildRadioButton('Female'),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Aadhaar No
-            _buildTextField(
-              label: 'Aadhaar No',
-              controller: _aadhaarController,
-              placeholder: 'Enter Aadhaar No',
-            ),
-            const SizedBox(height: 20),
-
-            // Father/Guardian Name
-            _buildTextField(
-              label: 'Name of Fathers/Guardian',
-              controller: _fatherNameController,
-              placeholder: 'Enter Name of Fathers/Guardian',
-              isRequired: true,
-            ),
-            const SizedBox(height: 20),
-
-            // Parent Contact No
-            _buildTextField(
-              label: 'Parent Contact No',
-              controller: _contactController,
-              placeholder: 'Enter Parent Contact No',
-              isRequired: true,
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 20),
-
-            // Weight and Height
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Weight(in kg)',
-                    controller: _weightController,
-                    placeholder: 'Enter Weight',
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
+              // Select Age
+              _buildLabel('Select Age', isRequired: true),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _selectDate,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Height/Length(in cm.)',
-                    controller: _heightController,
-                    placeholder: 'Enter Height',
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Weight/Height Classification
-            _buildLabel('Weight/Height for age Classification'),
-            const SizedBox(height: 12),
-            _buildClassificationGrid(),
-            const SizedBox(height: 40),
-
-            // Next Button
-            Container(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _handleNext,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
-                  shape: RoundedRectangleBorder(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        selectedDate != null
+                            ? '${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}'
+                            : '15-9-2023',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Color(0xFF2196F3),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+
+              // Gender
+              _buildLabel('Gender'),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildRadioButton('Male'),
+                  const SizedBox(width: 40),
+                  _buildRadioButton('Female'),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Aadhaar No
+              _buildTextField(
+                label: 'Aadhaar No',
+                controller: _aadhaarController,
+                placeholder: 'Enter Aadhaar No',
+              ),
+              const SizedBox(height: 20),
+
+              // Father/Guardian Name
+              _buildTextField(
+                label: 'Name of Fathers/Guardian',
+                controller: _fatherNameController,
+                placeholder: 'Enter Name of Fathers/Guardian',
+                isRequired: true,
+              ),
+              const SizedBox(height: 20),
+
+              // Parent Contact No
+              _buildTextField(
+                label: 'Parent Contact No',
+                controller: _contactController,
+                placeholder: 'Enter Parent Contact No',
+                isRequired: true,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20),
+
+              // Weight and Height
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      label: 'Weight(in kg)',
+                      controller: _weightController,
+                      placeholder: 'Enter Weight',
+                      isRequired: true,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      label: 'Height/Length(in cm.)',
+                      controller: _heightController,
+                      placeholder: 'Enter Height',
+                      isRequired: true,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Weight/Height Classification
+              _buildLabel('Weight/Height for age Classification'),
+              const SizedBox(height: 12),
+              _buildClassificationGrid(),
+              const SizedBox(height: 40),
+
+              // Next Button
+              Container(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _handleNext,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -274,10 +307,7 @@ class _ScreeningForAnganWadiFormOneState
                 vertical: 14,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
         ),
       ],
@@ -320,10 +350,7 @@ class _ScreeningForAnganWadiFormOneState
         ),
         Text(
           gender,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.black87,
-          ),
+          style: const TextStyle(fontSize: 16, color: Colors.black87),
         ),
       ],
     );
@@ -374,11 +401,7 @@ class _ScreeningForAnganWadiFormOneState
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: isSelected
-                      ? const Icon(
-                          Icons.check,
-                          size: 12,
-                          color: Colors.white,
-                        )
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
                       : null,
                 ),
                 const SizedBox(width: 8),
@@ -387,10 +410,12 @@ class _ScreeningForAnganWadiFormOneState
                     option,
                     style: TextStyle(
                       fontSize: 14,
-                      color:
-                          isSelected ? const Color(0xFF2196F3) : Colors.black87,
-                      fontWeight:
-                          isSelected ? FontWeight.w500 : FontWeight.normal,
+                      color: isSelected
+                          ? const Color(0xFF2196F3)
+                          : Colors.black87,
+                      fontWeight: isSelected
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -403,42 +428,117 @@ class _ScreeningForAnganWadiFormOneState
   }
 
   void _handleNext() {
-    // Validate required fields
+    if (_formKey.currentState!.validate()) {
+      // Validate DOB
+      if (selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please select Date of Birth"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
 
-    if (_childNameController.text.isEmpty ||
-        _fatherNameController.text.isEmpty ||
-        _contactController.text.isEmpty ||
-        _weightController.text.isEmpty ||
-        _heightController.text.isEmpty) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ScreeningForAngnwadiFormTwo(),
-            ),
-          );
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(
-      //     content: Text('Please fill all required fields'),
-      //     backgroundColor: Colors.red,
-      //   ),
-      // );
-      return;
+      int age = _calculateAge(selectedDate!);
+      if (age < 0 || age > 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Age must be between 0 and 6 years for Anganwadi"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Parse numeric values
+      double? weight = double.tryParse(_weightController.text);
+      int? height = int.tryParse(_heightController.text);
+
+      if (weight == null || height == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please enter valid numeric values"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Create form data map - same structure as school
+      final formData = {
+        // IDs
+        'SchoolId': widget.schoolId,
+        'UserId': widget.userid,
+
+        // Class flags - set anganwadi flags, all school classes false
+        'anganwadi':
+            widget.className!.toLowerCase().contains('anganwadi') &&
+            !widget.className!.toLowerCase().contains('mini'),
+        'MiniAnganwadi': widget.className!.toLowerCase().contains('mini'),
+        'firstclass': false,
+        'SecondClass': false,
+        'ThirdClass': false,
+        'FourthClass': false,
+        'FifthClass': false,
+        'SixthClass': false,
+        'SeventhClass': false,
+        'EighthClass': false,
+        'NinthClass': false,
+        'TenthClass': false,
+        'EleventhClass': false,
+        'TwelthClass': false,
+
+        // Demographics
+        'ChildName': _childNameController.text.trim(),
+        'Age': age.toString(),
+        'Gender': selectedGender,
+        'AadhaarNo': _aadhaarController.text.trim(),
+        'FathersName': _fatherNameController.text.trim(),
+        'FathersContactNo': _contactController.text.trim(),
+
+        // Measurements
+        'WeightInKg': weight,
+        'HeightInCm': height,
+
+        // Weight/Height status - based on user selection
+        'WeightHeightNormal': selectedClassification == 'Normal',
+        'WeightHeightSAM': selectedClassification == 'SAM',
+        'WeightHeightMAM': selectedClassification == 'MAM',
+        'WeightHeightSUW': selectedClassification == 'SUW',
+        'WeightHeightMUW': selectedClassification == 'MUW',
+        'WeightHeightStunted': selectedClassification == 'Stunted',
+
+        // Blood Pressure - not applicable for Anganwadi (young children)
+        'BloodPressure': false,
+        'BPNormal': false,
+        'BPPrehypertension': false,
+        'BPStage1HTN': false,
+        'BPStage2HTN': false,
+
+        // Vision - not applicable for Anganwadi (young children)
+        'AcuityOfVision': 0.0,
+        'AcuityOfLeftEye': 0.0,
+        'AcuityOfRightEye': 0.0,
+      };
+
+      print("Anganwadi Form Data: $formData");
+
+      // Navigate to next screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              ScreeningForAngnwadiFormTwo(previousFormData: formData),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete all required fields!'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    // Print form data for debugging
-    print('Form Data:');
-    print('Child Name: ${_childNameController.text}');
-    print(
-        'Age: ${selectedDate != null ? '${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}' : '15-9-2023'}');
-    print('Gender: $selectedGender');
-    print('Aadhaar: ${_aadhaarController.text}');
-    print('Father/Guardian: ${_fatherNameController.text}');
-    print('Contact: ${_contactController.text}');
-    print('Weight: ${_weightController.text}');
-    print('Height: ${_heightController.text}');
-    print('Classification: $selectedClassification');
-
-    // Navigate to next page or handle form submission
-    // Navigator.pushNamed(context, '/screening-form-2');
   }
 
   @override

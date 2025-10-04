@@ -11,14 +11,26 @@ import 'package:school_test/models/grampanchayat_model.dart';
 import 'package:school_test/models/school.dart';
 import 'package:school_test/models/school_model.dart';
 import 'package:school_test/models/taluka_model.dart';
+import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_form7.dart';
+import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
 class ScreenningAngnwadiScreen extends StatefulWidget {
-  final int? userid;
-  // final String? className;
-  const ScreenningAngnwadiScreen({super.key, this.userid});
+  // final String schoolName;
+
+  final int userid;
+  // final int schoolId;
+  // final String className;
+
+  const ScreenningAngnwadiScreen({
+    super.key,
+    // required this.schoolName,
+    required this.userid,
+    // required this.schoolId,
+    // required this.className,
+  });
 
   @override
   State<ScreenningAngnwadiScreen> createState() =>
@@ -895,13 +907,11 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ScreenningAngnwadiScreen(
-                        // school: selectedSchool!,
-                        userid: widget.userid!,
-                        // schoolId: selectedSchool!.schoolId,
-                        // schoolName: selectedSchool!.schoolName,
-                        // className: selectedClass!,
-                        // screenedChildren: screenedData,
+                      builder: (context) => ScreeningForAnganWadiFormOne(
+                        userid: widget.userid,
+                        schoolId: selectedSchool!.schoolId,
+                        schoolName: selectedSchool!.schoolName,
+                        className: selectedClass!,
                       ),
                     ),
                   );
