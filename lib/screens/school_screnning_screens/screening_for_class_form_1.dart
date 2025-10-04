@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_2.dart';
 
 class ScreeningFormScreenOne extends StatefulWidget {
@@ -38,6 +39,14 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
   final _heightController = TextEditingController();
   final _leftEyeController = TextEditingController();
   final _rightEyeController = TextEditingController();
+
+  ///input formmaters
+
+  final _aadhaarFormatter = FilteringTextInputFormatter.digitsOnly;
+  final _contactFormatter = FilteringTextInputFormatter.digitsOnly;
+  final _eyeFormatter = FilteringTextInputFormatter.allow(
+    RegExp(r'^\d*\.?\d*'),
+  );
 
   String? selectedAge;
   String selectedGender = 'Male';
@@ -116,7 +125,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title: const Text('Screening For 4st Class'),
+        title:  Text('Screening For ${widget.className}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -275,6 +284,16 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                   controller: _aadhaarController,
                   hintText: 'Enter Aadhaar No',
                   keyboardType: TextInputType.number,
+                  inputFormatters: [_aadhaarFormatter],
+                  maxLength: 12,
+                  validator: (value) {
+                    if (value != null &&
+                        value.isNotEmpty &&
+                        value.length != 12) {
+                      return 'Aadhaar must be exactly 12 digits';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -294,6 +313,17 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                   hintText: 'Enter Parent Contact No',
                   keyboardType: TextInputType.phone,
                   isRequired: true,
+                  inputFormatters: [_contactFormatter],
+                  maxLength: 10,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'This field is required';
+                    }
+                    if (value.length != 10) {
+                      return 'Contact number must be exactly 10 digits';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -381,6 +411,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                               value: bloodPressureSelections[0],
                               onChanged: (bool? value) {
                                 setState(() {
+                                  bloodPressureSelections = List.filled(
+                                    4,
+                                    false,
+                                  );
                                   bloodPressureSelections[0] = value ?? false;
                                 });
                               },
@@ -404,6 +438,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                               value: bloodPressureSelections[1],
                               onChanged: (bool? value) {
                                 setState(() {
+                                  bloodPressureSelections = List.filled(
+                                    4,
+                                    false,
+                                  );
                                   bloodPressureSelections[1] = value ?? false;
                                 });
                               },
@@ -435,6 +473,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                               value: bloodPressureSelections[2],
                               onChanged: (bool? value) {
                                 setState(() {
+                                  bloodPressureSelections = List.filled(
+                                    4,
+                                    false,
+                                  );
                                   bloodPressureSelections[2] = value ?? false;
                                 });
                               },
@@ -461,6 +503,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                               value: bloodPressureSelections[3],
                               onChanged: (bool? value) {
                                 setState(() {
+                                  bloodPressureSelections = List.filled(
+                                    4,
+                                    false,
+                                  );
                                   bloodPressureSelections[3] = value ?? false;
                                 });
                               },
@@ -503,6 +549,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                             controller: _leftEyeController,
                             hintText: 'Left Eye',
                             isRequired: true,
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [_eyeFormatter],
                           ),
                         ],
                       ),
@@ -518,6 +568,10 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                             controller: _rightEyeController,
                             hintText: 'Right Eye',
                             isRequired: true,
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [_eyeFormatter],
                           ),
                         ],
                       ),
@@ -745,6 +799,9 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
     required String hintText,
     bool isRequired = false,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -755,23 +812,28 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        maxLength: maxLength,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey[500]),
           border: InputBorder.none,
+          counterText: '', // Hide character counter
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
           ),
         ),
-        validator: isRequired
-            ? (value) {
-                if (value == null || value.isEmpty) {
-                  return 'This field is required';
-                }
-                return null;
-              }
-            : null,
+        validator:
+            validator ??
+            (isRequired
+                ? (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'This field is required';
+                    }
+                    return null;
+                  }
+                : null),
       ),
     );
   }

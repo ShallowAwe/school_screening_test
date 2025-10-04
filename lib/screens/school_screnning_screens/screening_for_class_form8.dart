@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
+import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:school_test/utils/api_client.dart';
 import 'package:school_test/config/endpoints.dart';
 
@@ -484,7 +486,13 @@ class _ScreeningForClassFormEightState
       await api.post(Endpoints.addScreeningSchool, body: payload);
       
       // Close loading dialog
-      Navigator.of(context).pop();
+      Navigator.of(context).push(MaterialPageRoute(
+        builder:  (context) => ScreeningFormScreenOne(
+     schoolName: widget.combinedData['_schoolName'],
+      userid: widget.combinedData['_userId'],
+      schoolId: widget.combinedData['_schoolId'],
+      className: widget.combinedData['_className'],),
+        ));
       
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
@@ -543,8 +551,8 @@ class _ScreeningForClassFormEightState
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Screening For 1st Class",
+        title:  Text(
+          "Screening For ${widget.combinedData['className']}",
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
         actions: const [
@@ -699,7 +707,7 @@ class _ScreeningForClassFormEightState
             child: ElevatedButton(
               onPressed: _isLoadingLocation ? null : _submitForm,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3F51B5),
+                backgroundColor: const Color(0xFF4A5568),
                 disabledBackgroundColor: Colors.grey,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(

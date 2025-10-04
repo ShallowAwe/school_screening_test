@@ -336,7 +336,7 @@ String _getPrefixForRefer(String prefix) {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Screening For 1st Class',
+          "Screening For ${widget.previousData['className']}",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -641,7 +641,7 @@ String _getPrefixForRefer(String prefix) {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3F51B5),
+                        backgroundColor: const Color(0xFF4A5568),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -678,7 +678,7 @@ String _getPrefixForRefer(String prefix) {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3F51B5),
+                        backgroundColor: const Color(0xFF4A5568),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

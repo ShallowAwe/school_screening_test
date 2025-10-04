@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
@@ -52,33 +53,55 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
   // radio button 
   Widget _buildServiceRadioBool(
-    String label,
-    bool? selectedValue,
-    ValueChanged<bool?> onChanged,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 16, color: Colors.black87)),
-          Row(
-            children: [
-              Radio<bool>(value: true, groupValue: selectedValue, onChanged: onChanged),
-              Text('Yes'),
-              Radio<bool>(value: false, groupValue: selectedValue, onChanged: onChanged),
-              Text('No'),
-            ],
+  String label,
+  bool? selectedValue,
+  ValueChanged<bool?> onChanged,
+) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.grey[300]!),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Radio<bool>(
+              value: true,
+              groupValue: selectedValue,
+              onChanged: onChanged,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            Text('Yes'),
+            SizedBox(width: 4),
+            Radio<bool>(
+              value: false,
+              groupValue: selectedValue,
+              onChanged: onChanged,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            Text('No'),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   // fetch the  current locations
  Future<void> _getCurrentLocation() async {
@@ -632,7 +655,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
                 GestureDetector(
                   onTap: () {
-                    _buildPhotoUpload(); // opens camera/gallery chooser
+                    _buildPhotoUpload(context); // opens camera/gallery chooser
                   },
                   child: Container(
                     width: double.infinity,
@@ -668,11 +691,14 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           )
                         : ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              selectedImage!,
-                              width: double.infinity,
-                              height: 200,
-                              fit: BoxFit.cover,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Image.file(
+                                selectedImage!,
+                                width: double.infinity,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                   ),
@@ -765,8 +791,9 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         miniAnganwadi: false,
 
                         // Media & User
-                        schoolPhoto:
-                            base64Image, // convert uploaded image to Base64
+                        SchoolPhoto:
+                            base64Image, // converted uploaded image to Base64
+                          
                         userId: widget.userId!, // logged-in user ID
                       );
 
@@ -949,28 +976,60 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
   //image pick
   // Pick image from gallery/camera
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? image = await _picker.pickImage(source: source);
+ Future<void> _pickAndCropImage(BuildContext context, ImageSource source) async {
+  try {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
 
-      if (image != null) {
-        setState(() {
-          selectedImage = File(image.path);
-        });
+    if (image == null) return;
 
-        // ✅ Convert to Base64 if you want to send to API
-        final bytes = await selectedImage!.readAsBytes();
-        base64Image = base64Encode(bytes);
+    final CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: image.path,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Cropper',
+          toolbarColor: Colors.deepOrange,
+          toolbarWidgetColor: Colors.white,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.original,
+            CropAspectRatioPreset.square,
+            CropAspectRatioPresetCustom(),
+          ],
+        ),
+        IOSUiSettings(
+          title: 'Cropper',
+          aspectRatioPresets: [
+            CropAspectRatioPreset.original,
+            CropAspectRatioPreset.square,
+            CropAspectRatioPresetCustom(),
+          ],
+        ),
+        WebUiSettings(context: context),
+      ],
+    );
 
-        print("Base64 Image length: ${base64Image!.length}"); // Debug
-      }
-    } catch (e) {
-      print("Error picking image: $e");
-    }
+    if (croppedFile == null) return;
+
+    // ✅ Update both selectedImage and base64Image
+    final file = File(croppedFile.path);
+    final bytes = await file.readAsBytes();
+    final base64 = base64Encode(bytes);
+
+    setState(() {
+      selectedImage = file;
+      base64Image = base64;
+    });
+  } catch (e) {
+    print("Error picking/cropping image: $e");
   }
+}
+
+/// Custom Aspect Ratio (2x3)
+
+
 
   // //image build
-  void _buildPhotoUpload() {
+  void _buildPhotoUpload(BuildContext context) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -981,7 +1040,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
               title: Text("Gallery"),
               onTap: () {
                 Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
+                _pickAndCropImage(context, ImageSource.gallery  );
               },
             ),
             ListTile(
@@ -989,7 +1048,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
               title: Text("Camera"),
               onTap: () {
                 Navigator.pop(context);
-                _pickImage(ImageSource.camera);
+                _pickAndCropImage(context,ImageSource.camera);
               },
             ),
           ],
@@ -1016,3 +1075,13 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 }
 
 
+
+
+
+class CropAspectRatioPresetCustom implements CropAspectRatioPresetData {
+  @override
+  (int, int)? get data => (2, 3);
+
+  @override
+  String get name => '2x3 (customized)';
+}

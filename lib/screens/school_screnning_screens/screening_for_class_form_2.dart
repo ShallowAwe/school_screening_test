@@ -67,7 +67,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title: const Text('Screening For 1st Class'),
+        title:  Text("Screening For ${widget.previousFormData['className']}"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

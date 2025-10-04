@@ -15,15 +15,17 @@ import 'package:school_test/screens/school_screnning_screens/screening_for_class
 import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
-class ScreenningSchoolScreen extends StatefulWidget {
+class ScreenningAngnwadiScreen extends StatefulWidget {
   final int? userid;
-  const ScreenningSchoolScreen({super.key, this.userid});
+  // final String? className;
+  const ScreenningAngnwadiScreen({super.key, this.userid});
 
   @override
-  State<ScreenningSchoolScreen> createState() => _ScreenningSchoolScreenState();
+  State<ScreenningAngnwadiScreen> createState() =>
+      _ScreenningSchoolScreenState();
 }
 
-class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
+class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
   District? selectedDistrict;
   Taluka? selectedTaluka;
   Grampanchayat? selectedVillage;
@@ -63,22 +65,21 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
     final url = Uri.parse(
       "$baseUrl/api/Rbsk/GetAllSchoolDataWithSchoolId?SchoolId=$schoolId",
     );
-
     try {
       final response = await http
           .get(url)
-          .timeout(const Duration(seconds: 10)); // ⏱ Timeout protection
+          .timeout(const Duration(seconds: 180)); // ⏱ Timeout protection
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
         if (decoded is Map<String, dynamic>) {
-          if (decoded['success'] == true &&
-              decoded['schools'] is List &&
-              decoded['schools'].isNotEmpty) {
-            return SchoolDetails.fromJson(decoded['schools'][0]);
+          if (decoded['success'] == true && decoded['schools'] != null) {
+            return SchoolDetails.fromJson(
+              decoded['schools'],
+            ); // ✅ Direct object, no [0]
           } else {
-            print('⚠️ No schools found or success=false');
+            print('⚠️ No schools found or success=false:${response.body}');
           }
         } else {
           print('⚠️ Unexpected JSON format');
@@ -108,7 +109,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
     required String className,
   }) async {
     final url = Uri.parse(
-      'https://api.rbsknagpur.in/api/Rbsk/GetScreenedDataBySchoolIdClass',
+      '$baseUrl/api/Rbsk/GetAllSchoolDataWithSchoolId?SchoolId=$schoolId',
     );
 
     try {
@@ -293,10 +294,19 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
     try {
       final uri = Uri.parse(
-        "$baseUrl${Endpoints.schoolByGrampanchayatId}?grampanchayatId=$grampanchayatId",
+        "https://api.rbsknagpur.in/api/Rbsk/GetSchoolByGrampanchayatId?grampanchayatId=$grampanchayatId",
       );
 
-      final response = await http.get(uri);
+      final response = await http
+          .get(uri)
+          .timeout(
+            const Duration(seconds: 30), // Add timeout
+            onTimeout: () {
+              throw Exception(
+                'Request timed out. Please check your internet connection.',
+              );
+            },
+          );
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -315,24 +325,34 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
           return fetchedSchools;
         } else {
-          throw Exception('Unexpected response format: $decoded');
+          throw Exception('Unexpected response format');
         }
       } else {
-        setState(() {
-          isLoadingSchools = false;
-          schoolFetchError = "Failed: ${response.statusCode}";
-        });
-        return [];
+        throw Exception('Failed: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ Error fetching schools: $e');
       setState(() {
         isLoadingSchools = false;
-        schoolFetchError = "Error: $e";
+        schoolFetchError = e.toString().contains('timeout')
+            ? "Request timed out. Check internet connection."
+            : "Error: $e";
       });
+
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(schoolFetchError ?? 'Failed to load schools'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
       return [];
     }
   }
-
   // Mock data for school information - will be replaced with API data in future
 
   final List<String> classes = [
@@ -463,7 +483,9 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                       hint: "Select School",
                       value: selectedSchool,
                       // Filter the items here
-                      items: schools.where((s) => s.flag == 'School').toList(),
+                      items: schools
+                          .where((s) => s.flag == 'Anganwadi')
+                          .toList(),
                       getLabel: (school) => school.schoolName,
                       onChanged: (School? newValue) async {
                         if (newValue == null) return;
@@ -574,6 +596,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   Widget _buildSchoolInformation() {
     // TODO: Replace with API call to fetch school information
     final schoolInfo = schoolData[selectedSchool];
+
     if (schoolInfo == null) return const SizedBox.shrink();
 
     return Container(
@@ -641,20 +664,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
   List<String> getAvailableClasses() {
     if (schoolDetails == null) return [];
-    return [
-      if (schoolDetails?.firstClass ?? false) '1st Class',
-      if (schoolDetails?.secondClass ?? false) '2nd Class',
-      if (schoolDetails?.thirdClass ?? false) '3rd Class',
-      if (schoolDetails?.fourthClass ?? false) '4th Class',
-      if (schoolDetails?.fifthClass ?? false) '5th Class',
-      if (schoolDetails?.sixthClass ?? false) '6th Class',
-      if (schoolDetails?.seventhClass ?? false) '7th Class',
-      if (schoolDetails?.eighthClass ?? false) '8th Class',
-      if (schoolDetails?.ninethClass ?? false) '9th Class',
-      if (schoolDetails?.tenthClass ?? false) '10th Class',
-      if (schoolDetails?.eleventhClass ?? false) '11th Class',
-      if (schoolDetails?.twelthClass ?? false) '12th Class',
-    ];
+    return ['Mini Anganwadi', 'Anganwadi'];
   }
 
   Widget _buildClassSelection(int userId) {
@@ -721,7 +731,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Select Class',
+              'Select Anganwadi',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -733,7 +743,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                 if (selectedClass == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please select a class first'),
+                      content: Text('Please select a Anganwadi first'),
                     ),
                   );
                   return;
@@ -778,8 +788,8 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 2.5,
+                  crossAxisCount: 2, // Changed from 3 to 2
+                  childAspectRatio: 3, // Adjusted for better appearance
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
@@ -885,12 +895,12 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ScreeningFormScreenOne(
+                      builder: (context) => ScreenningAngnwadiScreen(
                         // school: selectedSchool!,
                         userid: widget.userid!,
-                        schoolId: selectedSchool!.schoolId,
-                        schoolName: selectedSchool!.schoolName,
-                        className: selectedClass!,
+                        // schoolId: selectedSchool!.schoolId,
+                        // schoolName: selectedSchool!.schoolName,
+                        // className: selectedClass!,
                         // screenedChildren: screenedData,
                       ),
                     ),

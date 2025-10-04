@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/add_school_screen.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
-import 'package:school_test/screens/screening_screen.dart';
+import 'package:school_test/screens/screening_sccreen_angnwadi.dart';
+import 'package:school_test/screens/screening_screen_school.dart';
 import 'package:school_test/screens/select_angan_wadi_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Start Screening\nFor Angan Wadi',
                 onTap: () {
                   // Navigate to Start Screening For Angan Wadi
-                   Navigator.of(context).push(MaterialPageRoute(builder: (context)=> ScreeningForAnganWadiFormOne()));
+                   Navigator.of(context).push(MaterialPageRoute(builder: (context)=> ScreenningAngnwadiScreen(  userid: widget.userId,)));
                 },
               ),
               _buildCard(

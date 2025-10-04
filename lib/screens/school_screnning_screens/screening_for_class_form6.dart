@@ -326,7 +326,7 @@ String _getPrefixForRefer(String prefix) {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Screening For 1st Class',
+         " Screening For ${widget.previousData['className']}",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
