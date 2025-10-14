@@ -1,326 +1,333 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_angnwadi_form4.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form4.dart';
+
 
 class ScreeningFormAngnwadiScreenThree extends StatefulWidget {
-   final Map<String, dynamic> previousFormData;
-  const ScreeningFormAngnwadiScreenThree({super.key, required this.previousFormData});
+  final Map<String, dynamic> previousFormData;
+  const ScreeningFormAngnwadiScreenThree({
+    super.key,
+    required this.previousFormData,
+  });
 
   @override
-  State<ScreeningFormAngnwadiScreenThree> createState() => _ScreeningFormAngnwadiScreenThreeState();
+  State<ScreeningFormAngnwadiScreenThree> createState() =>
+      _ScreeningFormAngnwadiScreenThreeState();
 }
 
-class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadiScreenThree> {
+class _ScreeningFormAngnwadiScreenThreeState
+    extends State<ScreeningFormAngnwadiScreenThree> {
   final _formKey = GlobalKey<FormState>();
-    final Map<String, TextEditingController> _noteControllers = {};
-    bool hasDeficiency = false;
+  final Map<String, TextEditingController> _noteControllers = {};
+  bool hasDeficiency = false;
 
-    Map<String, bool> deficiencies = {
-      'Anemia': false,
-      'Vitamin A Def': false,
-      'Vitamin D Def (Rickets)': false,
-      'SAM/Stunting': false,
-      'Goiter': false,
-      'Vitamin B complex def': false,
-      'Others': false,
-    };
+  Map<String, bool> deficiencies = {
+    'Anemia': false,
+    'Vitamin A Def': false,
+    'Vitamin D Def (Rickets)': false,
+    'SAM/Stunting': false,
+    'Goiter': false,
+    'Vitamin B complex def': false,
+    'Others': false,
+  };
 
-    Map<String, String> deficiencyTreatment = {};
-    Map<String, String> referralOptions = {};
+  Map<String, String> deficiencyTreatment = {};
+  Map<String, String> referralOptions = {};
 
-    final List<String> referralChoices = [
-      'SK Nagpur',
-      'RH',
-      'SDH',
-      'DH',
-      'GMC',
-      'IGMC',
-      'MJMJY & MOUY',
-      'DEIC',
-    ];
+  final List<String> referralChoices = [
+    'SK Nagpur',
+    'RH',
+    'SDH',
+    'DH',
+    'GMC',
+    'IGMC',
+    'MJMJY & MOUY',
+    'DEIC',
+  ];
 
-    @override
-    void initState() {
-      super.initState();
-      deficiencies.keys.forEach((deficiency) {
-        deficiencyTreatment[deficiency] = '';
-        referralOptions[deficiency] = '';
-        _noteControllers[deficiency] = TextEditingController();
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    deficiencies.keys.forEach((deficiency) {
+      deficiencyTreatment[deficiency] = '';
+      referralOptions[deficiency] = '';
+      _noteControllers[deficiency] = TextEditingController();
+    });
+  }
 
-    @override
-    void dispose() {
-      _noteControllers.values.forEach(
-        (controller) => controller.dispose(),
-      );
-      super.dispose();
-    }
+  @override
+  void dispose() {
+    _noteControllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
+  }
 
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          title: Text("Screening For ${widget.previousFormData['className']}"),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Center(
-                child: Text(
-                  '3/8',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        title: Text("Screening Form"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Center(
+              child: Text(
+                '3/7',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          ],
-        ),
-        body: Container(
-          color: Colors.grey[50],
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'B. Deficiencies at Birth',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+          ),
+        ],
+      ),
+      body: Container(
+        color: Colors.grey[50],
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'B. Deficiencies at Birth',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text('No', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: !hasDeficiency,
+                        onChanged: (value) {
+                          setState(() {
+                            hasDeficiency = !(value ?? false);
+                            if (!hasDeficiency) {
+                              deficiencies.updateAll((key, value) => false);
+                              deficiencyTreatment.updateAll((key, value) => '');
+                              referralOptions.updateAll((key, value) => '');
+                            }
+                          });
+                        },
+                        activeColor: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    const Text('Yes', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: hasDeficiency,
+                        onChanged: (value) {
+                          setState(() {
+                            hasDeficiency = value ?? false;
+                            if (!hasDeficiency) {
+                              deficiencies.updateAll((key, value) => false);
+                              deficiencyTreatment.updateAll((key, value) => '');
+                              referralOptions.updateAll((key, value) => '');
+                            }
+                          });
+                        },
+                        activeColor: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                if (hasDeficiency) ...[
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Text('No', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Checkbox(
-                          value: !hasDeficiency,
-                          onChanged: (value) {
-                            setState(() {
-                              hasDeficiency = !(value ?? false);
-                              if (!hasDeficiency) {
-                                deficiencies.updateAll((key, value) => false);
-                                deficiencyTreatment.updateAll((key, value) => '');
-                                referralOptions.updateAll((key, value) => '');
-                              }
-                            });
-                          },
-                          activeColor: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      const Text('Yes', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Checkbox(
-                          value: hasDeficiency,
-                          onChanged: (value) {
-                            setState(() {
-                              hasDeficiency = value ?? false;
-                              if (!hasDeficiency) {
-                                deficiencies.updateAll((key, value) => false);
-                                deficiencyTreatment.updateAll((key, value) => '');
-                                referralOptions.updateAll((key, value) => '');
-                              }
-                            });
-                          },
-                          activeColor: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (hasDeficiency) ...[
-                    const SizedBox(height: 16),
-                    ...deficiencies.keys.toList().asMap().entries.map((entry) {
-                      int index = entry.key;
-                      String deficiency = entry.value;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                '${index + 1}. ',
+                  ...deficiencies.keys.toList().asMap().entries.map((entry) {
+                    int index = entry.key;
+                    String deficiency = entry.value;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '${index + 1}. ',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Expanded(
+                              child: Text(
+                                deficiency,
                                 style: TextStyle(fontSize: 16),
                               ),
-                              Expanded(
-                                child: Text(
-                                  deficiency,
+                            ),
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Checkbox(
+                                value: deficiencies[deficiency]!,
+                                onChanged: (value) {
+                                  setState(() {
+                                    deficiencies[deficiency] = value ?? false;
+                                    if (!deficiencies[deficiency]!) {
+                                      deficiencyTreatment[deficiency] = '';
+                                      referralOptions[deficiency] = '';
+                                      _noteControllers[deficiency]?.clear();
+                                    }
+                                  });
+                                },
+                                activeColor: Colors.blue,
+                                checkColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (deficiencies[deficiency]!) ...[
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'Treated',
                                   style: TextStyle(fontSize: 16),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Checkbox(
-                                  value: deficiencies[deficiency]!,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      deficiencies[deficiency] = value ?? false;
-                                      if (!deficiencies[deficiency]!) {
-                                        deficiencyTreatment[deficiency] = '';
-                                        referralOptions[deficiency] = '';
-                                        _noteControllers[deficiency]?.clear();
-                                      }
-                                    });
-                                  },
-                                  activeColor: Colors.blue,
-                                  checkColor: Colors.white,
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value:
+                                        deficiencyTreatment[deficiency] ==
+                                        'Treated',
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value ?? false) {
+                                          deficiencyTreatment[deficiency] =
+                                              'Treated';
+                                          referralOptions[deficiency] = '';
+                                        } else {
+                                          deficiencyTreatment[deficiency] = '';
+                                        }
+                                      });
+                                    },
+                                    activeColor: Colors.blue,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 20),
+                                const Text(
+                                  'Refer',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value:
+                                        deficiencyTreatment[deficiency] ==
+                                        'Refer',
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value ?? false) {
+                                          deficiencyTreatment[deficiency] =
+                                              'Refer';
+                                          _showReferralOptions(deficiency);
+                                        } else {
+                                          deficiencyTreatment[deficiency] = '';
+                                          referralOptions[deficiency] = '';
+                                        }
+                                      });
+                                    },
+                                    activeColor: Colors.blue,
+                                  ),
+                                ),
+                                if (referralOptions[deficiency]!
+                                    .isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    referralOptions[deficiency]!,
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                          if (deficiencies[deficiency]!) ...[
+                          if (deficiencyTreatment[deficiency] == 'Refer' &&
+                              referralOptions[deficiency]!.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Padding(
                               padding: const EdgeInsets.only(left: 16.0),
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    'Treated',
-                                    style: TextStyle(fontSize: 16),
+                              child: TextFormField(
+                                controller: _noteControllers[deficiency],
+                                decoration: InputDecoration(
+                                  labelText: 'Enter Refer Note',
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: deficiencyTreatment[deficiency] ==
-                                          'Treated',
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value ?? false) {
-                                            deficiencyTreatment[deficiency] =
-                                                'Treated';
-                                            referralOptions[deficiency] = '';
-                                          } else {
-                                            deficiencyTreatment[deficiency] = '';
-                                          }
-                                        });
-                                      },
-                                      activeColor: Colors.blue,
-                                    ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  const SizedBox(width: 20),
-                                  const Text(
-                                    'Refer',
-                                    style: TextStyle(fontSize: 16),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
                                   ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: deficiencyTreatment[deficiency] ==
-                                          'Refer',
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value ?? false) {
-                                            deficiencyTreatment[deficiency] =
-                                                'Refer';
-                                            _showReferralOptions(deficiency);
-                                          } else {
-                                            deficiencyTreatment[deficiency] = '';
-                                            referralOptions[deficiency] = '';
-                                          }
-                                        });
-                                      },
-                                      activeColor: Colors.blue,
-                                    ),
-                                  ),
-                                  if (referralOptions[deficiency]!.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      referralOptions[deficiency]!,
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ],
+                                ),
+                                validator: (value) {
+                                  if (deficiencyTreatment[deficiency] ==
+                                          'Refer' &&
+                                      referralOptions[deficiency]!.isNotEmpty &&
+                                      (value == null || value.isEmpty)) {
+                                    return 'Please enter refer note';
+                                  }
+                                  return null;
+                                },
                               ),
                             ),
-                            if (deficiencyTreatment[deficiency] == 'Refer' &&
-                                referralOptions[deficiency]!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: TextFormField(
-                                  controller: _noteControllers[deficiency],
-                                  decoration: InputDecoration(
-                                    labelText: 'Enter Refer Note',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                  ),
-                                  validator: (value) {
-                                    if (deficiencyTreatment[deficiency] ==
-                                            'Refer' &&
-                                        referralOptions[deficiency]!.isNotEmpty &&
-                                        (value == null || value.isEmpty)) {
-                                      return 'Please enter refer note';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                            if (deficiencyTreatment[deficiency] ==
-                                'Treated') ...[
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: TextFormField(
-                                  controller: _noteControllers[deficiency],
-                                  decoration: InputDecoration(
-                                    labelText: 'Enter Treated Note',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
-                                    ),
-                                  ),
-                                  validator: (value) {
-                                    if (deficiencyTreatment[deficiency] ==
-                                            'Treated' &&
-                                        (value == null || value.isEmpty)) {
-                                      return 'Please enter treated note';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
                           ],
-                          const SizedBox(height: 16),
+                          if (deficiencyTreatment[deficiency] == 'Treated') ...[
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: TextFormField(
+                                controller: _noteControllers[deficiency],
+                                decoration: InputDecoration(
+                                  labelText: 'Enter Treated Note',
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (deficiencyTreatment[deficiency] ==
+                                          'Treated' &&
+                                      (value == null || value.isEmpty)) {
+                                    return 'Please enter treated note';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ],
-                      );
-                    }),
-                  ],
-                  const SizedBox(height: 20),
-                  Row(
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  }),
+                ],
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 25,),
+                  child: Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
@@ -349,9 +356,9 @@ class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadi
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      ScreeningForClassFormFour(
-                                    previousData:  combinedData,
-                                  ),
+                                      ScreeningForAngnwadiClassFormFour(
+                                        previousData: combinedData,
+                                      ),
                                 ),
                               );
                             }
@@ -372,76 +379,77 @@ class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadi
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    void _showReferralOptions(String deficiency) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            child: Container(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Select Referral Option',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ...referralChoices.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    String option = entry.value;
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          referralOptions[deficiency] = option;
-                        });
-                        Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                        child: Text(
-                          '${index + 1}. $option',
-                          style: TextStyle(fontSize: 16),
+  void _showReferralOptions(String deficiency) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Select Referral Option',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ...referralChoices.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  String option = entry.value;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        referralOptions[deficiency] = option;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
                         ),
                       ),
-                    );
-                  }),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text('Cancel'),
+                      child: Text(
+                        '${index + 1}. $option',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text('Cancel'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      );
-    }
+          ),
+        );
+      },
+    );
+  }
 
-   Map<String, dynamic> _prepareFormData() {
+  Map<String, dynamic> _prepareFormData() {
   Map<String, dynamic> formData = Map.from(widget.previousFormData);
 
   formData['deficiencesAtBirth'] = hasDeficiency;
@@ -489,10 +497,10 @@ class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadi
   formData['vitaminDDef_Note'] = _noteControllers['Vitamin D Def (Rickets)']?.text ?? '';
 
   // SAM/Stunting
-  formData['sAM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
-  formData['sAMTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
-  formData['sAMRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
-  formData['sAMRefer_SKNagpur'] = referralOptions['SAM/Stunting'] == 'SK Nagpur';
+  formData['saM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
+  formData['samTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
+  formData['samRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
+  formData['samRefer_SKNagpur'] = referralOptions['SAM/Stunting'] == 'SK Nagpur';
   formData['sam_Refer_RH'] = referralOptions['SAM/Stunting'] == 'RH';
   formData['sam_Refer_SDH'] = referralOptions['SAM/Stunting'] == 'SDH';
   formData['sam_Refer_DH'] = referralOptions['SAM/Stunting'] == 'DH';
@@ -500,7 +508,7 @@ class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadi
   formData['sam_Refer_IGMC'] = referralOptions['SAM/Stunting'] == 'IGMC';
   formData['sam_Refer_MJMJYAndMOUY'] = referralOptions['SAM/Stunting'] == 'MJMJY & MOUY';
   formData['sam_Refer_DEIC'] = referralOptions['SAM/Stunting'] == 'DEIC';
-  formData['sAM_Stunting_Note'] = _noteControllers['SAM/Stunting']?.text ?? '';
+  formData['saM_Stunting_Note'] = _noteControllers['SAM/Stunting']?.text ?? '';
 
   // Goiter
   formData['goiter'] = deficiencies['Goiter'] ?? false;
@@ -546,4 +554,4 @@ class _ScreeningFormAngnwadiScreenThreeState extends State<ScreeningFormAngnwadi
 
   return formData;
 }
-  }
+}

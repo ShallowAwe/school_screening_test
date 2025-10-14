@@ -63,7 +63,7 @@
         appBar: AppBar(
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
-          title: Text("Screening For ${widget.previousFormData['className']}"),
+          title: Text("Screening Form"),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
@@ -260,15 +260,19 @@
                                 child: TextFormField(
                                   controller: _noteControllers[deficiency],
                                   decoration: InputDecoration(
+                                    
                                     labelText: 'Enter Refer Note',
                                     border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                      borderSide: BorderSide(color: Colors.black),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                      borderSide: BorderSide(color: Colors.black),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                      width: 2,
+                                    ),
                                     ),
                                   ),
                                   validator: (value) {
@@ -293,13 +297,13 @@
                                   decoration: InputDecoration(
                                     labelText: 'Enter Treated Note',
                                     border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                      borderSide: BorderSide(color: Colors.black),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                      borderSide: BorderSide(color: Colors.black),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.red),
+                                      borderSide: BorderSide(color: const Color(0xFF2196F3)),
                                     ),
                                   ),
                                   validator: (value) {
@@ -320,57 +324,61 @@
                     }),
                   ],
                   const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4A5F7A),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8.0,8,8,25),
+                    child: Row(
+                      
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF4A5F7A),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 12),
                             ),
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text(
-                            'Previous',
-                            style: TextStyle(fontSize: 16),
+                            child: const Text(
+                              'Previous',
+                              style: TextStyle(fontSize: 16),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              final combinedData = _prepareFormData();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ScreeningForClassFormFour(
-                                    previousData:  combinedData,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                final combinedData = _prepareFormData();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ScreeningForClassFormFour(
+                                      previousData:  combinedData,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4A5F7A),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF4A5F7A),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 12),
                             ),
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text(
-                            'Next',
-                            style: TextStyle(fontSize: 16),
+                            child: const Text(
+                              'Next',
+                              style: TextStyle(fontSize: 16),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -489,18 +497,19 @@
   formData['vitaminDDef_Note'] = _noteControllers['Vitamin D Def (Rickets)']?.text ?? '';
 
   // SAM/Stunting
-  formData['sAM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
-  formData['sAMTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
-  formData['sAMRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
-  formData['sAMRefer_SKNagpur'] = referralOptions['SAM/Stunting'] == 'SK Nagpur';
-  formData['sam_Refer_RH'] = referralOptions['SAM/Stunting'] == 'RH';
-  formData['sam_Refer_SDH'] = referralOptions['SAM/Stunting'] == 'SDH';
-  formData['sam_Refer_DH'] = referralOptions['SAM/Stunting'] == 'DH';
-  formData['sam_Refer_GMC'] = referralOptions['SAM/Stunting'] == 'GMC';
-  formData['sam_Refer_IGMC'] = referralOptions['SAM/Stunting'] == 'IGMC';
-  formData['sam_Refer_MJMJYAndMOUY'] = referralOptions['SAM/Stunting'] == 'MJMJY & MOUY';
-  formData['sam_Refer_DEIC'] = referralOptions['SAM/Stunting'] == 'DEIC';
-  formData['sAM_Stunting_Note'] = _noteControllers['SAM/Stunting']?.text ?? '';
+// SAM/Stunting
+formData['saM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
+formData['samTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
+formData['samRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
+formData['samRefer_SKNagpur'] = referralOptions['SAM/Stunting'] == 'SK Nagpur';
+formData['sam_Refer_RH'] = referralOptions['SAM/Stunting'] == 'RH';
+formData['sam_Refer_SDH'] = referralOptions['SAM/Stunting'] == 'SDH';
+formData['sam_Refer_DH'] = referralOptions['SAM/Stunting'] == 'DH';
+formData['sam_Refer_GMC'] = referralOptions['SAM/Stunting'] == 'GMC';
+formData['sam_Refer_IGMC'] = referralOptions['SAM/Stunting'] == 'IGMC';
+formData['sam_Refer_MJMJYAndMOUY'] = referralOptions['SAM/Stunting'] == 'MJMJY & MOUY';
+formData['sam_Refer_DEIC'] = referralOptions['SAM/Stunting'] == 'DEIC';
+formData['saM_Stunting_Note'] = _noteControllers['SAM/Stunting']?.text ?? '';
 
   // Goiter
   formData['goiter'] = deficiencies['Goiter'] ?? false;

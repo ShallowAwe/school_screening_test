@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
 import 'package:school_test/models/ScreenedChild.dart';
@@ -16,15 +17,20 @@ import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
 class ScreenningSchoolScreen extends StatefulWidget {
-  final int? userid;
+  final int? doctorId;
+  final String doctorName;
   // final String? className;
-  const ScreenningSchoolScreen({super.key, this.userid, });
+  // final String? schoolName;
+  const ScreenningSchoolScreen({super.key, this.doctorId, required  this.doctorName, });
 
   @override
   State<ScreenningSchoolScreen> createState() => _ScreenningSchoolScreenState();
 }
 
 class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
+
+  //intializing the logger 
+  Logger logger = Logger();
   District? selectedDistrict;
   Taluka? selectedTaluka;
   Grampanchayat? selectedVillage;
@@ -55,6 +61,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   @override
   void initState() {
     super.initState();
+    // logger.i(widget.schoolName);
     fetchDistricts(); // Fetch districts on screen load
   }
 
@@ -73,28 +80,31 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
         final decoded = jsonDecode(response.body);
 
         if (decoded is Map<String, dynamic>) {
-         if (decoded['success'] == true && decoded['schools'] != null) {
-  return SchoolDetails.fromJson(decoded['schools']);  // ✅ Direct object, no [0]
-} else {
-            print('⚠️ No schools found or success=false:${response.body}');
+          if (decoded['success'] == true && decoded['schools'] != null) {
+            return SchoolDetails.fromJson(
+              decoded['schools'],
+            ); // ✅ Direct object, no [0]
+          } else {
+            logger.e('⚠️ No schools found or success=false:${response.body}');
           }
         } else {
-          print('⚠️ Unexpected JSON format');
+          logger.e('⚠️ Unexpected JSON format');
         }
       } else {
-        print('❌ Server error: ${response.statusCode}');
+        logger.f
+        ('❌ Server error: ${response.statusCode}');
       }
     } on SocketException {
-      print('❌ Network error: No Internet connection');
+      logger.f('❌ Network error: No Internet connection');
     } on FormatException {
-      print('❌ Invalid JSON format');
+      logger.f('❌ Invalid JSON format');
     } on HttpException {
-      print('❌ HTTP error occurred');
+      logger.f('❌ HTTP error occurred');
     } on TimeoutException {
-      print('❌ Request timed out');
+      logger.f('❌ Request timed out');
     } catch (e, stack) {
-      print('❌ Unexpected error: $e');
-      print(stack);
+      logger.f('❌ Unexpected error: $e');
+      logger.i(stack);
     }
 
     return null;
@@ -129,7 +139,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
         throw Exception('Failed to fetch screened data');
       }
     } catch (e) {
-      print('Error fetching screened data: $e');
+      logger.e('Error fetching screened data: $e');
       return [];
     }
   }
@@ -148,7 +158,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
         final decoded = jsonDecode(response.body);
 
         // Debug: Print the API response to see the structure
-        print('Districts API Response: $decoded');
+        logger.d('Districts API Response: $decoded');
 
         // Handle if API returns { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -173,7 +183,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
       setState(() {
         isLoadingDistricts = false;
       });
-      print('Error fetching districts: $e');
+      logger.e('Error fetching districts: $e');
       return []; // return empty list instead of null
     }
   }
@@ -198,7 +208,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        print('Talukas API Response: $decoded');
+        logger.d('Talukas API Response: $decoded');
 
         // Handle API returning { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -223,7 +233,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
       setState(() {
         isLoadingTalukas = false;
       });
-      print('Error fetching talukas: $e');
+      logger.e('Error fetching talukas: $e');
       return []; // return empty list on error
     }
   }
@@ -246,7 +256,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        print('Villages API Response: $decoded');
+        logger.d('Villages API Response: $decoded');
 
         // Handle API returning { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -273,79 +283,83 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
       setState(() {
         isLoadingVillages = false;
       });
-      print('Error fetching villages: $e');
+      logger.e('Error fetching villages: $e');
       return []; // return empty list on error
     }
   }
   // 🔹 Get Schools by GrampanchayatId
 
   Future<List<School>> fetchSchoolsByGrampanchayatId(
-  int grampanchayatId,
-) async {
-  setState(() {
-    isLoadingSchools = true;
-    schoolFetchError = null;
-    schools = [];
-    selectedSchool = null;
-  });
-
-  try {
-    final uri = Uri.parse(
-      "https://api.rbsknagpur.in/api/Rbsk/GetSchoolByGrampanchayatId?grampanchayatId=$grampanchayatId",
-    );
-
-    final response = await http.get(uri).timeout(
-      const Duration(seconds: 30), // Add timeout
-      onTimeout: () {
-        throw Exception('Request timed out. Please check your internet connection.');
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-
-      print('Schools API Response: $decoded');
-
-      if (decoded is List) {
-        final fetchedSchools = decoded
-            .map((e) => School.fromJson(e))
-            .toList();
-
-        setState(() {
-          schools = fetchedSchools;
-          isLoadingSchools = false;
-        });
-
-        return fetchedSchools;
-      } else {
-        throw Exception('Unexpected response format');
-      }
-    } else {
-      throw Exception('Failed: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('❌ Error fetching schools: $e');
+    int grampanchayatId,
+  ) async {
     setState(() {
-      isLoadingSchools = false;
-      schoolFetchError = e.toString().contains('timeout')
-          ? "Request timed out. Check internet connection."
-          : "Error: $e";
+      isLoadingSchools = true;
+      schoolFetchError = null;
+      schools = [];
+      selectedSchool = null;
     });
-    
-    // Show error to user
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(schoolFetchError ?? 'Failed to load schools'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
+
+    try {
+      final uri = Uri.parse(
+        "https://api.rbsknagpur.in/api/Rbsk/GetSchoolByGrampanchayatId?grampanchayatId=$grampanchayatId",
       );
+
+      final response = await http
+          .get(uri)
+          .timeout(
+            const Duration(seconds: 180), // Add timeout
+            onTimeout: () {
+              throw Exception(
+                'Request timed out. Please check your internet connection.',
+              );
+            },
+          );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+
+        logger.d('Schools API Response: $decoded');
+
+        if (decoded is List) {
+          final fetchedSchools = decoded
+              .map((e) => School.fromJson(e))
+              .toList();
+
+          setState(() {
+            schools = fetchedSchools;
+            isLoadingSchools = false;
+          });
+
+          return fetchedSchools;
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        throw Exception('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      logger.e('❌ Error fetching schools: $e');
+      setState(() {
+        isLoadingSchools = false;
+        schoolFetchError = e.toString().contains('timeout')
+            ? "Request timed out. Check internet connection."
+            : "Error: $e";
+      });
+
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(schoolFetchError ?? 'Failed to load schools'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      return [];
     }
-    
-    return [];
   }
-}
   // Mock data for school information - will be replaced with API data in future
 
   final List<String> classes = [
@@ -463,6 +477,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
                         setState(() {
                           schools = fetchedSchools;
+                          // print("fetchSchoolsByGrampanchayatId Api response: $schools");
                         });
                       },
                       hint: 'Select Village',
@@ -475,7 +490,6 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                     _buildDropdown<School>(
                       hint: "Select School",
                       value: selectedSchool,
-                      // Filter the items here
                       items: schools.where((s) => s.flag == 'School').toList(),
                       getLabel: (school) => school.schoolName,
                       onChanged: (School? newValue) async {
@@ -489,20 +503,42 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                           schoolDetailsError = null;
                         });
 
+                        logger.d(
+                          '🏫 Selected school: ${newValue.schoolName} (ID: ${newValue.schoolId})',
+                        );
+
                         try {
                           final details = await fetchSchoolDetails(
                             newValue.schoolId,
                           );
+
                           setState(() {
                             schoolDetails = details;
                             isLoadingSchoolDetails = false;
                           });
-                        } catch (e) {
+
+                          if (details != null) {
+                            logger.d(
+                              '✅ School details fetched successfully for ID: ${newValue.schoolId}',
+                            );
+                            logger.d(
+                              '📦 SchoolDetails object: ${details.toString()}',
+                            );
+                          } else {
+                            logger.d(
+                              '⚠️ fetchSchoolDetails() returned null for ID: ${newValue.schoolId}',
+                            );
+                          }
+                        } catch (e, stack) {
                           setState(() {
                             schoolDetailsError =
                                 'Failed to load school details: $e';
                             isLoadingSchoolDetails = false;
                           });
+                          logger.f(
+                            '❌ Exception while fetching school details: $e',
+                          );
+                          logger.f(stack);
                         }
                       },
                     ),
@@ -512,7 +548,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                       const SizedBox(height: 32),
                       _buildSchoolInformation(),
                       const SizedBox(height: 10),
-                      _buildClassSelection(widget.userid!),
+                      _buildClassSelection(widget.doctorId!),
                     ],
                   ],
                 ),
@@ -587,7 +623,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   Widget _buildSchoolInformation() {
     // TODO: Replace with API call to fetch school information
     final schoolInfo = schoolData[selectedSchool];
-    
+
     if (schoolInfo == null) return const SizedBox.shrink();
 
     return Container(
@@ -671,7 +707,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
     ];
   }
 
-  Widget _buildClassSelection(int userId) {
+  Widget _buildClassSelection(int doctorId) {
     final availableClasses = getAvailableClasses();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -681,7 +717,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
         const SizedBox(height: 10),
         if (selectedSchool != null && schoolDetails != null) ...[
           Text(
-            'School ID / DISE code: ${selectedSchool!.schoolId}',
+            'School ID / DISE code: ${selectedSchool!.schoolCode}',
             style: const TextStyle(
               fontSize: 17,
               color: Colors.black87,
@@ -719,7 +755,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
               ),
               const SizedBox(width: 40),
               Text(
-                'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
+                'Total Girls: ${schoolDetails!.totalNoOfGirls}',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black87,
@@ -757,9 +793,10 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => StudentInfoScreen(
+                      isSchool: true,
                       schoolId: selectedSchool!.schoolId,
                       className: selectedClass!,
-                      userId: userId,
+                      doctorId: doctorId,
                     ),
                   ),
                 );
@@ -870,7 +907,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
     final isEnabled = selectedClass != null;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -893,7 +930,8 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                     className: selectedClass!,
                   );
 
-                  print('Screened Children: $screenedData');
+                  logger.d('Screened Children: $screenedData');
+                  logger.i('Selected Class: $selectedClass');
 
                   // Navigate to the next screen and pass the data
                   Navigator.push(
@@ -901,9 +939,10 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                     MaterialPageRoute(
                       builder: (context) => ScreeningFormScreenOne(
                         // school: selectedSchool!,
-                        userid: widget.userid!,
+                        doctorId: widget.doctorId!,
                         schoolId: selectedSchool!.schoolId,
                         schoolName: selectedSchool!.schoolName,
+                        doctorName: widget.doctorName,
                         className: selectedClass!,
                         // screenedChildren: screenedData,
                       ),

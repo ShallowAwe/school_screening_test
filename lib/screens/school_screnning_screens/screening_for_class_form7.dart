@@ -120,71 +120,53 @@ class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven>
   }
 
   Map<String, dynamic> _buildOutputData() {
-    Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
+  
+  if (hasYesDiseases && hasDisability) {
+    // Disability is selected
+    outputData['disibility'] = true;
+    outputData['disibilityTreated'] = treatmentOption;
+    outputData['disibilityRefer'] = !treatmentOption;
     
-    if (hasYesDiseases && hasDisability) {
-      // Disability is selected
-      outputData[disabilityConfig['field']!] = true;
-      outputData[disabilityConfig['treatedField']!] = treatmentOption;
-      outputData[disabilityConfig['referField']!] = !treatmentOption;
-      
-      // Add referral options
-      if (!treatmentOption) {
-        // Set referral flags based on selection
-        for (var referral in referralList) {
-          String referralField = referral['field']!;
-          String fullReferralField;
-          
-          if (referralField == 'SKNagpur') {
-            fullReferralField = '${disabilityConfig['referField']}_$referralField';
-          } else {
-            fullReferralField = '${disabilityConfig['field']}_$referralField';
-          }
-          
-          outputData[fullReferralField] = selectedReferral == referral['display'];
-        }
-      } else {
-        // Set all referral options to false if treated
-        for (var referral in referralList) {
-          String referralField = referral['field']!;
-          String fullReferralField;
-          
-          if (referralField == 'SKNagpur') {
-            fullReferralField = '${disabilityConfig['referField']}_$referralField';
-          } else {
-            fullReferralField = '${disabilityConfig['field']}_$referralField';
-          }
-          
-          outputData[fullReferralField] = false;
-        }
-      }
-      
-      // Add note
-      outputData['${disabilityConfig['field']}_Note'] = noteController.text;
-    } else {
-      // No disability selected - set all to false
-      outputData[disabilityConfig['field']!] = false;
-      outputData[disabilityConfig['treatedField']!] = false;
-      outputData[disabilityConfig['referField']!] = false;
-      
-      for (var referral in referralList) {
-        String referralField = referral['field']!;
-        String fullReferralField;
-        
-        if (referralField == 'SKNagpur') {
-          fullReferralField = '${disabilityConfig['referField']}_$referralField';
-        } else {
-          fullReferralField = '${disabilityConfig['field']}_$referralField';
-        }
-        
-        outputData[fullReferralField] = false;
-      }
-      
-      outputData['${disabilityConfig['field']}_Note'] = '';
+    // Add referral options based on selection
+    for (var referral in referralList) {
+      String referralField = referral['field']!;
+      String fullReferralField = _getReferralFieldName(referralField);
+      outputData[fullReferralField] = (!treatmentOption && selectedReferral == referral['display']);
     }
     
-    return outputData;
+    // Add note
+    outputData['disibility_Note'] = noteController.text;
+  } else {
+    // No disability selected - set all to false
+    outputData['disibility'] = false;
+    outputData['disibilityTreated'] = false;
+    outputData['disibilityRefer'] = false;
+    
+    for (var referral in referralList) {
+      String referralField = referral['field']!;
+      String fullReferralField = _getReferralFieldName(referralField);
+      outputData[fullReferralField] = false;
+    }
+    
+    outputData['disibility_Note'] = '';
   }
+  
+  return outputData;
+}
+
+String _getReferralFieldName(String referralField) {
+  // Based on model: disibilityRefer_SKNagpur, disibility_RH, disibility_SDH, etc.
+  // Exception: disibility_MJMJYAndMOUY (not disibility_Refer_MJMJYAndMOUY)
+  
+  if (referralField == 'SKNagpur') {
+    return 'disibilityRefer_SKNagpur';
+  } else if (referralField == 'MJMJYAndMOUY') {
+    return 'disibility_MJMJYAndMOUY';
+  } else {
+    return 'disibility_$referralField';
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +180,7 @@ class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven>
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Screening For ${widget.previousData['className']}",
+          "Screening Form",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -418,24 +400,12 @@ class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven>
                               if (!treatmentOption && selectedReferral.isNotEmpty) ...[
                                 SizedBox(width: 12),
                                 Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF2196F3).withOpacity(0.1),
-                                      border: Border.all(
-                                        color: Color(0xFF2196F3),
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      selectedReferral,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF2196F3),
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                  child: Text(
+                                    selectedReferral,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -451,10 +421,15 @@ class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven>
                           ),
                           SizedBox(height: 8),
                           Container(
-                            child: TextField(
+                            child: TextFormField(
+                              
                               controller: noteController,
-                              maxLines: 3,
+                              maxLines: 1,
                               decoration: InputDecoration(
+                                hintText: treatmentOption
+                                    ? 'Treated Note'
+                                    : 'Refer Note',
+                              
                                 border: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(4),
@@ -486,70 +461,73 @@ class _ScreeningForClassFormSevenState extends State<ScreeningForClassFormSeven>
             SizedBox(height: 40),
 
             // Navigation Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A5568),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Previous',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Map<String, dynamic> combinedData = _buildOutputData();
-                        
-                        // Debug print
-                        print('Combined Data from Form 7: $combinedData');
-                        
-                        // Navigate to next page with combined data
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ScreeningForClassFormEight(
-                              combinedData: combinedData,
-                            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8.0,8,8,25),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A5568),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      child: Text(
-                        'Next',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        child: Text(
+                          'Previous',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Map<String, dynamic> combinedData = _buildOutputData();
+                          
+                          // Debug print
+                          print('Combined Data from Form 7: $combinedData');
+                          
+                          // Navigate to next page with combined data
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ScreeningForClassFormEight(
+                                combinedData: combinedData,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          'Next',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

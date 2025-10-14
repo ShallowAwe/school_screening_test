@@ -5,14 +5,12 @@ import 'package:school_test/screens/school_screnning_screens/screening_for_class
 
 class ScreeningForClassFormSix extends StatefulWidget {
   final Map<String, dynamic> previousData;
-  
-  const ScreeningForClassFormSix({
-    super.key,
-    required this.previousData,
-  });
+
+  const ScreeningForClassFormSix({super.key, required this.previousData});
 
   @override
-  State<ScreeningForClassFormSix> createState() => _ScreeningForClassFormSixState();
+  State<ScreeningForClassFormSix> createState() =>
+      _ScreeningForClassFormSixState();
 }
 
 class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
@@ -107,7 +105,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize state for each adolescent issue
     for (var issue in adolescentConfig) {
       String key = issue['field']!;
@@ -123,9 +121,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
             padding: EdgeInsets.all(16),
@@ -157,7 +153,10 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 8,
+                          ),
                           child: Text(
                             '${index + 1}. ${referral['display']}',
                             style: TextStyle(
@@ -180,13 +179,11 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
     );
   }
 
- Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> _buildOutputData() {
   Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
   
-  // Add adolescent specific questionnaire flag (PascalCase)
-  outputData['AdolescentSpecificQuestionnare'] = hasYesIssues;
+  outputData['adolescentSpecificQuestionnare'] = hasYesIssues;
   
-  // Add issue-specific data
   for (var issueConf in adolescentConfig) {
     String field = issueConf['field']!;
     String prefix = issueConf['prefix']!;
@@ -194,124 +191,54 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
     String referField = issueConf['referField']!;
     
     if (adolescentIssues[field] == true) {
-      // Issue is selected
-      outputData[_toPascalCase(field)] = true;
+      outputData[field] = true;
+      outputData[treatedField] = treatmentOptions[field] == true;
+      outputData[referField] = treatmentOptions[field] == false;
       
-      // Add treatment/refer flags
-      outputData[_toPascalCase(treatedField)] = treatmentOptions[field] == true;
-      outputData[_toPascalCase(referField)] = treatmentOptions[field] == false;
-      
-      // Add referral options
       String selectedReferral = referralOptions[field] ?? '';
       
       for (var referral in referralList) {
-        String referralField = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        String referralFieldName = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
         outputData[fullReferralField] = selectedReferral == referral['display'];
       }
       
-      // Add note
-      outputData['${_toPascalCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
     } else {
-      // Issue not selected - set all to false
-      outputData[_toPascalCase(field)] = false;
-      outputData[_toPascalCase(treatedField)] = false;
-      outputData[_toPascalCase(referField)] = false;
+      outputData[field] = false;
+      outputData[treatedField] = false;
+      outputData[referField] = false;
       
       for (var referral in referralList) {
-        String referralField = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        String referralFieldName = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
         outputData[fullReferralField] = false;
       }
       
-      outputData['${_toPascalCase(field)}_Note'] = '';
+      outputData['${field}_Note'] = '';
     }
   }
   
   return outputData;
 }
 
-String _toPascalCase(String input) {
-  // Handle main issue fields
-  if (input == 'growingUpConcerns') return 'GrowingUpConcerns';
-  if (input == 'substanceAbuse') return 'SubstanceAbuse';
-  if (input == 'feelDepressed') return 'FeelDepressed';
-  if (input == 'delayInMenstrualCycles') return 'DelayInMenstrualCycles';
-  if (input == 'irregularPeriods') return 'IrregularPeriods';
-  if (input == 'painOrBurningSensationWhileUrinating') return 'PainOrBurningSensationWhileUrinating';
-  if (input == 'discharge') return 'Discharge';
-  if (input == 'painDuringMenstruation') return 'PainDuringMenstruation';
-  if (input == 'other_asq') return 'other_asq';
-  
-  // Handle treated fields
-  if (input == 'growingTreated') return 'GrowingTreated';
-  if (input == 'substanceTreated') return 'SubstanceTreated';
-  if (input == 'feelTreated') return 'FeelTreated';
-  if (input == 'delayTreated') return 'DelayTreated';
-  if (input == 'irregularTreated') return 'IrregularTreated';
-  if (input == 'painOrBurningTreated') return 'PainOrBurningTreated';
-  if (input == 'dischargeTreated') return 'DischargeTreated';
-  if (input == 'painDuringTreated') return 'PainDuringTreated';
-  if (input == 'other_asqTreated') return 'other_asqTreated';
-  
-  // Handle refer fields
-  if (input == 'growingRefer') return 'GrowingRefer';
-  if (input == 'substanceRefer') return 'SubstanceRefer';
-  if (input == 'feelRefer') return 'FeelRefer';
-  if (input == 'delayRefer') return 'DelayRefer';
-  if (input == 'irregularRefer') return 'IrregularRefer';
-  if (input == 'painOrBurningRefer') return 'PainOrBurningRefer';
-  if (input == 'dischargeRefer') return 'DischargeRefer';
-  if (input == 'painDuringRefer') return 'PainDuringRefer';
-  if (input == 'other_asqRefer') return 'other_asqRefer';
-  
-  return input;
-}
-
-String _getReferralFieldName(String prefix, String referralField, String issueField) {
-  // Based on C# model patterns:
-  // Growing: Growing_Refer_RH, GrowingRefer_SKNagpur
-  // Substance: Substance_Refer_RH, SubstanceRefer_SKNagpur
-  // Feel: Feel_Refer_RH, FeelRefer_SKNagpur
-  // Delay: Delay_Refer_RH, DelayRefer_SKNagpur
-  // Irregular: Irregular_Refer_RH, IrregularRefer_SKNagpur
-  // PainOrBurning: PainOrBurning_Refer_RH, PainOrBurningRefer_SKNagpur
-  // Discharge: Discharge_Refer_RH, DischargeRefer_SKNagpur
-  // PainDuring: PainDuring_Refer_RH, PainDuringRefer_SKNagpur
-  // other_asq: other_asqRefer_RH, other_asqRefer_SKNagpur, other_asqMJMJYAndMOUY
-  
+ String _getReferralFieldName(String prefix, String referralField, String issueField) {
   if (referralField == 'SKNagpur') {
-    // SKNagpur has different pattern
     if (prefix == 'other_asq') {
       return 'other_asqRefer_SKNagpur';
     }
-    return '${_toPascalCase(issueField)}Refer_SKNagpur';
+    return '${issueField}Refer_SKNagpur';
   } else if (referralField == 'MJMJYAndMOUY') {
-    // Special case for MJMJYAndMOUY
     if (prefix == 'other_asq') {
       return 'other_asqMJMJYAndMOUY';
     }
-    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
+    return '${prefix}_Refer_MJMJYAndMOUY';
   } else {
-    // Regular pattern: prefix_Refer_RH
     if (prefix == 'other_asq') {
       return 'other_asqRefer_$referralField';
     }
-    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+    return '${prefix}_Refer_$referralField';
   }
-}
-
-String _getPrefixForRefer(String prefix) {
-  // Convert prefix to match C# model
-  if (prefix == 'growing') return 'Growing';
-  if (prefix == 'substance') return 'Substance';
-  if (prefix == 'feel') return 'Feel';
-  if (prefix == 'delay') return 'Delay';
-  if (prefix == 'irregular') return 'Irregular';
-  if (prefix == 'painOrBurning') return 'PainOrBurning';
-  if (prefix == 'discharge') return 'Discharge';
-  if (prefix == 'painDuring') return 'PainDuring';
-  return prefix;
 }
 
   @override
@@ -326,7 +253,7 @@ String _getPrefixForRefer(String prefix) {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-         " Screening For ${widget.previousData['className']}",
+          "Screening Form",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -382,9 +309,13 @@ String _getPrefixForRefer(String prefix) {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasNoIssues ? Color(0xFF2196F3) : Colors.transparent,
+                          color: hasNoIssues
+                              ? Color(0xFF2196F3)
+                              : Colors.transparent,
                           border: Border.all(
-                            color: hasNoIssues ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasNoIssues
+                                ? Color(0xFF2196F3)
+                                : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -407,9 +338,13 @@ String _getPrefixForRefer(String prefix) {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasYesIssues ? Color(0xFF2196F3) : Colors.transparent,
+                          color: hasYesIssues
+                              ? Color(0xFF2196F3)
+                              : Colors.transparent,
                           border: Border.all(
-                            color: hasYesIssues ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasYesIssues
+                                ? Color(0xFF2196F3)
+                                : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -450,7 +385,8 @@ String _getPrefixForRefer(String prefix) {
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              adolescentIssues[issueKey] = !adolescentIssues[issueKey]!;
+                              adolescentIssues[issueKey] =
+                                  !adolescentIssues[issueKey]!;
                               if (!adolescentIssues[issueKey]!) {
                                 treatmentOptions[issueKey] = true;
                                 referralOptions[issueKey] = '';
@@ -474,7 +410,11 @@ String _getPrefixForRefer(String prefix) {
                               borderRadius: BorderRadius.circular(2),
                             ),
                             child: adolescentIssues[issueKey]!
-                                ? Icon(Icons.check, color: Colors.white, size: 18)
+                                ? Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
                                 : null,
                           ),
                         ),
@@ -515,7 +455,11 @@ String _getPrefixForRefer(String prefix) {
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: treatmentOptions[issueKey]!
-                                        ? Icon(Icons.check, color: Colors.white, size: 14)
+                                        ? Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14,
+                                          )
                                         : null,
                                   ),
                                 ),
@@ -544,7 +488,11 @@ String _getPrefixForRefer(String prefix) {
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: !treatmentOptions[issueKey]!
-                                        ? Icon(Icons.check, color: Colors.white, size: 14)
+                                        ? Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14,
+                                          )
                                         : null,
                                   ),
                                 ),
@@ -552,24 +500,12 @@ String _getPrefixForRefer(String prefix) {
                                     referralOptions[issueKey]!.isNotEmpty) ...[
                                   SizedBox(width: 12),
                                   Expanded(
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF2196F3).withOpacity(0.1),
-                                        border: Border.all(
-                                          color: Color(0xFF2196F3),
-                                          width: 1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        referralOptions[issueKey]!,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF2196F3),
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                    child: Text(
+                                      referralOptions[issueKey]!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -581,13 +517,16 @@ String _getPrefixForRefer(String prefix) {
                               treatmentOptions[issueKey]!
                                   ? 'Enter Treated Note'
                                   : 'Enter Refer Note',
-                              style: TextStyle(fontSize: 16, color: Colors.black87),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
                             ),
                             SizedBox(height: 8),
                             Container(
                               child: TextField(
                                 controller: noteControllers[issueKey],
-                                maxLines: 3,
+                                maxLines: 1,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),
@@ -598,8 +537,10 @@ String _getPrefixForRefer(String prefix) {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Color(0xFF2196F3), width: 2),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                      width: 2,
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   contentPadding: EdgeInsets.all(12),
@@ -621,81 +562,77 @@ String _getPrefixForRefer(String prefix) {
             SizedBox(height: 40),
 
             // Navigation Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3F51B5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Previous',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Map<String, dynamic> combinedData = _buildOutputData();
-                        
-                        // Debug print
-                        print('Combined Data from Form 6: $combinedData');
-                        
-                        // Navigate to next page with combined data
-                        // Uncomment when you create the next screen
-                        
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ScreeningForClassFormSeven(
-                              previousData: combinedData,
-                            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8.0,8,8,25),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        );
-                        
-                        
-                        // // Temporary: Show success message
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text('Form completed successfully! Check console for data.'),
-                        //     backgroundColor: Colors.green,
-                        //   ),
-                        // );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3F51B5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      child: Text(
-                        'Next',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        child: Text(
+                          'Previous',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Map<String, dynamic> combinedData = _buildOutputData();
+              
+                          // Debug print
+                          print('Combined Data from Form 6: $combinedData');
+              
+                          // Navigate to next page with combined data
+                          // Uncomment when you create the next screen
+              
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ScreeningForClassFormSeven(
+                                previousData: combinedData,
+                              ),
+                            ),
+                          );
+              
+                        
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          'Next',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

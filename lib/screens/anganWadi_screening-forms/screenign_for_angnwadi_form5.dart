@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_anganwadi_form6.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form6.dart';
+
 
 class ScreenignForAngnwadiFormFive extends StatefulWidget {
     final Map<String, dynamic> previousData;
@@ -11,7 +11,7 @@ class ScreenignForAngnwadiFormFive extends StatefulWidget {
 }
 
 class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormFive> {
-  // Disease configuration with API field names and prefixes
+    // Disease configuration with API field names and prefixes
   final List<Map<String, String>> diseaseConfig = [
     {
       'display': 'Vision Impairment',
@@ -109,7 +109,7 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize state for each disease
     for (var disease in diseaseConfig) {
       String key = disease['field']!;
@@ -125,9 +125,7 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
             padding: EdgeInsets.all(16),
@@ -159,7 +157,10 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 8,
+                          ),
                           child: Text(
                             '${index + 1}. ${referral['display']}',
                             style: TextStyle(
@@ -182,13 +183,11 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
     );
   }
 
- Map<String, dynamic> _buildOutputData() {
+  Map<String, dynamic> _buildOutputData() {
   Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
   
-  // Add developmental delay flag (PascalCase)
-  outputData['DevelopmentalDelayIncludingDisability'] = hasYesDiseases;
+  outputData['developmentalDelayIncludingDisability'] = hasYesDiseases;
   
-  // Add disease-specific data
   for (var diseaseConf in diseaseConfig) {
     String field = diseaseConf['field']!;
     String prefix = diseaseConf['prefix']!;
@@ -196,130 +195,155 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
     String referField = diseaseConf['referField']!;
     
     if (diseases[field] == true) {
-      // Disease is selected
-      outputData[_toPascalCase(field)] = true;
+      outputData[field] = true;
+      outputData[treatedField] = treatmentOptions[field] == true;
+      outputData[referField] = treatmentOptions[field] == false;
       
-      // Add treatment/refer flags
-      outputData[_toPascalCase(treatedField)] = treatmentOptions[field] == true;
-      outputData[_toPascalCase(referField)] = treatmentOptions[field] == false;
-      
-      // Add referral options
       String selectedReferral = referralOptions[field] ?? '';
       
       for (var referral in referralList) {
-        String referralField = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        String referralFieldName = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
         outputData[fullReferralField] = selectedReferral == referral['display'];
       }
       
-      // Add note
-      outputData['${_toPascalCase(field)}_Note'] = noteControllers[field]?.text ?? '';
+      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
     } else {
-      // Disease not selected - set all to false
-      outputData[_toPascalCase(field)] = false;
-      outputData[_toPascalCase(treatedField)] = false;
-      outputData[_toPascalCase(referField)] = false;
+      outputData[field] = false;
+      outputData[treatedField] = false;
+      outputData[referField] = false;
       
       for (var referral in referralList) {
-        String referralField = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralField, field);
+        String referralFieldName = referral['field']!;
+        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
         outputData[fullReferralField] = false;
       }
       
-      outputData['${_toPascalCase(field)}_Note'] = '';
+      outputData['${field}_Note'] = '';
     }
   }
   
   return outputData;
 }
 
-String _toPascalCase(String input) {
-  // Handle main disease fields
-  if (input == 'visionImpairment') return 'VisionImpairment';
-  if (input == 'hearingImpairment') return 'HearingImpairment';
-  if (input == 'neuromotorImpairment') return 'NeuromotorImpairment';
-  if (input == 'motorDelay') return 'MotorDelay';
-  if (input == 'cognitiveDelay') return 'CognitiveDelay';
-  if (input == 'speechAndLanguageDelay') return 'SpeechAndLanguageDelay';
-  if (input == 'behaviouralDisorder') return 'BehaviouralDisorder';
-  if (input == 'learningDisorder') return 'LearningDisorder';
-  if (input == 'attentionDeficitHyperactivityDisorder') return 'AttentionDeficitHyperactivityDisorder';
-  if (input == 'other_ddid') return 'other_ddid';
-  
-  // Handle treated fields
-  if (input == 'visionTreated') return 'VisionTreated';
-  if (input == 'hearingTreated') return 'HearingTreated';
-  if (input == 'neuromotorTreated') return 'NeuromotorTreated';
-  if (input == 'motorDealyTrated') return 'MotorDealyTrated'; // Note: typo in C# model
-  if (input == 'cognitiveTrated') return 'CognitiveTrated';
-  if (input == 'speechTreated') return 'SpeechTreated';
-  if (input == 'behaviouralTreated') return 'BehaviouralTreated';
-  if (input == 'learningTreated') return 'LearningTreated';
-  if (input == 'attentionTreated') return 'AttentionTreated';
-  if (input == 'other_ddidTreated') return 'other_ddidTreated';
-  
-  // Handle refer fields
-  if (input == 'visionRefer') return 'VisionRefer';
-  if (input == 'hearingRefer') return 'HearingRefer';
-  if (input == 'neuromotorRefer') return 'NeuromotorRefer';
-  if (input == 'motorDelayRefer') return 'MotorDelayRefer';
-  if (input == 'cognitiveRefer') return 'CognitiveRefer';
-  if (input == 'speechRefer') return 'SpeechRefer';
-  if (input == 'behavoiuralRefer') return 'BehavoiuralRefer'; // Note: typo in C# model
-  if (input == 'learningRefer') return 'LearningRefer';
-  if (input == 'attentionRefer') return 'AttentionRefer';
-  if (input == 'other_ddidRefer') return 'other_ddidRefer';
-  
-  return input;
-}
 
-String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
-  // Based on C# model patterns:
-  // Vision: Vision_Refer_RH, VisionRefer_SKNagpur
-  // Hearing: Hearing_Refer_RH, HearingRefer_SKNagpur
-  // Neuro: Neuro_Refer_RH, NeuromotorRefer_SKNagpur
-  // Motor: Motor_Refer_RH, MotorDelayRefer_SKNagpur
-  // Cognitive: Cognitive_Refer_RH, CognitiveRefer_SKNagpur
-  // Speech: Speech_Refer_RH, SpeechRefer_SKNagpur
-  // Behavoiural: Behavoiural_Refer_RH, BehavoiuralRefer_SKNagpur (note typo in C#)
-  // Learning: Learning_Refer_RH, LearningRefer_SKNagpur
-  // Attention: Attention_Refer_RH, AttentionRefer_SKNagpur
-  // other_ddid: other_ddidRefer_RH, other_ddidRefer_SKNagpur, other_ddidMJMJYAndMOUY
-  
+ String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
+  // Handle SKNagpur referrals
   if (referralField == 'SKNagpur') {
-    // SKNagpur has different pattern
-    if (prefix == 'other_ddid') {
-      return 'other_ddidRefer_SKNagpur';
-    }
-    return '${_toPascalCase(diseaseField)}Refer_SKNagpur';
-  } else if (referralField == 'MJMJYAndMOUY') {
-    // Special case for MJMJYAndMOUY
-    if (prefix == 'other_ddid') {
-      return 'other_ddidMJMJYAndMOUY';
-    }
-    return '${_getPrefixForRefer(prefix)}_Refer_MJMJYAndMOUY';
-  } else {
-    // Regular pattern: prefix_Refer_RH
-    if (prefix == 'other_ddid') {
-      return 'other_ddidRefer_$referralField';
-    }
-    return '${_getPrefixForRefer(prefix)}_Refer_$referralField';
+    if (diseaseField == 'visionImpairment') return 'visionRefer_SKNagpur';
+    if (diseaseField == 'hearingImpairment') return 'hearingRefer_SKNagpur';
+    if (diseaseField == 'neuromotorImpairment') return 'neuromotorRefer_SKNagpur';
+    if (diseaseField == 'motorDelay') return 'motorDelayRefer_SKNagpur';
+    if (diseaseField == 'cognitiveDelay') return 'cognitiveRefer_SKNagpur';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speechRefer_SKNagpur';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiuralRefer_SKNagpur';
+    if (diseaseField == 'learningDisorder') return 'learningRefer_SKNagpur';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attentionRefer_SKNagpur';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_SKNagpur';
   }
+  
+  // Handle RH referrals
+  if (referralField == 'RH') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_RH';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_RH';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_RH';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_RH';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_RH';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_RH';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_RH';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_RH';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_RH';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_RH';
+  }
+  
+  // Handle SDH referrals
+  if (referralField == 'SDH') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_SDH';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_SDH';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_SDH';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_SDH';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_SDH';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_SDH';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_SDH';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_SDH';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_SDH';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_SDH';
+  }
+  
+  // Handle DH referrals
+  if (referralField == 'DH') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_DH';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DH';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DH';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_DH';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DH';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DH';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_DH';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_DH';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_DH';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_DH';
+  }
+  
+  // Handle GMC referrals
+  if (referralField == 'GMC') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_GMC';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_GMC';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_GMC';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_GMC';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_GMC';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_GMC';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_GMC';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_GMC';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_GMC';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_GMC';
+  }
+  
+  // Handle IGMC referrals
+  if (referralField == 'IGMC') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_IGMC';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_IGMC';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_IGMC';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_IGMC';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_IGMC';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_IGMC';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_IGMC';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_IGMC';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_IGMC';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_IGMC';
+  }
+  
+  // Handle MJMJYAndMOUY referrals
+  if (referralField == 'MJMJYAndMOUY') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_MJMJYAndMOUY';
+    if (diseaseField == 'other_ddid') return 'other_ddidMJMJYAndMOUY';
+  }
+  
+  // Handle DEIC referrals
+  if (referralField == 'DEIC') {
+    if (diseaseField == 'visionImpairment') return 'vision_Refer_DEIC';
+    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DEIC';
+    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DEIC';
+    if (diseaseField == 'motorDelay') return 'motor_Refer_DEIC';
+    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DEIC';
+    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DEIC';
+    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_DEIC';
+    if (diseaseField == 'learningDisorder') return 'learning_Refer_DEIC';
+    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_DEIC';
+    if (diseaseField == 'other_ddid') return 'other_ddidRefer_DEIC';
+  }
+  
+  return '';
 }
 
-String _getPrefixForRefer(String prefix) {
-  // Convert prefix to match C# model
-  if (prefix == 'vision') return 'Vision';
-  if (prefix == 'hearing') return 'Hearing';
-  if (prefix == 'neuro') return 'Neuro';
-  if (prefix == 'motor') return 'Motor';
-  if (prefix == 'cognitive') return 'Cognitive';
-  if (prefix == 'speech') return 'Speech';
-  if (prefix == 'behavoiural') return 'Behavoiural'; // Note: matches C# typo
-  if (prefix == 'learning') return 'Learning';
-  if (prefix == 'attention') return 'Attention';
-  return prefix;
-}
+  
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +357,7 @@ String _getPrefixForRefer(String prefix) {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Screening For ${widget.previousData['className']}",
+          "Screening Form",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -345,7 +369,7 @@ String _getPrefixForRefer(String prefix) {
             padding: EdgeInsets.only(right: 16.0),
             child: Center(
               child: Text(
-                '5/8',
+                '5/7',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -389,9 +413,13 @@ String _getPrefixForRefer(String prefix) {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasNoDiseases ? Color(0xFF2196F3) : Colors.transparent,
+                          color: hasNoDiseases
+                              ? Color(0xFF2196F3)
+                              : Colors.transparent,
                           border: Border.all(
-                            color: hasNoDiseases ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasNoDiseases
+                                ? Color(0xFF2196F3)
+                                : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -414,9 +442,13 @@ String _getPrefixForRefer(String prefix) {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasYesDiseases ? Color(0xFF2196F3) : Colors.transparent,
+                          color: hasYesDiseases
+                              ? Color(0xFF2196F3)
+                              : Colors.transparent,
                           border: Border.all(
-                            color: hasYesDiseases ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasYesDiseases
+                                ? Color(0xFF2196F3)
+                                : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -481,7 +513,11 @@ String _getPrefixForRefer(String prefix) {
                               borderRadius: BorderRadius.circular(2),
                             ),
                             child: diseases[diseaseKey]!
-                                ? Icon(Icons.check, color: Colors.white, size: 18)
+                                ? Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
                                 : null,
                           ),
                         ),
@@ -522,7 +558,11 @@ String _getPrefixForRefer(String prefix) {
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check, color: Colors.white, size: 14)
+                                        ? Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14,
+                                          )
                                         : null,
                                   ),
                                 ),
@@ -551,32 +591,25 @@ String _getPrefixForRefer(String prefix) {
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: !treatmentOptions[diseaseKey]!
-                                        ? Icon(Icons.check, color: Colors.white, size: 14)
+                                        ? Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14,
+                                          )
                                         : null,
                                   ),
                                 ),
                                 if (!treatmentOptions[diseaseKey]! &&
-                                    referralOptions[diseaseKey]!.isNotEmpty) ...[
+                                    referralOptions[diseaseKey]!
+                                        .isNotEmpty) ...[
                                   SizedBox(width: 12),
                                   Expanded(
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF2196F3).withOpacity(0.1),
-                                        border: Border.all(
-                                          color: Color(0xFF2196F3),
-                                          width: 1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        referralOptions[diseaseKey]!,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF2196F3),
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                    child: Text(
+                                      referralOptions[diseaseKey]!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -588,13 +621,16 @@ String _getPrefixForRefer(String prefix) {
                               treatmentOptions[diseaseKey]!
                                   ? 'Enter Treated Note'
                                   : 'Enter Refer Note',
-                              style: TextStyle(fontSize: 16, color: Colors.black87),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
                             ),
                             SizedBox(height: 8),
                             Container(
                               child: TextField(
                                 controller: noteControllers[diseaseKey],
-                                maxLines: 3,
+                                maxLines: 1,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),
@@ -605,8 +641,10 @@ String _getPrefixForRefer(String prefix) {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Color(0xFF2196F3), width: 2),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                      width: 2,
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   contentPadding: EdgeInsets.all(12),
@@ -628,70 +666,73 @@ String _getPrefixForRefer(String prefix) {
             SizedBox(height: 40),
 
             // Navigation Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A5568),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Previous',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Map<String, dynamic> combinedData = _buildOutputData();
-                        
-                        // Debug print
-                        print('Combined Data: $combinedData');
-                        
-                        // Navigate to next page with combined data
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ScreeningForClassFormSix(
-                              previousData: combinedData,
-                            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 25.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A5568),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      child: Text(
-                        'Next',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        child: Text(
+                          'Previous',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Map<String, dynamic> combinedData = _buildOutputData();
+              
+                          // Debug print
+                          print('Combined Data: $combinedData');
+              
+                          // Navigate to next page with combined data
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ScreeningForAngnwadiFormSix(
+                                previousData: combinedData,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A5568),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          'Next',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

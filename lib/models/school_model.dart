@@ -34,12 +34,12 @@ class SchoolDetails {
     String? latitude;
     String? longitude;
     String? SchoolPhoto;
-    int? userId;
+    int? DoctorId;
     bool? nationalDeworingProgram;
     bool? anemiaMuktaBharat;
     bool? vitASupplementationProgram;
 
-    SchoolDetails({this.schoolName, this.schoolCode, this.schoolPrincipalName, this.schoolContactNo, this.districtId, this.districtName, this.talukaId, this.talukaName, this.grampanchayatId, this.grampanchayatName, this.anganwadi, this.miniAnganwadi, this.firstClass, this.secondClass, this.thirdClass, this.fourthClass, this.fifthClass, this.sixthClass, this.seventhClass, this.eighthClass, this.ninethClass, this.tenthClass, this.eleventhClass, this.twelthClass, this.totalNoOFBoys, this.totalNoOfGirls, this.total, this.latitude, this.longitude, this.SchoolPhoto, this.userId, this.nationalDeworingProgram, this.anemiaMuktaBharat, this.vitASupplementationProgram}); 
+    SchoolDetails({this.schoolName, this.schoolCode, this.schoolPrincipalName, this.schoolContactNo, this.districtId, this.districtName, this.talukaId, this.talukaName, this.grampanchayatId, this.grampanchayatName, this.anganwadi, this.miniAnganwadi, this.firstClass, this.secondClass, this.thirdClass, this.fourthClass, this.fifthClass, this.sixthClass, this.seventhClass, this.eighthClass, this.ninethClass, this.tenthClass, this.eleventhClass, this.twelthClass, this.totalNoOFBoys, this.totalNoOfGirls, this.total, this.latitude, this.longitude, this.SchoolPhoto, this.DoctorId, this.nationalDeworingProgram, this.anemiaMuktaBharat, this.vitASupplementationProgram}); 
 
     SchoolDetails.fromJson(Map<String, dynamic> json) {
         schoolName = json['schoolName'];
@@ -72,7 +72,7 @@ class SchoolDetails {
         latitude = json['latitude'];
         longitude = json['longitude'];
         SchoolPhoto = json['SchoolPhoto'];
-        userId = json['userId'];
+        DoctorId = json['DoctorId'];
         nationalDeworingProgram = json['nationalDeworingProgram'];
         anemiaMuktaBharat = json['anemiaMuktaBharat'];
         vitASupplementationProgram = json['vitASupplementationProgram'];
@@ -110,7 +110,7 @@ class SchoolDetails {
         data['latitude'] = latitude;
         data['longitude'] = longitude;
         data['SchoolPhoto'] = SchoolPhoto;
-        data['userId'] = userId;
+        data['DoctorId'] = DoctorId;
         data['nationalDeworingProgram'] = nationalDeworingProgram;
         data['anemiaMuktaBharat'] = anemiaMuktaBharat;
         data['vitASupplementationProgram'] = vitASupplementationProgram;

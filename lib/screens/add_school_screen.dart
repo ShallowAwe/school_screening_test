@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,21 +13,20 @@ import 'package:school_test/models/grampanchayat_model.dart';
 import 'package:school_test/models/school_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:school_test/models/taluka_model.dart';
+import 'package:school_test/utils/error_popup.dart';
 
 class AddSchoolScreen extends StatefulWidget {
-  final int? userId;
-  const AddSchoolScreen({super.key, this.userId});
+  final int? DoctorId;
+  final String doctorName;
+  const AddSchoolScreen({super.key, this.DoctorId, required this.doctorName});
 
   @override
   State<AddSchoolScreen> createState() => _AddSchoolScreenState();
 }
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
-
-  
   //image
   File? selectedImage;
-  final ImagePicker _picker = ImagePicker();
   String? base64Image;
 
   final _formKey = GlobalKey<FormState>();
@@ -51,97 +49,99 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
   String baseUrl = ApiConfig.baseUrl;
 
-  // radio button 
+  // radio button
   Widget _buildServiceRadioBool(
-  String label,
-  bool? selectedValue,
-  ValueChanged<bool?> onChanged,
-) {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: Colors.grey[300]!),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 2,
+    String label,
+    bool? selectedValue,
+    ValueChanged<bool?> onChanged,
+  ) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
           ),
-        ),
-        SizedBox(width: 8),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Radio<bool>(
-              value: true,
-              groupValue: selectedValue,
-              onChanged: onChanged,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-            Text('Yes'),
-            SizedBox(width: 4),
-            Radio<bool>(
-              value: false,
-              groupValue: selectedValue,
-              onChanged: onChanged,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-            Text('No'),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+          SizedBox(width: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Radio<bool>(
+                value: true,
+                groupValue: selectedValue,
+                onChanged: onChanged,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+              Text('Yes'),
+              SizedBox(width: 4),
+              Radio<bool>(
+                value: false,
+                groupValue: selectedValue,
+                onChanged: onChanged,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+              Text('No'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   // fetch the  current locations
- Future<void> _getCurrentLocation() async {
-  try {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enable location services')),
-      );
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+  Future<void> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location permission denied')),
+          SnackBar(content: Text('Please enable location services')),
         );
         return;
       }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Location permission denied')));
+          return;
+        }
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentLatitude = position.latitude;
+        _currentLongitude = position.longitude;
+      });
+
+      print('Location obtained: $_currentLatitude, $_currentLongitude');
+    } catch (e) {
+      print('Location error: $e');
+      showErrorPopup(
+        context,
+        message: "failed to get location: $e",
+        isSuccess: false,
+      );
     }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    setState(() {
-      _currentLatitude = position.latitude;
-      _currentLongitude = position.longitude;
-    });
-
-    print('Location obtained: $_currentLatitude, $_currentLongitude');
-  } catch (e) {
-    print('Location error: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to get location: $e')),
-    );
   }
-}
 
   //fetch Disctrict, Taluka , Village from api and populate in dropdowns
 
@@ -365,11 +365,19 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
       body: jsonEncode(school.toJson()),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    // Decode the JSON response
+    final data = jsonDecode(response.body);
+
+    print("📡 addSchool API raw response: $data");
+
+    // Check both HTTP status and API-level 'success'
+    if ((response.statusCode == 200 || response.statusCode == 201) &&
+        data['success'] == true) {
       return ApiResponse<dynamic>.fromJson(data, null);
     } else {
-      throw Exception("Failed to add school: ${response.body}");
+      // Throw an error with the backend's message (but don’t expose it directly in UI)
+      final message = data['responseMessage'] ?? "Failed to add school";
+      throw Exception(message);
     }
   }
 
@@ -428,6 +436,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                   hintText: 'Enter Contact No',
                   isRequired: true,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10
                 ),
                 SizedBox(height: 20),
 
@@ -516,16 +525,23 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                 ),
                 SizedBox(height: 16),
 
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: List.generate(12, (index) {
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, // 3 items per row
+                    childAspectRatio: 2.5, // Adjust height ratio
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
                     String suffix = _getOrdinalSuffix(index + 1);
                     return _buildClassCheckbox(
                       index,
                       '${index + 1}$suffix Class',
                     );
-                  }),
+                  },
                 ),
                 SizedBox(height: 30),
 
@@ -697,7 +713,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                                 selectedImage!,
                                 width: double.infinity,
                                 height: 200,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.fill,
                               ),
                             ),
                           ),
@@ -745,6 +761,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
                       // 3️⃣ Create School object
                       final school = SchoolDetails(
+                        // SchoolId:
                         schoolName: _schoolNameController.text,
                         schoolCode: _schoolIdController.text,
                         schoolPrincipalName: _principalNameController.text,
@@ -782,8 +799,8 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                             (int.tryParse(_girlsController.text) ?? 0),
 
                         // Programs
-                        nationalDeworingProgram: nationalDeworming ,
-                        anemiaMuktaBharat: anemiaMukt ,
+                        nationalDeworingProgram: nationalDeworming,
+                        anemiaMuktaBharat: anemiaMukt,
                         vitASupplementationProgram: vitASupplement,
 
                         // Anganwadi flags
@@ -793,18 +810,19 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         // Media & User
                         SchoolPhoto:
                             base64Image, // converted uploaded image to Base64
-                          
-                        userId: widget.userId!, // logged-in user ID
+
+                        DoctorId: widget.DoctorId!, // logged-in user ID
                       );
 
-                      // 4️⃣ Call API
                       try {
                         final response = await addSchool(school);
+                        print("add scholl response: ${response.data}");
 
                         // 5️⃣ Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('School added successfully!')),
-
+                        showErrorPopup(
+                          context,
+                          message: "School added Successfully",
+                          isSuccess: true,
                         );
 
                         // 6️⃣ Optional: Reset form
@@ -816,12 +834,11 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           classSelections = List.filled(12, false);
                           _boysController.clear();
                           _girlsController.clear();
-                          nationalDeworming =  false;
-                          anemiaMukt =  false;
-                          vitASupplement =  false;
+                          nationalDeworming = false;
+                          anemiaMukt = false;
+                          vitASupplement = false;
                           _currentLatitude = null;
                           _currentLongitude = null;
-                          // schoolI = null;
                         });
 
                         Navigator.pop(context);
@@ -878,38 +895,47 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    bool isRequired = false,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+
+
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hintText,
+  bool isRequired = false,
+  TextInputType? keyboardType,
+  int? maxLength, // 👈 new optional parameter
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.grey[300]!),
+    ),
+    child: TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: [
+        if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+        if (keyboardType == TextInputType.phone)
+          FilteringTextInputFormatter.digitsOnly, // 👈 only digits for phone
+      ],
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey[500]),
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey[500]),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        validator: isRequired
-            ? (value) {
-                if (value == null || value.isEmpty) {
-                  return 'This field is required';
-                }
-                return null;
+      validator: isRequired
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return 'This field is required';
               }
-            : null,
-      ),
-    );
-  }
+              return null;
+            }
+          : null,
+    ),
+  );
+}
+
 
   Widget _buildDropdown<T>({
     required T? value,
@@ -950,107 +976,219 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   }
 
   Widget _buildClassCheckbox(int index, String className) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 20,
-          height: 20,
-          child: Checkbox(
-            value: classSelections[index],
-            onChanged: (bool? value) {
-              setState(() {
-                classSelections[index] = value ?? false;
-              });
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(3),
-            ),
+    final isSelected = classSelections[index];
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          classSelections[index] = !classSelections[index];
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
           ),
         ),
-        SizedBox(width: 8),
-        Text(className, style: TextStyle(fontSize: 14, color: Colors.black87)),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center, // Center content
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.blue : Colors.transparent,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(
+                  color: isSelected ? Colors.blue : Colors.grey[400]!,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Icon(Icons.check, color: Colors.white, size: 10)
+                  : null,
+            ),
+            SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                className,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? Colors.blue : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   //image pick
   // Pick image from gallery/camera
- Future<void> _pickAndCropImage(BuildContext context, ImageSource source) async {
-  try {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source);
+  Future<void> _pickAndCropImage(
+    BuildContext context,
+    ImageSource source,
+  ) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1920, // Optimize image size
+        maxHeight: 1920,
+        imageQuality: 85, // Balance quality and file size
+      );
 
-    if (image == null) return;
+      if (image == null) return;
 
-    final CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: image.path,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Cropper',
-          toolbarColor: Colors.deepOrange,
-          toolbarWidgetColor: Colors.white,
-          aspectRatioPresets: [
-            CropAspectRatioPreset.original,
-            CropAspectRatioPreset.square,
-            CropAspectRatioPresetCustom(),
-          ],
-        ),
-        IOSUiSettings(
-          title: 'Cropper',
-          aspectRatioPresets: [
-            CropAspectRatioPreset.original,
-            CropAspectRatioPreset.square,
-            CropAspectRatioPresetCustom(),
-          ],
-        ),
-        WebUiSettings(context: context),
-      ],
-    );
+      final CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: image.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Photo',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            backgroundColor: Colors.black,
+            activeControlsWidgetColor: Colors.blue,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPresetCustom(),
+            ],
+          ),
+        ],
+      );
 
-    if (croppedFile == null) return;
+      if (croppedFile == null) return;
 
-    // ✅ Update both selectedImage and base64Image
-    final file = File(croppedFile.path);
-    final bytes = await file.readAsBytes();
-    final base64 = base64Encode(bytes);
+      // Convert to base64
+      final file = File(croppedFile.path);
+      final bytes = await file.readAsBytes();
+      final base64 = base64Encode(bytes);
 
-    setState(() {
-      selectedImage = file;
-      base64Image = base64;
-    });
-  } catch (e) {
-    print("Error picking/cropping image: $e");
+      // Check file size (optional: warn if > 2MB)
+      final fileSizeInBytes = bytes.length;
+      final fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+
+      if (fileSizeInMB > 5) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Image is large (${fileSizeInMB.toStringAsFixed(1)}MB). Upload may take time.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        selectedImage = file;
+        base64Image = base64;
+      });
+    } on PlatformException catch (e) {
+      print("Platform error: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to access ${source == ImageSource.camera ? 'camera' : 'gallery'}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error picking/cropping image: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to process image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
-}
 
-/// Custom Aspect Ratio (2x3)
-
-
+  /// Custom Aspect Ratio (2x3)
 
   // //image build
   void _buildPhotoUpload(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // Header
+            Text(
+              'Upload Photo',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 16),
+            Divider(height: 1),
+
+            // Gallery Option
             ListTile(
-              leading: Icon(Icons.photo_library),
-              title: Text("Gallery"),
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.photo_library, color: Colors.blue),
+              ),
+              title: Text(
+                'Choose from Gallery',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
-                _pickAndCropImage(context, ImageSource.gallery  );
+                _pickAndCropImage(context, ImageSource.gallery);
               },
             ),
+
+            // Camera Option
             ListTile(
-              leading: Icon(Icons.camera_alt),
-              title: Text("Camera"),
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.camera_alt, color: Colors.green),
+              ),
+              title: Text(
+                'Take a Photo',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
-                _pickAndCropImage(context,ImageSource.camera);
+                _pickAndCropImage(context, ImageSource.camera);
               },
             ),
+
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -1073,10 +1211,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     }
   }
 }
-
-
-
-
 
 class CropAspectRatioPresetCustom implements CropAspectRatioPresetData {
   @override

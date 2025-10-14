@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
+import 'package:logger/logger.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:school_test/utils/api_client.dart';
 import 'package:school_test/config/endpoints.dart';
+import 'package:school_test/utils/error_popup.dart';
 
 class ScreeningForClassFormEight extends StatefulWidget {
   final Map<String, dynamic> combinedData;
@@ -18,100 +19,255 @@ class ScreeningForClassFormEight extends StatefulWidget {
 
 class _ScreeningForClassFormEightState
     extends State<ScreeningForClassFormEight> {
-  final TextEditingController _doctorNameController = TextEditingController();
-  
+  //instanciating the  Loggers
+
+  bool _isLoading = false;
+
+  TextEditingController _doctorNameController = TextEditingController();
+
+  /// instnace of Logger
+  final _logger = Logger();
   // Location state
   Position? _currentPosition;
   bool _isLoadingLocation = false;
   String? _locationError;
 
   // Disease categories mapping with exact C# model field names
+  // ✅ Corrected diseaseCategories mapping (matches backend model exactly)
   final Map<String, Map<String, dynamic>> diseaseCategories = {
     'A. Defects at Birth': {
-      'parent': 'DefectsAtBirth',
+      'parent': 'defectsAtBirth',
       'diseases': [
-        {'key': 'NeuralTubeDefects', 'label': 'Neural Tube Defects', 'prefix': 'Neural'},
-        {'key': 'DownsSyndrome', 'label': 'Downs Syndrome', 'prefix': 'Downs'},
-        {'key': 'CleftLipAndPalate', 'label': 'Cleft Lip and Palate', 'prefix': 'Cleft'},
-        {'key': 'TalipesClubFoot', 'label': 'Talipes Club Foot', 'prefix': 'Talipse'},
-        {'key': 'DvelopmentalDysplasiaOfHip', 'label': 'Developmental Dysplasia of Hip', 'prefix': 'Hip'},
-        {'key': 'CongenitalCatract', 'label': 'Congenital Cataract', 'prefix': 'Co'},
-        {'key': 'CongenitalDeafness', 'label': 'Congenital Deafness', 'prefix': 'Cd'},
-        {'key': 'CongentialHeartDisease', 'label': 'Congenital Heart Disease', 'prefix': 'Hd'},
-        {'key': 'RetinopathyOfPrematurity', 'label': 'Retinopathy of Prematurity', 'prefix': 'Rp'},
-        {'key': 'Other', 'label': 'Other', 'prefix': 'Other'},
-      ]
+        {
+          'key': 'neuralTubeDefects',
+          'label': 'Neural Tube Defects',
+          'prefix': 'neural',
+        },
+        {'key': 'downsSyndrome', 'label': 'Downs Syndrome', 'prefix': 'downs'},
+        {
+          'key': 'cleftLipAndPalate',
+          'label': 'Cleft Lip and Palate',
+          'prefix': 'cleft',
+        },
+        {
+          'key': 'talipesClubFoot',
+          'label': 'Talipes (club foot)',
+          'prefix': 'talipse',
+        },
+        {
+          'key': 'dvelopmentalDysplasiaOfHip',
+          'label': 'Developmental Dysplasia of Hip',
+          'prefix': 'hip',
+        },
+        {
+          'key': 'congenitalCatract',
+          'label': 'Congenital Cataract',
+          'prefix': 'congenital',
+        },
+        {
+          'key': 'congenitalDeafness',
+          'label': 'Congenital Deafness',
+          'prefix': 'deafness',
+        },
+        {
+          'key': 'congentialHeartDisease',
+          'label': 'Congenital Heart Disease',
+          'prefix': 'heartDisease',
+        },
+        {
+          'key': 'retinopathyOfPrematurity',
+          'label': 'Retinopathy of Prematurity',
+          'prefix': 'retinopathy',
+        },
+        {'key': 'other', 'label': 'Other', 'prefix': 'other'},
+      ],
     },
     'B. Deficiencies': {
-      'parent': 'DeficiencesAtBirth',
+      'parent': 'deficiencesAtBirth',
       'diseases': [
-        {'key': 'Anemia', 'label': 'Anemia', 'prefix': 'Anemia'},
-        {'key': 'VitaminADef', 'label': 'Vitamin A Deficiency', 'prefix': 'VA'},
-        {'key': 'VitaminDDef', 'label': 'Vitamin D Deficiency', 'prefix': 'VD'},
-        {'key': 'SAM_Stunting', 'label': 'SAM Stunting', 'prefix': 'Sam'},
-        {'key': 'Goiter', 'label': 'Goiter', 'prefix': 'G'},
-        {'key': 'VitaminBcomplexDef', 'label': 'Vitamin B Complex Deficiency', 'prefix': 'VB'},
-        {'key': 'OthersSpecify', 'label': 'Others', 'prefix': 'Ot'},
-      ]
+        {'key': 'anemia', 'label': 'Anemia', 'prefix': 'anemia'},
+        {
+          'key': 'vitaminADef',
+          'label': 'Vitamin A Deficiency',
+          'prefix': 'vitaminA',
+        },
+        {
+          'key': 'vitaminDDef',
+          'label': 'Vitamin D Deficiency',
+          'prefix': 'vitaminD',
+        },
+        {'key': 'saM_Stunting', 'label': 'SAM Stunting', 'prefix': 'sam'},
+        {'key': 'goiter', 'label': 'Goiter', 'prefix': 'goiter'},
+        {
+          'key': 'vitaminBcomplexDef',
+          'label': 'Vitamin B Complex Deficiency',
+          'prefix': 'vitaminB',
+        },
+        {'key': 'othersSpecify', 'label': 'Others', 'prefix': 'others'},
+      ],
     },
     'C. Diseases': {
-      'parent': 'Diseases',
+      'parent': 'diseases',
       'diseases': [
-        {'key': 'SkinConditionsNotLeprosy', 'label': 'Skin Conditions (Not Leprosy)', 'prefix': 'Sk'},
-        {'key': 'OtitisMedia', 'label': 'Otitis Media', 'prefix': 'Otm'},
-        {'key': 'RehumaticHeartDisease', 'label': 'Rheumatic Heart Disease', 'prefix': 'Re'},
-        {'key': 'ReactiveAirwayDisease', 'label': 'Reactive Airway Disease', 'prefix': 'Ra'},
-        {'key': 'DentalConditions', 'label': 'Dental Conditions', 'prefix': 'De'},
-        {'key': 'ChildhoodLeprosyDisease', 'label': 'Childhood Leprosy Disease', 'prefix': 'Ch'},
-        {'key': 'ChildhoodTuberculosis', 'label': 'Childhood Tuberculosis', 'prefix': 'CTu'},
-        {'key': 'ChildhoodTuberculosisExtraPulmonary', 'label': 'Childhood Tuberculosis Extra Pulmonary', 'prefix': 'CTuExtra'},
+        {
+          'key': 'skinConditionsNotLeprosy',
+          'label': 'Skin Conditions (Not Leprosy)',
+          'prefix': 'skin',
+        },
+        {
+          'key': 'otitisMedia',
+          'label': 'Otitis Media',
+          'prefix': 'otitisMedia',
+        },
+        {
+          'key': 'rehumaticHeartDisease',
+          'label': 'Rheumatic Heart Disease',
+          'prefix': 'rehumatic',
+        },
+        {
+          'key': 'reactiveAirwayDisease',
+          'label': 'Reactive Airway Disease',
+          'prefix': 'reactive',
+        },
+        {
+          'key': 'dentalConditions',
+          'label': 'Dental Conditions',
+          'prefix': 'dental',
+        },
+        {
+          'key': 'childhoodLeprosyDisease',
+          'label': 'Childhood Leprosy Disease',
+          'prefix': 'childhood',
+        },
+        {
+          'key': 'childhoodTuberculosis',
+          'label': 'Childhood Tuberculosis',
+          'prefix': 'cTuberculosis',
+        },
+        {
+          'key': 'childhoodTuberculosisExtraPulmonary',
+          'label': 'Childhood Tuberculosis Extra Pulmonary',
+          'prefix': 'cTuExtra',
+        },
         {'key': 'other_disease', 'label': 'Other', 'prefix': 'other_disease'},
-      ]
+      ],
     },
     'D. Developmental Delay Including Disability': {
-      'parent': 'DevelopmentalDelayIncludingDisability',
+      'parent': 'developmentalDelayIncludingDisability',
       'diseases': [
-        {'key': 'VisionImpairment', 'label': 'Vision Impairment', 'prefix': 'Vision'},
-        {'key': 'HearingImpairment', 'label': 'Hearing Impairment', 'prefix': 'Hearing'},
-        {'key': 'NeuromotorImpairment', 'label': 'Neuromotor Impairment', 'prefix': 'Neuro'},
-        {'key': 'MotorDelay', 'label': 'Motor Delay', 'prefix': 'Motor'},
-        {'key': 'CognitiveDelay', 'label': 'Cognitive Delay', 'prefix': 'Cognitive'},
-        {'key': 'SpeechAndLanguageDelay', 'label': 'Speech and Language Delay', 'prefix': 'Speech'},
-        {'key': 'BehaviouralDisorder', 'label': 'Behavioural Disorder', 'prefix': 'Behavoiural'},
-        {'key': 'LearningDisorder', 'label': 'Learning Disorder', 'prefix': 'Learning'},
-        {'key': 'AttentionDeficitHyperactivityDisorder', 'label': 'Attention Deficit Hyperactivity Disorder', 'prefix': 'Attention'},
+        {
+          'key': 'visionImpairment',
+          'label': 'Vision Impairment',
+          'prefix': 'vision',
+        },
+        {
+          'key': 'hearingImpairment',
+          'label': 'Hearing Impairment',
+          'prefix': 'hearing',
+        },
+        {
+          'key': 'neuromotorImpairment',
+          'label': 'Neuromotor Impairment',
+          'prefix': 'neuromotor',
+        },
+        {'key': 'motorDelay', 'label': 'Motor Delay', 'prefix': 'motor'},
+        {
+          'key': 'cognitiveDelay',
+          'label': 'Cognitive Delay',
+          'prefix': 'cognitive',
+        },
+        {
+          'key': 'speechAndLanguageDelay',
+          'label': 'Speech and Language Delay',
+          'prefix': 'speech',
+        },
+        {
+          'key': 'behaviouralDisorder',
+          'label': 'Behavioural Disorder',
+          'prefix': 'behavoiural',
+        },
+        {
+          'key': 'learningDisorder',
+          'label': 'Learning Disorder',
+          'prefix': 'learning',
+        },
+        {
+          'key': 'attentionDeficitHyperactivityDisorder',
+          'label': 'Attention Deficit Hyperactivity Disorder',
+          'prefix': 'attention',
+        },
         {'key': 'other_ddid', 'label': 'Other', 'prefix': 'other_ddid'},
-      ]
+      ],
     },
     'E. Adolescent Specific': {
-      'parent': 'AdolescentSpecificQuestionnare',
+      'parent': 'adolescentSpecificQuestionnare',
       'diseases': [
-        {'key': 'GrowingUpConcerns', 'label': 'Growing Up Concerns', 'prefix': 'Growing'},
-        {'key': 'SubstanceAbuse', 'label': 'Substance Abuse', 'prefix': 'Substance'},
-        {'key': 'FeelDepressed', 'label': 'Feel Depressed', 'prefix': 'Feel'},
-        {'key': 'DelayInMenstrualCycles', 'label': 'Delay in Menstrual Cycles', 'prefix': 'Delay'},
-        {'key': 'IrregularPeriods', 'label': 'Irregular Periods', 'prefix': 'Irregular'},
-        {'key': 'PainOrBurningSensationWhileUrinating', 'label': 'Pain or Burning Sensation While Urinating', 'prefix': 'PainOrBurning'},
-        {'key': 'Discharge', 'label': 'Discharge', 'prefix': 'Discharge'},
-        {'key': 'PainDuringMenstruation', 'label': 'Pain During Menstruation', 'prefix': 'PainDuring'},
+        {
+          'key': 'growingUpConcerns',
+          'label': 'Growing Up Concerns',
+          'prefix': 'growing',
+        },
+        {
+          'key': 'substanceAbuse',
+          'label': 'Substance Abuse',
+          'prefix': 'substance',
+        },
+        {'key': 'feelDepressed', 'label': 'Feel Depressed', 'prefix': 'feel'},
+        {
+          'key': 'delayInMenstrualCycles',
+          'label': 'Delay in Menstrual Cycles',
+          'prefix': 'delay',
+        },
+        {
+          'key': 'irregularPeriods',
+          'label': 'Irregular Periods',
+          'prefix': 'irregular',
+        },
+        {
+          'key': 'painOrBurningSensationWhileUrinating',
+          'label': 'Pain or Burning Sensation While Urinating',
+          'prefix': 'painOrBurning',
+        },
+        {'key': 'discharge', 'label': 'Discharge', 'prefix': 'discharge'},
+        {
+          'key': 'painDuringMenstruation',
+          'label': 'Pain During Menstruation',
+          'prefix': 'painDuring',
+        },
         {'key': 'other_asq', 'label': 'Other', 'prefix': 'other_asq'},
-      ]
+      ],
     },
     'F. Disability': {
-      'parent': 'Disibility',
+      'parent': 'disibility',
       'diseases': [
-        {'key': 'Disibility', 'label': 'Disability', 'prefix': 'Disibility'},
-      ]
+        {'key': 'disibility', 'label': 'Disability', 'prefix': 'disibility'},
+      ],
     },
   };
 
   @override
   void initState() {
     super.initState();
-    // Debug: Print received data
-    print('=== COMBINED DATA RECEIVED IN FORM 8 ===');
-    print(json.encode(widget.combinedData));
-    
+    _logger.i(
+      "Current object => "
+      "ClassName: ${widget.combinedData['ClassName']}, "
+      "DoctorName: ${widget.combinedData['DoctorName']}, "
+      "SchoolId: ${widget.combinedData['SchoolId']}, "
+      "SchoolName: ${widget.combinedData['SchoolName']}, "
+      "DoctorId: ${widget.combinedData['DoctorId']}",
+    );
+
+    _doctorNameController =
+        widget.combinedData['DoctorName'] != null &&
+            widget.combinedData['DoctorName'] != 'string'
+        ? TextEditingController(text: widget.combinedData['DoctorName'])
+        : TextEditingController();
+    // Debug: _logger received data
+    _logger.i('=== COMBINED DATA RECEIVED IN FORM 8 ===');
+    _logger.i(json.encode(widget.combinedData));
+    _logger.i('=== Motor Delay Debug ===');
+    _logger.i('defects keys: ${widget.combinedData?.keys.toList()}');
+
     // Automatically get location when page loads
     _getCurrentLocation();
   }
@@ -141,12 +297,16 @@ class _ScreeningForClassFormEightState
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          throw Exception('Location permission denied. Please grant permission in settings.');
+          throw Exception(
+            'Location permission denied. Please grant permission in settings.',
+          );
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        throw Exception('Location permission permanently denied. Please enable in app settings.');
+        throw Exception(
+          'Location permission permanently denied. Please enable in app settings.',
+        );
       }
 
       // Get current position
@@ -160,20 +320,19 @@ class _ScreeningForClassFormEightState
         _isLoadingLocation = false;
       });
 
-      print('=== LOCATION OBTAINED ===');
-      print('Latitude: ${position.latitude}');
-      print('Longitude: ${position.longitude}');
-      print('Accuracy: ${position.accuracy}m');
-
+      _logger.i('=== LOCATION OBTAINED ===');
+      _logger.i('Latitude: ${position.latitude}');
+      _logger.i('Longitude: ${position.longitude}');
+      _logger.i('Accuracy: ${position.accuracy}m');
     } catch (e) {
       setState(() {
         _isLoadingLocation = false;
         _locationError = e.toString();
       });
-      
-      print('=== LOCATION ERROR ===');
-      print(e.toString());
-      
+
+      _logger.e('=== LOCATION ERROR ===');
+      _logger.e(e.toString());
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Location error: ${e.toString()}'),
@@ -185,27 +344,108 @@ class _ScreeningForClassFormEightState
   }
 
   /// Get hospital names from referral flags
-  String _getReferralHospitals(String prefix) {
+  String _getReferralHospitals(String prefix, String diseaseKey) {
     List<String> hospitals = [];
-    
-    final Map<String, String> hospitalMap;
-    
-    // Special case for Disability (has inconsistent pattern in C# model)
-    if (prefix == 'Disibility') {
-      hospitalMap = {
-        'DisibilityRefer_SKNagpur': 'SK Nagpur',
-        'Disibility_RH': 'RH',
-        'Disibility_SDH': 'SDH',
-        'Disibility_DH': 'DH',
-        'Disibility_GMC': 'GMC',
-        'Disibility_IGMC': 'IGMC',
-        'Disibility_MJMJYAndMOUY': 'MJMJY',
-        'Disibility_DEIC': 'DEIC',
+
+    // Special case for Disability (inconsistent pattern in backend)
+    if (prefix == 'disibility') {
+      final hospitalMap = {
+        'disibilityRefer_SKNagpur': 'SK Nagpur',
+        'disibility_RH': 'RH',
+        'disibility_SDH': 'SDH',
+        'disibility_DH': 'DH',
+        'disibility_GMC': 'GMC',
+        'disibility_IGMC': 'IGMC',
+        'disibility_MJMJYAndMOUY': 'MJMJY',
+        'disibility_DEIC': 'DEIC',
       };
-    } else {
-      // Standard pattern for all other diseases
-      hospitalMap = {
-        '${prefix}Refer_SKNagpur': 'SK Nagpur',
+
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
+    // Special case for other_disease
+    else if (prefix == 'other_disease') {
+      final hospitalMap = {
+        'other_diseaseRefer_SKNagpur': 'SK Nagpur',
+        'other_diseaseRefer_RH': 'RH',
+        'other_diseaseRefer_SDH': 'SDH',
+        'other_diseaseRefer_DH': 'DH',
+        'other_diseaseRefer_GMC': 'GMC',
+        'other_diseaseRefer_IGMC': 'IGMC',
+        'other_diseaseMJMJYAndMOUY': 'MJMJY',
+        'other_diseaseRefer_DEIC': 'DEIC',
+      };
+
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
+    // Special case for other_ddid
+    else if (prefix == 'other_ddid') {
+      final hospitalMap = {
+        'other_ddidRefer_SKNagpur': 'SK Nagpur',
+        'other_ddidRefer_RH': 'RH',
+        'other_ddidRefer_SDH': 'SDH',
+        'other_ddidRefer_DH': 'DH',
+        'other_ddidRefer_GMC': 'GMC',
+        'other_ddidRefer_IGMC': 'IGMC',
+        'other_ddidMJMJYAndMOUY': 'MJMJY',
+        'other_ddidRefer_DEIC': 'DEIC',
+      };
+
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
+    // Special case for other_asq
+    else if (prefix == 'other_asq') {
+      final hospitalMap = {
+        'other_asqRefer_SKNagpur': 'SK Nagpur',
+        'other_asqRefer_RH': 'RH',
+        'other_asqRefer_SDH': 'SDH',
+        'other_asqRefer_DH': 'DH',
+        'other_asqRefer_GMC': 'GMC',
+        'other_asqRefer_IGMC': 'IGMC',
+        'other_asqMJMJYAndMOUY': 'MJMJY',
+        'other_asqRefer_DEIC': 'DEIC',
+      };
+
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
+    // Special case for "other" (from Defects at Birth)
+    else if (diseaseKey == 'other') {
+      final hospitalMap = {
+        'otherRefer_SKNagpur': 'SK Nagpur',
+        'other_Refer_RH': 'RH',
+        'other_Refer_SDH': 'SDH',
+        'other_Refer_DH': 'DH',
+        'other_Refer_GMC': 'GMC',
+        'other_Refer_IGMC': 'IGMC',
+        'other_Refer_MJMJYAndMOUY': 'MJMJY',
+        'other_Refer_DEIC': 'DEIC',
+      };
+
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
+    // Standard pattern for all other diseases
+    else {
+      final hospitalMap = {
+        '${diseaseKey}Refer_SKNagpur': 'SK Nagpur',
         '${prefix}_Refer_RH': 'RH',
         '${prefix}_Refer_SDH': 'SDH',
         '${prefix}_Refer_DH': 'DH',
@@ -214,13 +454,13 @@ class _ScreeningForClassFormEightState
         '${prefix}_Refer_MJMJYAndMOUY': 'MJMJY',
         '${prefix}_Refer_DEIC': 'DEIC',
       };
-    }
 
-    hospitalMap.forEach((key, value) {
-      if (widget.combinedData[key] == true) {
-        hospitals.add(value);
-      }
-    });
+      hospitalMap.forEach((key, value) {
+        if (widget.combinedData[key] == true) {
+          hospitals.add(value);
+        }
+      });
+    }
 
     return hospitals.isNotEmpty ? hospitals.join(', ') : '';
   }
@@ -232,16 +472,105 @@ class _ScreeningForClassFormEightState
 
     diseaseCategories.forEach((categoryName, categoryData) {
       List<Widget> categoryDiseases = [];
-      
+
       for (var disease in categoryData['diseases']) {
         String diseaseKey = disease['key'];
-        
+
         // Check if this disease is selected
         if (data[diseaseKey] == true) {
           String prefix = disease['prefix'];
-          String treatedKey = '${prefix}Treated';
-          String referKey = '${prefix}Refer';
+
+          // Handle special cases where treated/refer fields don't follow standard pattern
+          // or have typos in the model
+          String treatedKey;
+          String referKey;
+
+          if (diseaseKey == 'saM_Stunting') {
+            treatedKey = 'samTreated';
+            referKey = 'samRefer';
+          } else if (diseaseKey == 'other') {
+            treatedKey = 'otherTreated';
+            referKey = 'otherRefer';
+          } else if (diseaseKey == 'retinopathyOfPrematurity') {
+            treatedKey = 'retinopathyTreated';
+            referKey = 'retinopathyRefer';
+          } else if (diseaseKey == 'other_disease') {
+            treatedKey = 'other_diseaseTreated';
+            referKey = 'other_diseaseRefer';
+          } else if (diseaseKey == 'other_ddid') {
+            treatedKey = 'other_ddidTreated';
+            referKey = 'other_ddidRefer';
+          } else if (diseaseKey == 'other_asq') {
+            treatedKey = 'other_asqTreated';
+            referKey = 'other_asqRefer';
+          } else if (diseaseKey == 'congenitalCatract') {
+            treatedKey = 'congenitalTarget';
+            referKey = 'congenitalRefer';
+          } else if (diseaseKey == 'congenitalDeafness') {
+            treatedKey = 'deafnessTarget';
+            referKey = 'deafnessRefer';
+          } else if (diseaseKey == 'congentialHeartDisease') {
+            treatedKey = 'heartDiseaseTarget';
+            referKey = 'heartDiseaseRefer';
+          } else if (diseaseKey == 'motorDelay') {
+            treatedKey = 'motorDealyTrated';
+            referKey = 'motorDelayRefer';
+          } else if (diseaseKey == 'cognitiveDelay') {
+            treatedKey = 'cognitiveTrated';
+            referKey = 'cognitiveRefer';
+          } else if (diseaseKey == 'rehumaticHeartDisease') {
+            treatedKey = 'rehumaticTrated';
+            referKey = 'rehumaticRefer';
+          } else if (diseaseKey == 'dentalConditions') {
+            treatedKey = 'dentalTrated';
+            referKey = 'dentalRefer';
+          } else if (diseaseKey == 'skinConditionsNotLeprosy') {
+            treatedKey = 'skinTrated';
+            referKey = 'skinRefer';
+          } else if (diseaseKey == 'vitaminADef') {
+            treatedKey = 'vitaminATreated';
+            referKey = 'vitaminARefer';
+          } else if (diseaseKey == 'vitaminDDef') {
+            treatedKey = 'vitaminDTreated';
+            referKey = 'vitaminDRefer';
+          } else if (diseaseKey == 'goiter') {
+            treatedKey = 'goiterTreated';
+            referKey = 'goiterRefer';
+          } else if (diseaseKey == 'vitaminBcomplexDef') {
+            treatedKey = 'vitaminBTreated';
+            referKey = 'vitaminBRefer';
+          } else if (diseaseKey == 'othersSpecify') {
+            treatedKey = 'othersTreated';
+            referKey = 'othersRefer';
+          } else if (diseaseKey == 'otitisMedia') {
+            treatedKey = 'otitisMediaTreated';
+            referKey = 'otitisMediaRefer';
+          } else if (diseaseKey == 'reactiveAirwayDisease') {
+            treatedKey = 'reactiveTreated';
+            referKey = 'reactiveRefer';
+          } else if (diseaseKey == 'childhoodLeprosyDisease') {
+            treatedKey = 'childhoodTreated';
+            referKey = 'childhoodRefer';
+          } else if (diseaseKey == 'childhoodTuberculosis') {
+            treatedKey = 'cTuberculosisTreated';
+            referKey = 'cTuberculosisRefer';
+          } else if (diseaseKey == 'neuromotorImpairment') {
+            treatedKey = 'neuromotorTreated';
+            referKey = 'neuromotorRefer';
+          } else {
+            treatedKey = '${prefix}Treated';
+            referKey = '${prefix}Refer';
+          }
+
           String noteKey = '${diseaseKey}_Note';
+
+          // Debug _logger
+          _logger.d('=== Disease Display ===');
+          _logger.d('Disease: $diseaseKey');
+          _logger.d(
+            'Treated Key: $treatedKey = ${widget.combinedData[treatedKey]}',
+          );
+          _logger.d('Refer Key: $referKey = ${widget.combinedData[referKey]}');
 
           categoryDiseases.add(
             Padding(
@@ -263,7 +592,8 @@ class _ScreeningForClassFormEightState
                       InkWell(
                         onTap: () {
                           setState(() {
-                            widget.combinedData[treatedKey] = !(widget.combinedData[treatedKey] ?? false);
+                            widget.combinedData[treatedKey] =
+                                !(widget.combinedData[treatedKey] ?? false);
                             // If treated is selected, unselect refer
                             if (widget.combinedData[treatedKey] == true) {
                               widget.combinedData[referKey] = false;
@@ -272,16 +602,26 @@ class _ScreeningForClassFormEightState
                         },
                         child: Row(
                           children: [
-                            const Text('Treated  ', style: TextStyle(fontSize: 15)),
+                            const Text(
+                              'Treated  ',
+                              style: TextStyle(fontSize: 15),
+                            ),
                             Container(
                               width: 24,
                               height: 24,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[400]!, width: 2),
+                                border: Border.all(
+                                  color: Colors.grey[400]!,
+                                  width: 2,
+                                ),
                                 color: Colors.white,
                               ),
                               child: widget.combinedData[treatedKey] == true
-                                  ? const Icon(Icons.check, size: 18, color: Colors.blue)
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: Colors.blue,
+                                    )
                                   : null,
                             ),
                           ],
@@ -292,7 +632,8 @@ class _ScreeningForClassFormEightState
                       InkWell(
                         onTap: () {
                           setState(() {
-                            widget.combinedData[referKey] = !(widget.combinedData[referKey] ?? false);
+                            widget.combinedData[referKey] =
+                                !(widget.combinedData[referKey] ?? false);
                             // If refer is selected, unselect treated
                             if (widget.combinedData[referKey] == true) {
                               widget.combinedData[treatedKey] = false;
@@ -301,16 +642,26 @@ class _ScreeningForClassFormEightState
                         },
                         child: Row(
                           children: [
-                            const Text('Refer  ', style: TextStyle(fontSize: 15)),
+                            const Text(
+                              'Refer  ',
+                              style: TextStyle(fontSize: 15),
+                            ),
                             Container(
                               width: 24,
                               height: 24,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[400]!, width: 2),
+                                border: Border.all(
+                                  color: Colors.grey[400]!,
+                                  width: 2,
+                                ),
                                 color: Colors.white,
                               ),
                               child: widget.combinedData[referKey] == true
-                                  ? const Icon(Icons.check, size: 18, color: Colors.blue)
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: Colors.blue,
+                                    )
                                   : null,
                             ),
                           ],
@@ -321,20 +672,26 @@ class _ScreeningForClassFormEightState
                       if (widget.combinedData[referKey] == true)
                         Expanded(
                           child: Text(
-                            _getReferralHospitals(prefix),
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                            _getReferralHospitals(prefix, diseaseKey),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   // Note field
-                  if (widget.combinedData[treatedKey] == true || widget.combinedData[referKey] == true)
+                  if (widget.combinedData[treatedKey] == true ||
+                      widget.combinedData[referKey] == true)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.combinedData[treatedKey] == true ? 'Enter Treated Note' : 'Enter Refer Note',
+                          widget.combinedData[treatedKey] == true
+                              ? 'Enter Treated Note'
+                              : 'Enter Refer Note',
                           style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 8),
@@ -345,9 +702,10 @@ class _ScreeningForClassFormEightState
                           ),
                           child: TextField(
                             controller: TextEditingController(
-                              text: widget.combinedData[noteKey] != null && 
-                                    widget.combinedData[noteKey] != 'string' 
-                                  ? widget.combinedData[noteKey].toString() 
+                              text:
+                                  widget.combinedData[noteKey] != null &&
+                                      widget.combinedData[noteKey] != 'string'
+                                  ? widget.combinedData[noteKey].toString()
                                   : '',
                             ),
                             onChanged: (value) {
@@ -379,10 +737,7 @@ class _ScreeningForClassFormEightState
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               categoryName,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         );
@@ -404,7 +759,6 @@ class _ScreeningForClassFormEightState
   }
 
   Future<void> _submitForm() async {
-    // Validation - Doctor name
     if (_doctorNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -420,9 +774,11 @@ class _ScreeningForClassFormEightState
     if (_currentPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_locationError != null 
-            ? "Location unavailable: $_locationError" 
-            : "Getting location... Please wait"),
+          content: Text(
+            _locationError != null
+                ? "Location unavailable: $_locationError"
+                : "Getting location... Please wait",
+          ),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 3),
           action: SnackBarAction(
@@ -432,7 +788,7 @@ class _ScreeningForClassFormEightState
           ),
         ),
       );
-      
+
       // Try to get location one more time
       if (!_isLoadingLocation) {
         await _getCurrentLocation();
@@ -440,7 +796,7 @@ class _ScreeningForClassFormEightState
       return;
     }
 
-    // Show loading dialog
+    // ✅ Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -460,84 +816,144 @@ class _ScreeningForClassFormEightState
         ),
       ),
     );
-
     try {
-      // Use combinedData directly (already has all previous form data)
-      Map<String, dynamic> payload = Map<String, dynamic>.from(widget.combinedData);
-      
-      // Add the final fields from Form 8
-      payload['DoctorName'] = _doctorNameController.text.trim();
+      setState(() => _isLoading = true);
+
+      // Prepare a clean payload copy
+      Map<String, dynamic> payload = Map<String, dynamic>.from(
+        widget.combinedData,
+      );
+
+      // Remove temporary fields (like "_schoolId", "_doctorId" etc.)
+      // payload.removeWhere((key, value) => key.toString().startsWith('_'));
+
+      // Added required fields from the form
+      payload['DoctorId'] = _toInt(widget.combinedData['doctorId']);
+      payload['UserId'] = _toInt(widget.combinedData['userId']);
+      payload['SchoolId'] = _toInt(widget.combinedData['SchoolId']);
+
+      payload['ClassName'] = widget.combinedData['className'];
       payload['Latitude'] = _currentPosition!.latitude.toString();
       payload['Longitude'] = _currentPosition!.longitude.toString();
-      
-      // Ensure all note fields are strings (not null or 'string')
+
+      //  Clean note fields (replace "string" or null with empty)
       payload.forEach((key, value) {
         if (key.endsWith('_Note')) {
-          payload[key] = (value == null || value == 'string') ? '' : value.toString();
+          payload[key] = (value == null || value == 'string')
+              ? ''
+              : value.toString();
         }
       });
-      
-      // Debug print
-      print('=== SUBMITTING PAYLOAD ===');
-      print(json.encode(payload));
-      
-      // Submit
+
+      // 🩺 Hardcoded screening status and reference suggestion fields
+      payload.addAll({
+        "investigationStatus": "string",
+        "diagnosisStatus": "string",
+        "pending": "string",
+        "medicine": "string",
+        "death": "string",
+        "cured": "string",
+        "nill": "string",
+        "note": "string",
+        "rH_Refer_Status": "string",
+        "rH_Refer_Note_Suggestion": "string",
+        "sdH_Refer_Status": "string",
+        "sdH_Refer_Note_Suggestion": "string",
+        "dH_Refer_Status": "string",
+        "dH_Refer_Note_Suggestion": "string",
+        "gmC_Refer_Status": "string",
+        "gmC_Refer_Note_Suggestion": "string",
+        "igmC_Refer_Status": "string",
+        "igmC_Refer_Note_Suggestion": "string",
+        "mjmjyAndMOUY_Refer_Status": "string",
+        "mjmjyAndMOUY_Refer_Note_Suggestion": "string",
+        "deiC_Refer_Status": "string",
+        "deiC_Refer_Note_Suggestion": "string",
+        "skNagpur_Refer_Status": "string",
+        "skNagpur_Refer_Note_Suggestion": "string",
+      });
+
+      // 🧾 Debug _logger before API call
+      _logger.i("=== FINAL PAYLOAD ===");
+      payload.forEach(
+        (key, value) => _logger.i('$key => ${value.runtimeType} : $value'),
+      );
+
+      // 🛰️ Send to API
       final api = ApiClient();
-      await api.post(Endpoints.addScreeningSchool, body: payload);
-      
-      // Close loading dialog
-      Navigator.of(context).push(MaterialPageRoute(
-        builder:  (context) => ScreeningFormScreenOne(
-     schoolName: widget.combinedData['_schoolName'],
-      userid: widget.combinedData['_userId'],
-      schoolId: widget.combinedData['_schoolId'],
-      className: widget.combinedData['_className'],),
-        ));
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Form submitted successfully!"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
+      final response = await api.post(
+        Endpoints.addScreeningSchool,
+        body: payload,
       );
-      
-      // Navigate back to first page
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      
-    } catch (e) {
-      // Close loading dialog
-      Navigator.of(context).pop();
-      
-      print('=== SUBMISSION ERROR ===');
-      print(e.toString());
-      
-      // Show error message with details
-      String errorMessage = 'Submission failed';
-      if (e.toString().contains('SocketException')) {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else if (e.toString().contains('TimeoutException')) {
-        errorMessage = 'Request timeout. Please try again.';
-      } else if (e.toString().contains('FormatException')) {
-        errorMessage = 'Invalid data format. Please check your entries.';
-      } else {
-        errorMessage = 'Submission failed: ${e.toString()}';
+
+      // Log API response
+      _logger.i("=== RESPONSE === $response");
+      if (context.mounted) {
+        Navigator.of(context).pop();
       }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Retry',
-            textColor: Colors.white,
-            onPressed: _submitForm,
+      // Check response
+      if (response['responseCode'] == 200) {
+        // ✅ Show success popup and AWAIT it
+        if (context.mounted) {
+          await showErrorPopup(
+            context,
+            isSuccess: true,
+            message: 'Form submitted successfully!',
+          );
+        }
+
+        if (!context.mounted) return;
+
+        // ✅ Navigate immediately after popup closes
+        // ✅ Navigate immediately after popup closes
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => ScreeningFormScreenOne(
+              className:
+                  widget.combinedData['ClassName']?.toString() ?? 'Unknown',
+              doctorName:
+                  widget.combinedData['DoctorName']?.toString() ?? 'Unknown',
+              schoolId: widget.combinedData['SchoolId'] ?? 0,
+              schoolName:
+                  widget.combinedData['SchoolName']?.toString() ?? 'Unknown',
+              doctorId: widget.combinedData['DoctorId'] ?? 0,
+            ),
           ),
-        ),
-      );
+          (Route<dynamic> route) => false, // 👈 removes all previous routes
+        );
+      } else {
+        if (context.mounted) {
+          await showErrorPopup(
+            context,
+            isSuccess: false,
+            message: response['responseMessage'] ?? 'Unknown error',
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      _logger.f("Error submitting form: $e");
+
+      // ✅ Show error popup
+      if (context.mounted) {
+        await showErrorPopup(
+          context,
+          isSuccess: false,
+          message: 'Something went wrong. Please try again later.',
+        );
+      }
     }
+  }
+
+  ///Helper function to safely convert IDs to int
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String && value.isNotEmpty) return int.tryParse(value) ?? 0;
+    return 0;
   }
 
   @override
@@ -551,8 +967,8 @@ class _ScreeningForClassFormEightState
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title:  Text(
-          "Screening For ${widget.combinedData['className']}",
+        title: Text(
+          "Screening Form",
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
         actions: const [
@@ -561,7 +977,11 @@ class _ScreeningForClassFormEightState
             child: Center(
               child: Text(
                 "8/8",
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -581,9 +1001,10 @@ class _ScreeningForClassFormEightState
                     Text(
                       "Doctor Name",
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
                     ),
                     Text(" *", style: TextStyle(color: Colors.red)),
                   ],
@@ -600,43 +1021,45 @@ class _ScreeningForClassFormEightState
                     decoration: const InputDecoration(
                       hintText: "Enter doctor name",
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Location Status Card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _currentPosition != null 
-                      ? Colors.green[50] 
-                      : _locationError != null 
-                        ? Colors.red[50] 
+                    color: _currentPosition != null
+                        ? Colors.green[50]
+                        : _locationError != null
+                        ? Colors.red[50]
                         : Colors.blue[50],
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: _currentPosition != null 
-                        ? Colors.green 
-                        : _locationError != null 
-                          ? Colors.red 
+                      color: _currentPosition != null
+                          ? Colors.green
+                          : _locationError != null
+                          ? Colors.red
                           : Colors.blue,
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        _currentPosition != null 
-                          ? Icons.location_on 
-                          : _isLoadingLocation 
-                            ? Icons.location_searching 
+                        _currentPosition != null
+                            ? Icons.location_on
+                            : _isLoadingLocation
+                            ? Icons.location_searching
                             : Icons.location_off,
-                        color: _currentPosition != null 
-                          ? Colors.green 
-                          : _locationError != null 
-                            ? Colors.red 
+                        color: _currentPosition != null
+                            ? Colors.green
+                            : _locationError != null
+                            ? Colors.red
                             : Colors.blue,
                       ),
                       const SizedBox(width: 12),
@@ -645,17 +1068,17 @@ class _ScreeningForClassFormEightState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _currentPosition != null 
-                                ? 'Location obtained' 
-                                : _isLoadingLocation 
-                                  ? 'Getting location...' 
+                              _currentPosition != null
+                                  ? 'Location obtained'
+                                  : _isLoadingLocation
+                                  ? 'Getting location...'
                                   : 'Location unavailable',
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
-                                color: _currentPosition != null 
-                                  ? Colors.green[700] 
-                                  : _locationError != null 
-                                    ? Colors.red[700] 
+                                color: _currentPosition != null
+                                    ? Colors.green[700]
+                                    : _locationError != null
+                                    ? Colors.red[700]
                                     : Colors.blue[700],
                               ),
                             ),
@@ -686,7 +1109,9 @@ class _ScreeningForClassFormEightState
                       if (_locationError != null || _currentPosition == null)
                         IconButton(
                           icon: const Icon(Icons.refresh),
-                          onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                          onPressed: _isLoadingLocation
+                              ? null
+                              : _getCurrentLocation,
                           color: Colors.blue,
                         ),
                     ],
@@ -703,7 +1128,7 @@ class _ScreeningForClassFormEightState
 
           // Submit button
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 25),
             child: ElevatedButton(
               onPressed: _isLoadingLocation ? null : _submitForm,
               style: ElevatedButton.styleFrom(
@@ -717,9 +1142,9 @@ class _ScreeningForClassFormEightState
               child: Text(
                 _isLoadingLocation ? "Getting Location..." : "Submit",
                 style: const TextStyle(
-                  fontSize: 16, 
-                  fontWeight: FontWeight.w500, 
-                  color: Colors.white
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
               ),
             ),

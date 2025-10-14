@@ -63,7 +63,7 @@ class _ScreeningForAngnwadiFormTwoState
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title: Text("Screening For ${widget.previousFormData['className']}"),
+        title: Text("Screening Form"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -73,7 +73,7 @@ class _ScreeningForAngnwadiFormTwoState
             padding: const EdgeInsets.only(right: 16.0),
             child: Center(
               child: Text(
-                '2/8',
+                '2/7',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -268,13 +268,13 @@ class _ScreeningForAngnwadiFormTwoState
                                 decoration: InputDecoration(
                                   labelText: 'Enter Refer Note',
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
                                   ),
                                 ),
                                 validator: (value) {
@@ -297,13 +297,13 @@ class _ScreeningForAngnwadiFormTwoState
                                 decoration: InputDecoration(
                                   labelText: 'Enter Treated Note',
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
                                   ),
                                 ),
                                 validator: (value) {
@@ -323,57 +323,61 @@ class _ScreeningForAngnwadiFormTwoState
                   }),
                 ],
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF4A5F7A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 25.0),
+                  child: Row(
+                    
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF4A5F7A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'Previous',
-                          style: TextStyle(fontSize: 16),
+                          child: const Text(
+                            'Previous',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            final combinedData = _prepareFormData();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ScreeningFormAngnwadiScreenThree(
-                                      previousFormData: combinedData,
-                                    ),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF4A5F7A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              final combinedData = _prepareFormData();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ScreeningFormAngnwadiScreenThree(
+                                        previousFormData: combinedData,
+                                      ),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF4A5F7A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(fontSize: 16),
+                          child: const Text(
+                            'Next',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
 import 'package:school_test/models/ScreenedChild.dart';
@@ -11,23 +12,22 @@ import 'package:school_test/models/grampanchayat_model.dart';
 import 'package:school_test/models/school.dart';
 import 'package:school_test/models/school_model.dart';
 import 'package:school_test/models/taluka_model.dart';
-import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_form7.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
 class ScreenningAngnwadiScreen extends StatefulWidget {
   // final String schoolName;
 
-  final int userid;
+  final int doctorId;
+  final String doctorName;
   // final int schoolId;
   // final String className;
 
   const ScreenningAngnwadiScreen({
     super.key,
     // required this.schoolName,
-    required this.userid,
+    required this.doctorId, required this.doctorName,
     // required this.schoolId,
     // required this.className,
   });
@@ -38,6 +38,11 @@ class ScreenningAngnwadiScreen extends StatefulWidget {
 }
 
 class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
+  //logger class initialioztion 
+  Logger _logger = Logger();
+  // gllobal form key
+  final _formKey = GlobalKey<FormState>();
+
   District? selectedDistrict;
   Taluka? selectedTaluka;
   Grampanchayat? selectedVillage;
@@ -80,36 +85,36 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
     try {
       final response = await http
           .get(url)
-          .timeout(const Duration(seconds: 180)); // ⏱ Timeout protection
+          .timeout(const Duration(seconds: 360)); // ⏱ Timeout protection
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-
+        _logger.i('School Details API Response: $decoded');
         if (decoded is Map<String, dynamic>) {
           if (decoded['success'] == true && decoded['schools'] != null) {
             return SchoolDetails.fromJson(
               decoded['schools'],
             ); // ✅ Direct object, no [0]
           } else {
-            print('⚠️ No schools found or success=false:${response.body}');
+            _logger.e('⚠️ No schools found or success=false:${response.body}');
           }
         } else {
-          print('⚠️ Unexpected JSON format');
+          _logger.e('⚠️ Unexpected JSON format');
         }
       } else {
-        print('❌ Server error: ${response.statusCode}');
+        _logger.f('❌ Server error: ${response.statusCode}');
       }
     } on SocketException {
-      print('❌ Network error: No Internet connection');
+      _logger.f('❌ Network error: No Internet connection');
     } on FormatException {
-      print('❌ Invalid JSON format');
+      _logger.f('❌ Invalid JSON format');
     } on HttpException {
-      print('❌ HTTP error occurred');
+      _logger.f('❌ HTTP error occurred');
     } on TimeoutException {
-      print('❌ Request timed out');
+      _logger.f('❌ Request timed out');
     } catch (e, stack) {
-      print('❌ Unexpected error: $e');
-      print(stack);
+      _logger.f('❌ Unexpected error: $e');
+      _logger.f(stack);
     }
 
     return null;
@@ -144,7 +149,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
         throw Exception('Failed to fetch screened data');
       }
     } catch (e) {
-      print('Error fetching screened data: $e');
+      _logger.e('Error fetching screened data: $e');
       return [];
     }
   }
@@ -162,8 +167,8 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
-        // Debug: Print the API response to see the structure
-        print('Districts API Response: $decoded');
+        // Debug: _logger the API response to see the structure
+        _logger.i('Districts API Response: $decoded');
 
         // Handle if API returns { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -188,7 +193,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       setState(() {
         isLoadingDistricts = false;
       });
-      print('Error fetching districts: $e');
+      _logger.e('Error fetching districts: $e');
       return []; // return empty list instead of null
     }
   }
@@ -213,7 +218,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        print('Talukas API Response: $decoded');
+        _logger.i('Talukas API Response: $decoded');
 
         // Handle API returning { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -238,7 +243,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       setState(() {
         isLoadingTalukas = false;
       });
-      print('Error fetching talukas: $e');
+      _logger.e('Error fetching talukas: $e');
       return []; // return empty list on error
     }
   }
@@ -261,7 +266,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        print('Villages API Response: $decoded');
+        _logger.i('Villages API Response: $decoded');
 
         // Handle API returning { "data": [...] } or just [...]
         final List<dynamic> data = decoded is Map<String, dynamic>
@@ -288,7 +293,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       setState(() {
         isLoadingVillages = false;
       });
-      print('Error fetching villages: $e');
+      _logger.e('Error fetching villages: $e');
       return []; // return empty list on error
     }
   }
@@ -312,7 +317,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       final response = await http
           .get(uri)
           .timeout(
-            const Duration(seconds: 30), // Add timeout
+            const Duration(seconds: 180), // Add timeout
             onTimeout: () {
               throw Exception(
                 'Request timed out. Please check your internet connection.',
@@ -323,7 +328,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
-        print('Schools API Response: $decoded');
+        _logger.i('Schools API Response: $decoded');
 
         if (decoded is List) {
           final fetchedSchools = decoded
@@ -343,7 +348,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
         throw Exception('Failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Error fetching schools: $e');
+      _logger.e('❌ Error fetching schools: $e');
       setState(() {
         isLoadingSchools = false;
         schoolFetchError = e.toString().contains('timeout')
@@ -388,7 +393,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title: const Text('Select School'),
+        title: const Text('Select Anganwadi'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -406,7 +411,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                   children: [
                     _buildRequiredLabel('District/Block'),
                     const SizedBox(height: 8),
-                    _buildDropdown<District>(
+                    _buildValidatedDropdown<District>(
                       value: selectedDistrict,
                       items: districts,
                       getLabel: (district) => district.districtName,
@@ -430,12 +435,13 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                         });
                       },
                       hint: 'Select District',
+                      validationMessage: 'Please select a district',
                     ),
                     const SizedBox(height: 24),
 
                     _buildRequiredLabel('Taluka'),
                     const SizedBox(height: 8),
-                    _buildDropdown<Taluka>(
+                    _buildValidatedDropdown<Taluka>(
                       value: selectedTaluka,
                       items: talukas,
                       getLabel: (taluka) => taluka.talukaName,
@@ -457,12 +463,13 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                         });
                       },
                       hint: 'Select Taluka',
+                      validationMessage: 'Please select a taluka',
                     ),
                     const SizedBox(height: 24),
 
                     _buildRequiredLabel('Village'),
                     const SizedBox(height: 8),
-                    _buildDropdown<Grampanchayat>(
+                    _buildValidatedDropdown<Grampanchayat>(
                       value: selectedVillage,
                       items: villages,
                       getLabel: (village) => village.grampanchayatName,
@@ -485,19 +492,18 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                         });
                       },
                       hint: 'Select Village',
+                      validationMessage: 'Please select a village',
                     ),
 
                     const SizedBox(height: 24),
 
-                    _buildRequiredLabel('School ID / DISE code'),
+                    _buildRequiredLabel('School Name '),
                     const SizedBox(height: 8),
-                    _buildDropdown<School>(
+                    _buildValidatedDropdown<School>(
                       hint: "Select School",
                       value: selectedSchool,
                       // Filter the items here
-                      items: schools
-                          .where((s) => s.flag == 'Anganwadi')
-                          .toList(),
+                      items: schools.where((s) => s.flag == 'Anganwadi' || s.flag =='miniAnganwadi').toList(),
                       getLabel: (school) => school.schoolName,
                       onChanged: (School? newValue) async {
                         if (newValue == null) return;
@@ -517,12 +523,14 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                           setState(() {
                             schoolDetails = details;
                             isLoadingSchoolDetails = false;
+                            _logger.i("schoolDetails Api response : ${details}");
                           });
                         } catch (e) {
                           setState(() {
                             schoolDetailsError =
                                 'Failed to load school details: $e';
                             isLoadingSchoolDetails = false;
+                            _logger.e("schoolDetails Api response error: $e");
                           });
                         }
                       },
@@ -533,7 +541,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                       const SizedBox(height: 32),
                       _buildSchoolInformation(),
                       const SizedBox(height: 10),
-                      _buildClassSelection(widget.userid!),
+                      _buildClassSelection(widget.doctorId),
                     ],
                   ],
                 ),
@@ -567,46 +575,80 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
     );
   }
 
-  Widget _buildDropdown<T>({
+  // Replace each _buildDropdown call with _buildValidatedDropdown
+
+  Widget _buildValidatedDropdown<T>({
     required T? value,
     required List<T> items,
     required String Function(T) getLabel,
     required ValueChanged<T?> onChanged,
     String? hint,
+    String? validationMessage,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          hint: hint != null
-              ? Padding(
-                  padding: EdgeInsets.only(left: 16),
-                  child: Text(hint, style: TextStyle(color: Colors.grey[500])),
-                )
-              : null,
-          items: items.map((T item) {
-            return DropdownMenuItem<T>(
-              value: item,
-              child: Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(getLabel(item)),
+    return FormField<T>(
+      validator: (val) {
+        if (value == null) {
+          return validationMessage ?? 'This field is required';
+        }
+        return null;
+      },
+      builder: (FormFieldState<T> state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: state.hasError ? Colors.red : Colors.grey[300]!,
+                ),
               ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<T>(
+                  value: value,
+                  isExpanded: true,
+                  hint: hint != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Text(
+                            hint,
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
+                        )
+                      : null,
+                  items: items.map((T item) {
+                    return DropdownMenuItem<T>(
+                      value: item,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: Text(getLabel(item)),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (T? newValue) {
+                    onChanged(newValue);
+                    state.didChange(newValue);
+                  },
+                ),
+              ),
+            ),
+            if (state.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 5),
+                child: Text(
+                  state.errorText!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildSchoolInformation() {
-    // TODO: Replace with API call to fetch school information
+   
     final schoolInfo = schoolData[selectedSchool];
 
     if (schoolInfo == null) return const SizedBox.shrink();
@@ -674,203 +716,219 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
     );
   }
 
-  List<String> getAvailableClasses() {
-    if (schoolDetails == null) return [];
-    return ['Mini Anganwadi', 'Anganwadi'];
+ List<String> getAvailableClasses() {
+  if (schoolDetails == null) return [];
+  
+  List<String> classes = [];
+  
+  // Dynamically check which anganwadi type is true
+  if (schoolDetails!.miniAnganwadi == true) {
+    classes.add('Mini Anganwadi');
   }
+  if (schoolDetails!.anganwadi == true) {
+    classes.add('Anganwadi');
+  }
+  
+  return classes;
+}
 
-  Widget _buildClassSelection(int userId) {
+  Widget _buildClassSelection(int doctorId) {
     final availableClasses = getAvailableClasses();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // School info display matching existing UI style
-        Divider(color: Colors.grey[300], thickness: 1),
-        const SizedBox(height: 10),
-        if (selectedSchool != null && schoolDetails != null) ...[
-          Text(
-            'School ID / DISE code: ${selectedSchool!.schoolId}',
-            style: const TextStyle(
-              fontSize: 17,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'School Name: ${schoolDetails!.schoolName}',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Total Students: ${schoolDetails!.total}',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Text(
-                'Total Boys: ${schoolDetails!.totalNoOFBoys}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 40),
-              Text(
-                'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-        Divider(color: Colors.grey[300], thickness: 1),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Select Anganwadi',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // School info display matching existing UI style
+          Divider(color: Colors.grey[300], thickness: 1),
+          const SizedBox(height: 10),
+          if (selectedSchool != null && schoolDetails != null) ...[
+            Text(
+              'School ID / DISE code: ${selectedSchool!.schoolCode}',
+              style: const TextStyle(
+                fontSize: 17,
                 color: Colors.black87,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            GestureDetector(
-              onTap: () {
-                if (selectedClass == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please select a Anganwadi first'),
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => StudentInfoScreen(
-                      schoolId: selectedSchool!.schoolId,
-                      className: selectedClass!,
-                      userId: userId,
-                    ),
-                  ),
-                );
-              },
-              child: const Text(
-                'View',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
-                ),
+            const SizedBox(height: 4),
+            Text(
+              'School Name: ${schoolDetails!.schoolName}',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
               ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Total Students: ${schoolDetails!.total}',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Text(
+                  'Total Boys: ${schoolDetails!.totalNoOFBoys}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 40),
+                Text(
+                  'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        isLoadingSchoolDetails
-            ? const Center(child: CircularProgressIndicator())
-            : schoolDetailsError != null
-            ? Text(
-                schoolDetailsError!,
-                style: const TextStyle(color: Colors.red),
-              )
-            : availableClasses.isEmpty
-            ? const Text(
-                'No classes available',
-                style: TextStyle(color: Colors.grey),
-              )
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Changed from 3 to 2
-                  childAspectRatio: 3, // Adjusted for better appearance
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+          Divider(color: Colors.grey[300], thickness: 1),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Select Anganwadi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
                 ),
-                itemCount: availableClasses.length,
-                itemBuilder: (context, index) {
-                  final className = availableClasses[index];
-                  final isSelected = selectedClass == className;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedClass = className;
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected ? Colors.blue : Colors.grey[300]!,
-                          width: isSelected ? 2 : 1,
-                        ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (selectedClass == null) {
+                    _logger.i("selectedClass");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a Anganwadi first'),
                       ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.blue
-                                  : Colors.transparent,
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.blue
-                                    : Colors.grey[400]!,
-                                width: 2,
-                              ),
-                            ),
-                            child: isSelected
-                                ? const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 12,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              className,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isSelected
-                                    ? Colors.blue
-                                    : Colors.black87,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
+                    );
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StudentInfoScreen(
+                        isSchool: false,
+                        schoolId: selectedSchool!.schoolId,
+                        className: selectedClass!,
+                        doctorId: doctorId,
                       ),
                     ),
                   );
                 },
+                child: const Text(
+                  'View',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          isLoadingSchoolDetails
+              ? const Center(child: CircularProgressIndicator())
+              : schoolDetailsError != null
+              ? Text(
+                  schoolDetailsError!,
+                  style: const TextStyle(color: Colors.red),
+                )
+              : availableClasses.isEmpty
+              ? const Text(
+                  'No classes available',
+                  style: TextStyle(color: Colors.grey),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // Changed from 3 to 2
+                    childAspectRatio: 3, // Adjusted for better appearance
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: availableClasses.length,
+                  itemBuilder: (context, index) {
+                    final className = availableClasses[index];
+                    final isSelected = selectedClass == className;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedClass = className;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey[300]!,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.blue
+                                      : Colors.grey[400]!,
+                                  width: 2,
+                                ),
+                              ),
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 12,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                className,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isSelected
+                                      ? Colors.blue
+                                      : Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
     );
   }
 
@@ -878,7 +936,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
     final isEnabled = selectedClass != null;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 25),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -894,29 +952,27 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
         width: double.infinity,
         height: 48,
         child: ElevatedButton(
-          onPressed: isEnabled
-              ? () async {
-                  final screenedData = await fetchScreenedData(
-                    schoolId: selectedSchool!.schoolId,
-                    className: selectedClass!,
-                  );
+          // Replace your onPressed in _buildStartScreeningButton()
+          onPressed: () {
+            if (!_formKey.currentState!.validate() ||
+                !_validateClassSelection()) {
+              return;
+            }
 
-                  print('Screened Children: $screenedData');
-
-                  // Navigate to the next screen and pass the data
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ScreeningForAnganWadiFormOne(
-                        userid: widget.userid,
-                        schoolId: selectedSchool!.schoolId,
-                        schoolName: selectedSchool!.schoolName,
-                        className: selectedClass!,
-                      ),
-                    ),
-                  );
-                }
-              : null,
+            // Your existing navigation code
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ScreeningForAnganWadiFormOne(
+                  doctorId: widget.doctorId,
+                  doctorName: widget.doctorName,
+                  schoolId: selectedSchool!.schoolId,
+                  schoolName: selectedSchool!.schoolName,
+                  className: selectedClass!,
+                ),
+              ),
+            );
+          },
 
           style: ElevatedButton.styleFrom(
             backgroundColor: isEnabled ? Colors.blue[800] : Colors.grey[400],
@@ -933,5 +989,18 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
         ),
       ),
     );
+  }
+
+  bool _validateClassSelection() {
+    if (selectedClass == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an Anganwadi class'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 }

@@ -1,20 +1,22 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_2.dart';
 
 class ScreeningFormScreenOne extends StatefulWidget {
   final String schoolName;
-
-  final int userid;
+  final String doctorName;
+  final int doctorId;
   final int schoolId;
   final String className;
 
   const ScreeningFormScreenOne({
     super.key,
     required this.schoolName,
-    required this.userid,
+    required this.doctorId,
     required this.schoolId,
     required this.className,
+    required this.doctorName,
   });
 
   @override
@@ -22,11 +24,14 @@ class ScreeningFormScreenOne extends StatefulWidget {
 }
 
 class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
+
+  // Instantiating 
+    final _logger = Logger(); 
   // data to be thrown forward
   late final String? schoolName;
   DateTime? selectedDob;
-
-  late final int? userId;
+  late final String? doctorName;
+  late final int? doctorId;
   late final int? schoolId;
   late final String? className;
 
@@ -81,13 +86,24 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
 
   @override
   void initState() {
+   
     super.initState();
     _weightController.addListener(_updateBMI);
     _heightController.addListener(_updateBMI);
-    userId = widget.userid;
+    doctorId = widget.doctorId;
+    doctorName = widget.doctorName;
     schoolId = widget.schoolId;
     className = widget.className;
     schoolName = widget.schoolName;
+
+    _logger.i(
+       "Current object page 1=> "
+        "ClassName: ${widget.className}, "
+        "DoctorName: ${widget.doctorName}, "
+        "SchoolId: ${widget.schoolId} "
+        "SchoolName: ${widget.schoolName}, "
+        "DoctorId: ${widget.doctorId}"
+    );
   }
 
   void _updateBMI() {
@@ -125,7 +141,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title:  Text('Screening For ${widget.className}'),
+        title: Text('Screening For ${widget.className}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -176,7 +192,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                         const Duration(days: 365 * 5),
                       ), // default 5 years ago
                       firstDate: DateTime.now().subtract(
-                        const Duration(days: 365 * 15),
+                        const Duration(days: 365 * 20),
                       ), // max 15 years ago
                       lastDate: DateTime.now(), // cannot pick future date
                     );
@@ -229,16 +245,15 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                   ),
                 const SizedBox(height: 20),
 
-                if (selectedAge == null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      'Select Age',
-                      style: TextStyle(color: Colors.red, fontSize: 14),
-                    ),
-                  ),
-                const SizedBox(height: 20),
-
+                // if (selectedAge == null)
+                //   Padding(
+                //     padding: const EdgeInsets.only(top: 4),
+                //     child: Text(
+                //       'Select Age',
+                //       style: TextStyle(color: Colors.red, fontSize: 14),
+                //     ),
+                //   ),
+                // const SizedBox(height: 20),
                 Text(
                   'Gender',
                   style: TextStyle(
@@ -297,11 +312,11 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                 ),
                 const SizedBox(height: 20),
 
-                _buildRequiredLabel('Name of Fathers/Guardian'),
+                _buildRequiredLabel('Name of Father/Guardian'),
                 const SizedBox(height: 8),
                 _buildTextField(
                   controller: _fatherNameController,
-                  hintText: 'Enter Name of Fathers/Guardian',
+                  hintText: 'Enter Name of Fatherchandu/Guardian',
                   isRequired: true,
                 ),
                 const SizedBox(height: 20),
@@ -650,11 +665,14 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                           );
                           return;
                         }
-
+                       _logger.i("School Name: $schoolName");
                         final formData = {
                           // IDs (PascalCase)
-                          'SchoolId': widget.schoolId,
-                          'UserId': widget.userid,
+                          'SchoolId': schoolId,
+                          'DoctorId': doctorId,
+                          'DoctorName': doctorName,
+                          'SchoolName':schoolName,
+                          'ClassName': className,
 
                           // Class flags
                           'anganwadi': false,
@@ -729,12 +747,13 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                           'AcuityOfRightEye': rightEye,
                         };
 
-                        print("Form Data: $formData");
+                        _logger.i("Form Data: $formData");
 
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => ScreeningFormScreenTwo(
                               previousFormData: formData,
+                              
                             ),
                           ),
                         );
@@ -834,45 +853,6 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                     return null;
                   }
                 : null),
-      ),
-    );
-  }
-
-  Widget _buildDropdown({
-    String? value,
-    required String hint,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Text(hint, style: TextStyle(color: Colors.grey[500])),
-          ),
-          isExpanded: true,
-          icon: const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.keyboard_arrow_down, color: Colors.blue),
-          ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Text(item),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
       ),
     );
   }

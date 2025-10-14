@@ -45,6 +45,15 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
 
   @override
   void initState() {
+    print(
+  "Current object => "
+  "ClassName: ${widget.previousFormData['ClassName']}, "
+  "DoctorName: ${widget.previousFormData['DoctorName']}, "
+  "SchoolId: ${widget.previousFormData['SchoolId']}, "
+  "SchoolName: ${widget.previousFormData['SchoolName']}, "
+  "DoctorId: ${widget.previousFormData['DoctorId']}"
+);
+
     super.initState();
     defects.keys.forEach((defect) {
       defectTreatment[defect] = '';
@@ -67,7 +76,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        title:  Text("Screening For ${widget.previousFormData['className']}"),
+        title:  Text("Screening Form"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -272,13 +281,13 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                                 decoration: InputDecoration(
                                   labelText: 'Enter Refer Note',
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
                                   ),
                                 ),
                                 validator: (value) {
@@ -301,13 +310,13 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                                 decoration: InputDecoration(
                                   labelText: 'Enter Treated Note',
                                   border: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.red),
+                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
                                   ),
                                 ),
                                 validator: (value) {
@@ -327,57 +336,60 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                   }),
                 ],
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF4A5F7A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8,8,8,25),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF4A5F7A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'Previous',
-                          style: TextStyle(fontSize: 16),
+                          child: const Text(
+                            'Previous',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            final combinedData = _prepareFormData();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ScreeningFormScreenThree(
-                                  previousFormData: combinedData,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              final combinedData = _prepareFormData();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ScreeningFormScreenThree(
+                                    previousFormData: combinedData,
+                                  ),
                                 ),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF4A5F7A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF4A5F7A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(fontSize: 16),
+                          child: const Text(
+                            'Next',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

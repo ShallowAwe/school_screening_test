@@ -5,13 +5,15 @@ import 'package:http/http.dart' as http;
 class StudentInfoScreen extends StatefulWidget {
   final int schoolId;
   final String className;
-  final int userId;
+  final int doctorId;
+  final bool isSchool;
 
   const StudentInfoScreen({
     super.key,
     required this.schoolId,
     required this.className,
-    required this.userId,
+    required this.doctorId,
+    required this.isSchool,
   });
 
   @override
@@ -68,8 +70,8 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
     final requestBody = {
       "SchoolId": widget.schoolId,
       "Class": mapClassNameForApi(widget.className),
-      "UserId": widget.userId,
-      "IsSchool": true,
+      "doctorId": widget.doctorId,
+      "IsSchool": widget.isSchool,
     };
 
     print("➡️ API URL: $url");
@@ -123,14 +125,11 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, color: Colors.blue[300], size: 60),
+            Icon(Icons.group_off, color: Colors.blue[200], size: 60),
             const SizedBox(height: 16),
-            Text(
-              errorMessage!,
-              style: const TextStyle(
-                color: Colors.blueGrey,
-                fontSize: 16,
-              ),
+            const Text(
+              "No students found in this class.",
+              style: TextStyle(color: Colors.blueGrey, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

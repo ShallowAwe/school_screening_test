@@ -5,16 +5,17 @@ import 'package:school_test/screens/anganWadi_screening-forms/screening_for_anga
 class ScreeningForAnganWadiFormOne extends StatefulWidget {
   final String? schoolName;
 
-  final int? userid;
+  final int? doctorId;
   final int? schoolId;
   final String? className;
+  final String doctorName;
   const ScreeningForAnganWadiFormOne({
-    Key? key,
+    super.key,
     required this.schoolName,
-    required this.userid,
+    required this.doctorId,
     required this.schoolId,
-    required this.className,
-  }) : super(key: key);
+    required this.className, required  this.doctorName,
+  });
 
   @override
   State<ScreeningForAnganWadiFormOne> createState() =>
@@ -33,9 +34,88 @@ class _ScreeningForAnganWadiFormOneState
   /// form validator key
   final _formKey = GlobalKey<FormState>();
 
-  /// formatters
-  final _aadhaarFormatter = FilteringTextInputFormatter.digitsOnly;
-  final _contactFormatter = FilteringTextInputFormatter.digitsOnly;
+  //
+  final _aadhaarFormatter = FilteringTextInputFormatter.allow(RegExp(r'[0-9]'));
+  final _contactFormatter = FilteringTextInputFormatter.allow(RegExp(r'[0-9]'));
+  final _numberFormatter = FilteringTextInputFormatter.allow(
+    RegExp(r'^\d*\.?\d{0,2}'),
+  );
+
+  /// vallidator functions
+  String? _validateChildName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Child name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  }
+
+  String? _validateAadhaar(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Aadhaar is optional
+    }
+    if (value.trim().length != 12) {
+      return 'Aadhaar must be exactly 12 digits';
+    }
+    return null;
+  }
+
+  String? _validateFatherName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Father/Guardian name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  }
+
+  String? _validateContact(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Contact number is required';
+    }
+    if (value.trim().length != 10) {
+      return 'Contact number must be exactly 10 digits';
+    }
+    return null;
+  }
+
+  String? _validateWeight(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Weight is required';
+    }
+    final weight = double.tryParse(value.trim());
+    if (weight == null) {
+      return 'Please enter a valid number';
+    }
+    if (weight <= 0) {
+      return 'Weight must be greater than 0';
+    }
+    if (weight > 100) {
+      return 'Please enter a valid weight';
+    }
+    return null;
+  }
+
+  String? _validateHeight(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Height is required';
+    }
+    final height = double.tryParse(value.trim());
+    if (height == null) {
+      return 'Please enter a valid number';
+    }
+    if (height <= 0) {
+      return 'Height must be greater than 0';
+    }
+    if (height > 200) {
+      return 'Please enter a valid height';
+    }
+    return null;
+  }
+
   DateTime? selectedDate;
   String selectedGender = 'Male';
   String selectedClassification = 'SAM';
@@ -103,6 +183,7 @@ class _ScreeningForAnganWadiFormOneState
                 controller: _childNameController,
                 placeholder: 'Enter Child Name',
                 isRequired: true,
+                validator: _validateChildName,
               ),
               const SizedBox(height: 20),
 
@@ -159,8 +240,14 @@ class _ScreeningForAnganWadiFormOneState
               // Aadhaar No
               _buildTextField(
                 label: 'Aadhaar No',
+                inputFormatters: [
+                  _aadhaarFormatter,
+                  LengthLimitingTextInputFormatter(12),
+                ],
                 controller: _aadhaarController,
                 placeholder: 'Enter Aadhaar No',
+                keyboardType: TextInputType.number,
+                validator: _validateAadhaar,
               ),
               const SizedBox(height: 20),
 
@@ -170,16 +257,23 @@ class _ScreeningForAnganWadiFormOneState
                 controller: _fatherNameController,
                 placeholder: 'Enter Name of Fathers/Guardian',
                 isRequired: true,
+                validator: _validateFatherName,
               ),
+
               const SizedBox(height: 20),
 
               // Parent Contact No
               _buildTextField(
                 label: 'Parent Contact No',
                 controller: _contactController,
+                inputFormatters: [
+                  _contactFormatter,
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 placeholder: 'Enter Parent Contact No',
                 isRequired: true,
                 keyboardType: TextInputType.phone,
+                validator: _validateContact,
               ),
               const SizedBox(height: 20),
 
@@ -192,7 +286,11 @@ class _ScreeningForAnganWadiFormOneState
                       controller: _weightController,
                       placeholder: 'Enter Weight',
                       isRequired: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [_numberFormatter],
+                      validator: _validateWeight,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -202,7 +300,11 @@ class _ScreeningForAnganWadiFormOneState
                       controller: _heightController,
                       placeholder: 'Enter Height',
                       isRequired: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [_numberFormatter],
+                      validator: _validateHeight,
                     ),
                   ),
                 ],
@@ -216,28 +318,32 @@ class _ScreeningForAnganWadiFormOneState
               const SizedBox(height: 40),
 
               // Next Button
-              Container(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _handleNext,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2196F3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 28.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _handleNext,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2196F3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
               ),
+              
             ],
           ),
         ),
@@ -246,38 +352,44 @@ class _ScreeningForAnganWadiFormOneState
   }
 
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime(2023, 9, 15),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2196F3),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
+  final DateTime now = DateTime.now();
+  final DateTime sixYearsAgo = DateTime(now.year - 6, now.month, now.day);
 
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
+  final DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: selectedDate ?? now,
+    firstDate: sixYearsAgo,  // child can't be older than 6 years
+    lastDate: now,           // child can't be in the future
+    builder: (BuildContext context, Widget? child) {
+      return Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2196F3),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Colors.black,
+          ),
+          dialogBackgroundColor: Colors.white,
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (picked != null && picked != selectedDate) {
+    setState(() {
+      selectedDate = picked;
+    });
   }
+}
+
 
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
     required String placeholder,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
     bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
@@ -292,9 +404,11 @@ class _ScreeningForAnganWadiFormOneState
             border: Border.all(color: const Color(0xFFE0E0E0)),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            validator: validator,
             decoration: InputDecoration(
               hintText: placeholder,
               hintStyle: const TextStyle(
@@ -467,9 +581,13 @@ class _ScreeningForAnganWadiFormOneState
 
       // Create form data map - same structure as school
       final formData = {
+        // Metadata
+        'DoctorName': widget.doctorName,
+        'DoctorId': widget.doctorId,
+        'SchoolName': widget.schoolName,
         // IDs
         'SchoolId': widget.schoolId,
-        'UserId': widget.userid,
+        'UserId': widget.doctorId,
 
         // Class flags - set anganwadi flags, all school classes false
         'anganwadi':
@@ -528,7 +646,7 @@ class _ScreeningForAnganWadiFormOneState
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
-              ScreeningForAngnwadiFormTwo(previousFormData: formData),
+              ScreeningForAngnwadiFormTwo(previousFormData: formData,),
         ),
       );
     } else {
