@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_anganwadi_form6.dart';
 
-
 class ScreenignForAngnwadiFormFive extends StatefulWidget {
-    final Map<String, dynamic> previousData;
+  final Map<String, dynamic> previousData;
   const ScreenignForAngnwadiFormFive({super.key, required this.previousData});
 
   @override
-  State<ScreenignForAngnwadiFormFive> createState() => _ScreenignForAngnwadiFormFiveState();
+  State<ScreenignForAngnwadiFormFive> createState() =>
+      _ScreenignForAngnwadiFormFiveState();
 }
 
-class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormFive> {
-    // Disease configuration with API field names and prefixes
+class _ScreenignForAngnwadiFormFiveState
+    extends State<ScreenignForAngnwadiFormFive> {
+  // Disease configuration with API field names and prefixes
   final List<Map<String, String>> diseaseConfig = [
     {
       'display': 'Vision Impairment',
@@ -87,14 +88,14 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
 
   // Referral dropdown options with API field names
   final List<Map<String, String>> referralList = [
-    {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
+    // {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
     {'display': 'RH', 'field': 'RH'},
     {'display': 'SDH', 'field': 'SDH'},
     {'display': 'DH', 'field': 'DH'},
     {'display': 'GMC', 'field': 'GMC'},
-    {'display': 'IGMC', 'field': 'IGMC'},
-    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
-    {'display': 'DEIC', 'field': 'DEIC'},
+    // {'display': 'IGMC', 'field': 'IGMC'},
+    // {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    // {'display': 'DEIC', 'field': 'DEIC'},
   ];
 
   // State management
@@ -184,166 +185,198 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
   }
 
   Map<String, dynamic> _buildOutputData() {
-  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
-  
-  outputData['developmentalDelayIncludingDisability'] = hasYesDiseases;
-  
-  for (var diseaseConf in diseaseConfig) {
-    String field = diseaseConf['field']!;
-    String prefix = diseaseConf['prefix']!;
-    String treatedField = diseaseConf['treatedField']!;
-    String referField = diseaseConf['referField']!;
-    
-    if (diseases[field] == true) {
-      outputData[field] = true;
-      outputData[treatedField] = treatmentOptions[field] == true;
-      outputData[referField] = treatmentOptions[field] == false;
-      
-      String selectedReferral = referralOptions[field] ?? '';
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = selectedReferral == referral['display'];
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(
+      widget.previousData,
+    );
+
+    outputData['developmentalDelayIncludingDisability'] = hasYesDiseases;
+
+    for (var diseaseConf in diseaseConfig) {
+      String field = diseaseConf['field']!;
+      String prefix = diseaseConf['prefix']!;
+      String treatedField = diseaseConf['treatedField']!;
+      String referField = diseaseConf['referField']!;
+
+      if (diseases[field] == true) {
+        outputData[field] = true;
+        outputData[treatedField] = treatmentOptions[field] == true;
+        outputData[referField] = treatmentOptions[field] == false;
+
+        String selectedReferral = referralOptions[field] ?? '';
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] =
+              selectedReferral == referral['display'];
+        }
+
+        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
+      } else {
+        outputData[field] = false;
+        outputData[treatedField] = false;
+        outputData[referField] = false;
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] = false;
+        }
+
+        outputData['${field}_Note'] = '';
       }
-      
-      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-    } else {
-      outputData[field] = false;
-      outputData[treatedField] = false;
-      outputData[referField] = false;
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = false;
-      }
-      
-      outputData['${field}_Note'] = '';
     }
-  }
-  
-  return outputData;
-}
 
+    return outputData;
+  }
 
- String _getReferralFieldName(String prefix, String referralField, String diseaseField) {
-  // Handle SKNagpur referrals
-  if (referralField == 'SKNagpur') {
-    if (diseaseField == 'visionImpairment') return 'visionRefer_SKNagpur';
-    if (diseaseField == 'hearingImpairment') return 'hearingRefer_SKNagpur';
-    if (diseaseField == 'neuromotorImpairment') return 'neuromotorRefer_SKNagpur';
-    if (diseaseField == 'motorDelay') return 'motorDelayRefer_SKNagpur';
-    if (diseaseField == 'cognitiveDelay') return 'cognitiveRefer_SKNagpur';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speechRefer_SKNagpur';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiuralRefer_SKNagpur';
-    if (diseaseField == 'learningDisorder') return 'learningRefer_SKNagpur';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attentionRefer_SKNagpur';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_SKNagpur';
-  }
-  
-  // Handle RH referrals
-  if (referralField == 'RH') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_RH';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_RH';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_RH';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_RH';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_RH';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_RH';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_RH';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_RH';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_RH';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_RH';
-  }
-  
-  // Handle SDH referrals
-  if (referralField == 'SDH') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_SDH';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_SDH';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_SDH';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_SDH';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_SDH';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_SDH';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_SDH';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_SDH';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_SDH';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_SDH';
-  }
-  
-  // Handle DH referrals
-  if (referralField == 'DH') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_DH';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DH';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DH';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_DH';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DH';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DH';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_DH';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_DH';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_DH';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_DH';
-  }
-  
-  // Handle GMC referrals
-  if (referralField == 'GMC') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_GMC';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_GMC';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_GMC';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_GMC';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_GMC';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_GMC';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_GMC';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_GMC';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_GMC';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_GMC';
-  }
-  
-  // Handle IGMC referrals
-  if (referralField == 'IGMC') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_IGMC';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_IGMC';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_IGMC';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_IGMC';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_IGMC';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_IGMC';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_IGMC';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_IGMC';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_IGMC';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_IGMC';
-  }
-  
-  // Handle MJMJYAndMOUY referrals
-  if (referralField == 'MJMJYAndMOUY') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'other_ddid') return 'other_ddidMJMJYAndMOUY';
-  }
-  
-  // Handle DEIC referrals
-  if (referralField == 'DEIC') {
-    if (diseaseField == 'visionImpairment') return 'vision_Refer_DEIC';
-    if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DEIC';
-    if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DEIC';
-    if (diseaseField == 'motorDelay') return 'motor_Refer_DEIC';
-    if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DEIC';
-    if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DEIC';
-    if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_DEIC';
-    if (diseaseField == 'learningDisorder') return 'learning_Refer_DEIC';
-    if (diseaseField == 'attentionDeficitHyperactivityDisorder') return 'attention_Refer_DEIC';
-    if (diseaseField == 'other_ddid') return 'other_ddidRefer_DEIC';
-  }
-  
-  return '';
-}
+  String _getReferralFieldName(
+    String prefix,
+    String referralField,
+    String diseaseField,
+  ) {
+    // Handle SKNagpur referrals
+    if (referralField == 'SKNagpur') {
+      if (diseaseField == 'visionImpairment') return 'visionRefer_SKNagpur';
+      if (diseaseField == 'hearingImpairment') return 'hearingRefer_SKNagpur';
+      if (diseaseField == 'neuromotorImpairment')
+        return 'neuromotorRefer_SKNagpur';
+      if (diseaseField == 'motorDelay') return 'motorDelayRefer_SKNagpur';
+      if (diseaseField == 'cognitiveDelay') return 'cognitiveRefer_SKNagpur';
+      if (diseaseField == 'speechAndLanguageDelay')
+        return 'speechRefer_SKNagpur';
+      if (diseaseField == 'behaviouralDisorder')
+        return 'behavoiuralRefer_SKNagpur';
+      if (diseaseField == 'learningDisorder') return 'learningRefer_SKNagpur';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attentionRefer_SKNagpur';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_SKNagpur';
+    }
 
-  
+    // Handle RH referrals
+    if (referralField == 'RH') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_RH';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_RH';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_RH';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_RH';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_RH';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_RH';
+      if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_RH';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_RH';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_RH';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_RH';
+    }
+
+    // Handle SDH referrals
+    if (referralField == 'SDH') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_SDH';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_SDH';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_SDH';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_SDH';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_SDH';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_SDH';
+      if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_SDH';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_SDH';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_SDH';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_SDH';
+    }
+
+    // Handle DH referrals
+    if (referralField == 'DH') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_DH';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DH';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DH';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_DH';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DH';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DH';
+      if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_DH';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_DH';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_DH';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_DH';
+    }
+
+    // Handle GMC referrals
+    if (referralField == 'GMC') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_GMC';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_GMC';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_GMC';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_GMC';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_GMC';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_GMC';
+      if (diseaseField == 'behaviouralDisorder') return 'behavoiural_Refer_GMC';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_GMC';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_GMC';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_GMC';
+    }
+
+    // Handle IGMC referrals
+    if (referralField == 'IGMC') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_IGMC';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_IGMC';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_IGMC';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_IGMC';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_IGMC';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_IGMC';
+      if (diseaseField == 'behaviouralDisorder')
+        return 'behavoiural_Refer_IGMC';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_IGMC';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_IGMC';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_IGMC';
+    }
+
+    // Handle MJMJYAndMOUY referrals
+    if (referralField == 'MJMJYAndMOUY') {
+      if (diseaseField == 'visionImpairment')
+        return 'vision_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'hearingImpairment')
+        return 'hearing_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'neuromotorImpairment')
+        return 'neuro_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'cognitiveDelay')
+        return 'cognitive_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'speechAndLanguageDelay')
+        return 'speech_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'behaviouralDisorder')
+        return 'behavoiural_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'learningDisorder')
+        return 'learning_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'other_ddid') return 'other_ddidMJMJYAndMOUY';
+    }
+
+    // Handle DEIC referrals
+    if (referralField == 'DEIC') {
+      if (diseaseField == 'visionImpairment') return 'vision_Refer_DEIC';
+      if (diseaseField == 'hearingImpairment') return 'hearing_Refer_DEIC';
+      if (diseaseField == 'neuromotorImpairment') return 'neuro_Refer_DEIC';
+      if (diseaseField == 'motorDelay') return 'motor_Refer_DEIC';
+      if (diseaseField == 'cognitiveDelay') return 'cognitive_Refer_DEIC';
+      if (diseaseField == 'speechAndLanguageDelay') return 'speech_Refer_DEIC';
+      if (diseaseField == 'behaviouralDisorder')
+        return 'behavoiural_Refer_DEIC';
+      if (diseaseField == 'learningDisorder') return 'learning_Refer_DEIC';
+      if (diseaseField == 'attentionDeficitHyperactivityDisorder')
+        return 'attention_Refer_DEIC';
+      if (diseaseField == 'other_ddid') return 'other_ddidRefer_DEIC';
+    }
+
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -608,7 +641,7 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
                                       referralOptions[diseaseKey]!,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        
+
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -700,11 +733,12 @@ class _ScreenignForAngnwadiFormFiveState extends State<ScreenignForAngnwadiFormF
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Map<String, dynamic> combinedData = _buildOutputData();
-              
+                          Map<String, dynamic> combinedData =
+                              _buildOutputData();
+
                           // Debug print
                           print('Combined Data: $combinedData');
-              
+
                           // Navigate to next page with combined data
                           Navigator.of(context).push(
                             MaterialPageRoute(

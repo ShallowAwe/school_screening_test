@@ -10,12 +10,24 @@ class ScreeningForAnganWadiFormOne extends StatefulWidget {
   final int? schoolId;
   final String? className;
   final String doctorName;
+
+  final String? childName;
+  final String? aadhaarNo;
+  final String? fatherName;
+  final String? contactNo;
+  final String? dateOfBirth;
   const ScreeningForAnganWadiFormOne({
     super.key,
     required this.schoolName,
     required this.doctorId,
     required this.schoolId,
-    required this.className, required  this.doctorName,
+    required this.className,
+    required this.doctorName,
+    this.childName,
+    this.aadhaarNo,
+    this.fatherName,
+    this.contactNo,
+    this.dateOfBirth,
   });
 
   @override
@@ -141,6 +153,53 @@ class _ScreeningForAnganWadiFormOneState
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    // Pre-fill the text controllers if data is passed
+    if (widget.childName != null) {
+      _childNameController.text = widget.childName!;
+    }
+
+    if (widget.aadhaarNo != null) {
+      _aadhaarController.text = widget.aadhaarNo!;
+    }
+
+    if (widget.fatherName != null) {
+      _fatherNameController.text = widget.fatherName!;
+    }
+
+    if (widget.contactNo != null) {
+      _contactController.text = widget.contactNo!;
+    }
+
+    // Parse and set the date of birth if provided
+    if (widget.dateOfBirth != null && widget.dateOfBirth!.isNotEmpty) {
+      try {
+        // Assuming dateOfBirth is in format "yyyy-MM-dd" or similar
+        // Adjust the parsing based on your actual date format
+        selectedDate = DateTime.parse(widget.dateOfBirth!);
+      } catch (e) {
+        print("Error parsing date: $e");
+        // If parsing fails, try other common formats
+        try {
+          // Try dd-MM-yyyy format
+          final parts = widget.dateOfBirth!.split('-');
+          if (parts.length == 3) {
+            selectedDate = DateTime(
+              int.parse(parts[2]), // year
+              int.parse(parts[1]), // month
+              int.parse(parts[0]), // day
+            );
+          }
+        } catch (e2) {
+          print("Error parsing date with alternative format: $e2");
+        }
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -148,8 +207,14 @@ class _ScreeningForAnganWadiFormOneState
         backgroundColor: const Color(0xFF2196F3),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) =>  HomeScreen(doctorId: widget.doctorId ,doctorName:widget.doctorName ,)),
+          onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(
+                doctorId: widget.doctorId,
+                doctorName: widget.doctorName,
+              ),
+            ),
+            (route) => false,
           ),
         ),
         title: const Text(
@@ -227,16 +292,16 @@ class _ScreeningForAnganWadiFormOneState
                 ),
               ),
               if (selectedDate != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      "Age: ${_calculateAge(selectedDate!)} years",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    "Age: ${_calculateAge(selectedDate!)} years",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                ),
               const SizedBox(height: 20),
 
               // Gender
@@ -357,7 +422,6 @@ class _ScreeningForAnganWadiFormOneState
                   ),
                 ),
               ),
-              
             ],
           ),
         ),
@@ -366,37 +430,36 @@ class _ScreeningForAnganWadiFormOneState
   }
 
   Future<void> _selectDate() async {
-  final DateTime now = DateTime.now();
-  final DateTime sixYearsAgo = DateTime(now.year - 6, now.month, now.day);
+    final DateTime now = DateTime.now();
+    final DateTime sixYearsAgo = DateTime(now.year - 6, now.month, now.day);
 
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: selectedDate ?? now,
-    firstDate: sixYearsAgo,  // child can't be older than 6 years
-    lastDate: now,           // child can't be in the future
-    builder: (BuildContext context, Widget? child) {
-      return Theme(
-        data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Color(0xFF2196F3),
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Colors.black,
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? now,
+      firstDate: sixYearsAgo, // child can't be older than 6 years
+      lastDate: now, // child can't be in the future
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2196F3),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
           ),
-          dialogBackgroundColor: Colors.white,
-        ),
-        child: child!,
-      );
-    },
-  );
+          child: child!,
+        );
+      },
+    );
 
-  if (picked != null && picked != selectedDate) {
-    setState(() {
-      selectedDate = picked;
-    });
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
-}
-
 
   Widget _buildTextField({
     required String label,
@@ -660,7 +723,7 @@ class _ScreeningForAnganWadiFormOneState
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
-              ScreeningForAngnwadiFormTwo(previousFormData: formData,),
+              ScreeningForAngnwadiFormTwo(previousFormData: formData),
         ),
       );
     } else {

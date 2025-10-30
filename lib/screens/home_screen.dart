@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Text(
-              'Team A',
+              widget.doctorName,
               style: TextStyle(
                 fontSize: subtitleFontSize,
                 fontWeight: FontWeight.w400,

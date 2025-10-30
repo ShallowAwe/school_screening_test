@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screenign_for_angnwadi_form5.dart';
 
-
 class ScreeningForAngnwadiClassFormFour extends StatefulWidget {
   final Map<String, dynamic> previousData;
   const ScreeningForAngnwadiClassFormFour({
@@ -85,14 +84,14 @@ class _ScreeningForAngnwadiClassFormFourState
 
   // Referral dropdown options with API field names
   final List<Map<String, String>> referralList = [
-    {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
+    // {'display': 'Samaj Kalyan Nagpur', 'field': 'SKNagpur'},
     {'display': 'RH', 'field': 'RH'},
     {'display': 'SDH', 'field': 'SDH'},
     {'display': 'DH', 'field': 'DH'},
     {'display': 'GMC', 'field': 'GMC'},
-    {'display': 'IGMC', 'field': 'IGMC'},
-    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
-    {'display': 'DEIC', 'field': 'DEIC'},
+    // {'display': 'IGMC', 'field': 'IGMC'},
+    // {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    // {'display': 'DEIC', 'field': 'DEIC'},
   ];
 
   // State management
@@ -182,51 +181,62 @@ class _ScreeningForAngnwadiClassFormFourState
   }
 
   Map<String, dynamic> _buildOutputData() {
-  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
-  
-  // Add diseases flag - should be true only if user selected "Yes"
-  outputData['diseases'] = hasYesDiseases;
-  
-  // Process each disease regardless of Yes/No selection
-  for (var diseaseConf in diseaseConfig) {
-    String field = diseaseConf['field']!;
-    String prefix = diseaseConf['prefix']!;
-    String treatedField = diseaseConf['treatedField']!;
-    String referField = diseaseConf['referField']!;
-    
-    // If user selected "Yes" AND this specific disease is checked
-    if (hasYesDiseases && diseases[field] == true) {
-      outputData[field] = true;
-      outputData[treatedField] = treatmentOptions[field] == true;
-      outputData[referField] = treatmentOptions[field] == false;
-      
-      String selectedReferral = referralOptions[field] ?? '';
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = selectedReferral == referral['display'];
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(
+      widget.previousData,
+    );
+
+    // Add diseases flag - should be true only if user selected "Yes"
+    outputData['diseases'] = hasYesDiseases;
+
+    // Process each disease regardless of Yes/No selection
+    for (var diseaseConf in diseaseConfig) {
+      String field = diseaseConf['field']!;
+      String prefix = diseaseConf['prefix']!;
+      String treatedField = diseaseConf['treatedField']!;
+      String referField = diseaseConf['referField']!;
+
+      // If user selected "Yes" AND this specific disease is checked
+      if (hasYesDiseases && diseases[field] == true) {
+        outputData[field] = true;
+        outputData[treatedField] = treatmentOptions[field] == true;
+        outputData[referField] = treatmentOptions[field] == false;
+
+        String selectedReferral = referralOptions[field] ?? '';
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] =
+              selectedReferral == referral['display'];
+        }
+
+        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
+      } else {
+        // Disease not selected OR user selected "No" - set all to false
+        outputData[field] = false;
+        outputData[treatedField] = false;
+        outputData[referField] = false;
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] = false;
+        }
+
+        outputData['${field}_Note'] = '';
       }
-      
-      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-    } else {
-      // Disease not selected OR user selected "No" - set all to false
-      outputData[field] = false;
-      outputData[treatedField] = false;
-      outputData[referField] = false;
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = false;
-      }
-      
-      outputData['${field}_Note'] = '';
     }
+
+    return outputData;
   }
-  
-  return outputData;
-}
 
   String _getReferralFieldName(
     String prefix,
@@ -714,17 +724,19 @@ class _ScreeningForAngnwadiClassFormFourState
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Map<String, dynamic> combinedData = _buildOutputData();
-              
+                          Map<String, dynamic> combinedData =
+                              _buildOutputData();
+
                           // Debug print
                           print('Combined Data: $combinedData');
-              
+
                           // Navigate to next page with combined data
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => ScreenignForAngnwadiFormFive(
-                                previousData: combinedData,
-                              ),
+                              builder: (context) =>
+                                  ScreenignForAngnwadiFormFive(
+                                    previousData: combinedData,
+                                  ),
                             ),
                           );
                         },

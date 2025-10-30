@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
@@ -35,10 +36,14 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
   // Form Key
   final _formKey = GlobalKey<FormState>();
 
+  //DateTime
+  DateTime? dateOfBirth;
   // Form Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _workerNameController = TextEditingController();
+  final TextEditingController _latitudeController = TextEditingController();
+  final TextEditingController _longitudeController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _boysController = TextEditingController();
   final TextEditingController _girlsController = TextEditingController();
@@ -82,7 +87,6 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
     _girlsController.addListener(_updateTotal);
 
     fetchDistricts();
-    _getCurrentLocation();
   }
 
   @override
@@ -98,43 +102,32 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
     super.dispose();
   }
 
-  // Get current location - Updated to match AddSchoolScreen
-  Future<void> _getCurrentLocation() async {
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enable location services')),
+  //Date Selection
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue[800]!,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.blue[800]!,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
         );
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission denied')),
-          );
-          return;
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
+      },
+    );
+    if (picked != null && picked != dateOfBirth) {
       setState(() {
-        _currentLatitude = position.latitude;
-        _currentLongitude = position.longitude;
+        dateOfBirth = picked;
       });
-
-      _logger.i('Location obtained: $_currentLatitude, $_currentLongitude');
-    } catch (e) {
-      _logger.e('Location error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to get location: $e')));
     }
   }
 
@@ -452,17 +445,9 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
       return;
     }
 
-    if (_currentLatitude == null || _currentLongitude == null) {
+    if (_latitudeController.text.isEmpty || _longitudeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Location not available. Please enable GPS and try again.',
-          ),
-          action: SnackBarAction(
-            label: 'Retry',
-            onPressed: () => _getCurrentLocation(),
-          ),
-        ),
+        const SnackBar(content: Text('Please enter latitude and longitude')),
       );
       return;
     }
@@ -489,8 +474,10 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
         grampanchayatId: selectedVillage?.grampanchayatId,
         grampanchayatName: selectedVillage?.grampanchayatName,
 
-        latitude: _currentLatitude?.toString(),
-        longitude: _currentLongitude?.toString(),
+        latitude: _latitudeController.text.trim(),
+        longitude: _longitudeController.text.trim(),
+
+        VisitDate: dateOfBirth, // Add this line
 
         anganwadi: selectedAnganWadiType == 'AnganWadi',
         miniAnganwadi: selectedAnganWadiType == 'Mini AnganWadi',
@@ -806,8 +793,93 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
                         },
                         hint: 'Select Village',
                       ),
-                      const SizedBox(height: 30),
 
+                      const SizedBox(height: 20),
+
+                      // Visit Date Section
+                      _buildRequiredLabel('Visit Date'),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _selectDate(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  dateOfBirth == null
+                                      ? 'Select Visit Date'
+                                      : DateFormat(
+                                          'dd MMM yyyy',
+                                        ).format(dateOfBirth!),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: dateOfBirth == null
+                                        ? Colors.grey[500]
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildRequiredLabel('Latitude'),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  controller: _latitudeController,
+                                  hintText: 'Enter Latitude',
+                                  isRequired: true,
+                                  keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildRequiredLabel('Longitude'),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  controller: _longitudeController,
+                                  hintText: 'Enter Longitude',
+                                  isRequired: true,
+                                  keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
                       // Angan Wadi Type Selection
                       const Text(
                         'Angan Wadi Type',

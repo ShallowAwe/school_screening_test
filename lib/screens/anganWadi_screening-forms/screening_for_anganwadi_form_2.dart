@@ -3,7 +3,10 @@ import 'package:school_test/screens/anganWadi_screening-forms/screening_for_angn
 
 class ScreeningForAngnwadiFormTwo extends StatefulWidget {
   final Map<String, dynamic> previousFormData;
-  const ScreeningForAngnwadiFormTwo({super.key, required this.previousFormData});
+  const ScreeningForAngnwadiFormTwo({
+    super.key,
+    required this.previousFormData,
+  });
 
   @override
   State<ScreeningForAngnwadiFormTwo> createState() =>
@@ -35,10 +38,10 @@ class _ScreeningForAngnwadiFormTwoState
     'RH',
     'SDH',
     'DH',
-    'GMC',
-    'IGMC',
-    'MJMJY & MOUY',
-    'DEIC',
+    // 'GMC',
+    // 'IGMC',
+    // 'MJMJY & MOUY',
+    // 'DEIC',
   ];
 
   @override
@@ -274,7 +277,9 @@ class _ScreeningForAngnwadiFormTwoState
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                    ),
                                   ),
                                 ),
                                 validator: (value) {
@@ -303,7 +308,9 @@ class _ScreeningForAngnwadiFormTwoState
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                    ),
                                   ),
                                 ),
                                 validator: (value) {
@@ -326,7 +333,6 @@ class _ScreeningForAngnwadiFormTwoState
                 Padding(
                   padding: const EdgeInsets.only(bottom: 25.0),
                   child: Row(
-                    
                     children: [
                       Expanded(
                         child: ElevatedButton(

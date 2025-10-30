@@ -40,7 +40,7 @@ class SchoolDetails {
   bool? nationalDeworingProgram;
   bool? anemiaMuktaBharat;
   bool? vitASupplementationProgram;
-  DateTime? visitDate;
+  DateTime? VisitDate;
 
   SchoolDetails({
     this.schoolName,
@@ -76,7 +76,7 @@ class SchoolDetails {
     this.TeamId,
     this.nationalDeworingProgram,
     this.anemiaMuktaBharat,
-    this.visitDate,
+    this.VisitDate,
     this.vitASupplementationProgram,
   });
 
@@ -87,7 +87,7 @@ class SchoolDetails {
     schoolContactNo = json['schoolContactNo'];
     districtId = json['districtId'];
     districtName = json['districtName'];
-    visitDate = json['visitDate'];
+    VisitDate = json['visitDate'];
     talukaId = json['talukaId'];
     talukaName = json['talukaName'];
     grampanchayatId = json['grampanchayatId'];
@@ -152,8 +152,8 @@ class SchoolDetails {
     data['longitude'] = longitude;
 
     // Add visitDate here
-    data['visitDate'] = visitDate != null
-        ? DateFormat('yyyy-MM-dd').format(visitDate!)
+    data['visitDate'] = VisitDate != null
+        ? DateFormat('yyyy-MM-dd').format(VisitDate!)
         : null;
 
     data['SchoolPhoto'] = SchoolPhoto;

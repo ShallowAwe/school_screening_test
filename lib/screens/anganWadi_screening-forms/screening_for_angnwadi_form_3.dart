@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_angnwadi_form4.dart';
 
-
 class ScreeningFormAngnwadiScreenThree extends StatefulWidget {
   final Map<String, dynamic> previousFormData;
   const ScreeningFormAngnwadiScreenThree({
@@ -34,14 +33,14 @@ class _ScreeningFormAngnwadiScreenThreeState
   Map<String, String> referralOptions = {};
 
   final List<String> referralChoices = [
-    'SK Nagpur',
+    // 'SK Nagpur',
     'RH',
     'SDH',
     'DH',
     'GMC',
-    'IGMC',
-    'MJMJY & MOUY',
-    'DEIC',
+    // 'IGMC',
+    // 'MJMJY & MOUY',
+    // 'DEIC',
   ];
 
   @override
@@ -274,7 +273,9 @@ class _ScreeningFormAngnwadiScreenThreeState
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                    ),
                                   ),
                                 ),
                                 validator: (value) {
@@ -304,7 +305,9 @@ class _ScreeningFormAngnwadiScreenThreeState
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF2196F3)),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFF2196F3),
+                                    ),
                                   ),
                                 ),
                                 validator: (value) {
@@ -326,7 +329,7 @@ class _ScreeningFormAngnwadiScreenThreeState
                 ],
                 const SizedBox(height: 20),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 25,),
+                  padding: const EdgeInsets.only(bottom: 25),
                   child: Row(
                     children: [
                       Expanded(
@@ -450,108 +453,139 @@ class _ScreeningFormAngnwadiScreenThreeState
   }
 
   Map<String, dynamic> _prepareFormData() {
-  Map<String, dynamic> formData = Map.from(widget.previousFormData);
+    Map<String, dynamic> formData = Map.from(widget.previousFormData);
 
-  formData['deficiencesAtBirth'] = hasDeficiency;
+    formData['deficiencesAtBirth'] = hasDeficiency;
 
-  // Anemia
-  formData['anemia'] = deficiencies['Anemia'] ?? false;
-  formData['anemiaTreated'] = deficiencyTreatment['Anemia'] == 'Treated';
-  formData['anemiaRefer'] = deficiencyTreatment['Anemia'] == 'Refer';
-  formData['anemiaRefer_SKNagpur'] = referralOptions['Anemia'] == 'SK Nagpur';
-  formData['anemia_Refer_RH'] = referralOptions['Anemia'] == 'RH';
-  formData['anemia_Refer_SDH'] = referralOptions['Anemia'] == 'SDH';
-  formData['anemia_Refer_DH'] = referralOptions['Anemia'] == 'DH';
-  formData['anemia_Refer_GMC'] = referralOptions['Anemia'] == 'GMC';
-  formData['anemia_Refer_IGMC'] = referralOptions['Anemia'] == 'IGMC';
-  formData['anemia_Refer_MJMJYAndMOUY'] = referralOptions['Anemia'] == 'MJMJY & MOUY';
-  formData['anemia_Refer_DEIC'] = referralOptions['Anemia'] == 'DEIC';
-  formData['anemia_Note'] = _noteControllers['Anemia']?.text ?? '';
+    // Anemia
+    formData['anemia'] = deficiencies['Anemia'] ?? false;
+    formData['anemiaTreated'] = deficiencyTreatment['Anemia'] == 'Treated';
+    formData['anemiaRefer'] = deficiencyTreatment['Anemia'] == 'Refer';
+    formData['anemiaRefer_SKNagpur'] = referralOptions['Anemia'] == 'SK Nagpur';
+    formData['anemia_Refer_RH'] = referralOptions['Anemia'] == 'RH';
+    formData['anemia_Refer_SDH'] = referralOptions['Anemia'] == 'SDH';
+    formData['anemia_Refer_DH'] = referralOptions['Anemia'] == 'DH';
+    formData['anemia_Refer_GMC'] = referralOptions['Anemia'] == 'GMC';
+    formData['anemia_Refer_IGMC'] = referralOptions['Anemia'] == 'IGMC';
+    formData['anemia_Refer_MJMJYAndMOUY'] =
+        referralOptions['Anemia'] == 'MJMJY & MOUY';
+    formData['anemia_Refer_DEIC'] = referralOptions['Anemia'] == 'DEIC';
+    formData['anemia_Note'] = _noteControllers['Anemia']?.text ?? '';
 
-  // Vitamin A Def
-  formData['vitaminADef'] = deficiencies['Vitamin A Def'] ?? false;
-  formData['vitaminATreated'] = deficiencyTreatment['Vitamin A Def'] == 'Treated';
-  formData['vitaminARefer'] = deficiencyTreatment['Vitamin A Def'] == 'Refer';
-  formData['vitaminARefer_SKNagpur'] = referralOptions['Vitamin A Def'] == 'SK Nagpur';
-  formData['vA_Refer_RH'] = referralOptions['Vitamin A Def'] == 'RH';
-  formData['vA_Refer_SDH'] = referralOptions['Vitamin A Def'] == 'SDH';
-  formData['vA_Refer_DH'] = referralOptions['Vitamin A Def'] == 'DH';
-  formData['vA_Refer_GMC'] = referralOptions['Vitamin A Def'] == 'GMC';
-  formData['vA_Refer_IGMC'] = referralOptions['Vitamin A Def'] == 'IGMC';
-  formData['vA_Refer_MJMJYAndMOUY'] = referralOptions['Vitamin A Def'] == 'MJMJY & MOUY';
-  formData['vA_Refer_DEIC'] = referralOptions['Vitamin A Def'] == 'DEIC';
-  formData['vitaminADef_Note'] = _noteControllers['Vitamin A Def']?.text ?? '';
+    // Vitamin A Def
+    formData['vitaminADef'] = deficiencies['Vitamin A Def'] ?? false;
+    formData['vitaminATreated'] =
+        deficiencyTreatment['Vitamin A Def'] == 'Treated';
+    formData['vitaminARefer'] = deficiencyTreatment['Vitamin A Def'] == 'Refer';
+    formData['vitaminARefer_SKNagpur'] =
+        referralOptions['Vitamin A Def'] == 'SK Nagpur';
+    formData['vA_Refer_RH'] = referralOptions['Vitamin A Def'] == 'RH';
+    formData['vA_Refer_SDH'] = referralOptions['Vitamin A Def'] == 'SDH';
+    formData['vA_Refer_DH'] = referralOptions['Vitamin A Def'] == 'DH';
+    formData['vA_Refer_GMC'] = referralOptions['Vitamin A Def'] == 'GMC';
+    formData['vA_Refer_IGMC'] = referralOptions['Vitamin A Def'] == 'IGMC';
+    formData['vA_Refer_MJMJYAndMOUY'] =
+        referralOptions['Vitamin A Def'] == 'MJMJY & MOUY';
+    formData['vA_Refer_DEIC'] = referralOptions['Vitamin A Def'] == 'DEIC';
+    formData['vitaminADef_Note'] =
+        _noteControllers['Vitamin A Def']?.text ?? '';
 
-  // Vitamin D Def (Rickets)
-  formData['vitaminDDef'] = deficiencies['Vitamin D Def (Rickets)'] ?? false;
-  formData['vitaminDTreated'] = deficiencyTreatment['Vitamin D Def (Rickets)'] == 'Treated';
-  formData['vitaminDRefer'] = deficiencyTreatment['Vitamin D Def (Rickets)'] == 'Refer';
-  formData['vitaminDRefer_SKNagpur'] = referralOptions['Vitamin D Def (Rickets)'] == 'SK Nagpur';
-  formData['vD_Refer_RH'] = referralOptions['Vitamin D Def (Rickets)'] == 'RH';
-  formData['vD_Refer_SDH'] = referralOptions['Vitamin D Def (Rickets)'] == 'SDH';
-  formData['vD_Refer_DH'] = referralOptions['Vitamin D Def (Rickets)'] == 'DH';
-  formData['vD_Refer_GMC'] = referralOptions['Vitamin D Def (Rickets)'] == 'GMC';
-  formData['vD_Refer_IGMC'] = referralOptions['Vitamin D Def (Rickets)'] == 'IGMC';
-  formData['vD_Refer_MJMJYAndMOUY'] = referralOptions['Vitamin D Def (Rickets)'] == 'MJMJY & MOUY';
-  formData['vD_Refer_DEIC'] = referralOptions['Vitamin D Def (Rickets)'] == 'DEIC';
-  formData['vitaminDDef_Note'] = _noteControllers['Vitamin D Def (Rickets)']?.text ?? '';
+    // Vitamin D Def (Rickets)
+    formData['vitaminDDef'] = deficiencies['Vitamin D Def (Rickets)'] ?? false;
+    formData['vitaminDTreated'] =
+        deficiencyTreatment['Vitamin D Def (Rickets)'] == 'Treated';
+    formData['vitaminDRefer'] =
+        deficiencyTreatment['Vitamin D Def (Rickets)'] == 'Refer';
+    formData['vitaminDRefer_SKNagpur'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'SK Nagpur';
+    formData['vD_Refer_RH'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'RH';
+    formData['vD_Refer_SDH'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'SDH';
+    formData['vD_Refer_DH'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'DH';
+    formData['vD_Refer_GMC'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'GMC';
+    formData['vD_Refer_IGMC'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'IGMC';
+    formData['vD_Refer_MJMJYAndMOUY'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'MJMJY & MOUY';
+    formData['vD_Refer_DEIC'] =
+        referralOptions['Vitamin D Def (Rickets)'] == 'DEIC';
+    formData['vitaminDDef_Note'] =
+        _noteControllers['Vitamin D Def (Rickets)']?.text ?? '';
 
-  // SAM/Stunting
-  formData['saM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
-  formData['samTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
-  formData['samRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
-  formData['samRefer_SKNagpur'] = referralOptions['SAM/Stunting'] == 'SK Nagpur';
-  formData['sam_Refer_RH'] = referralOptions['SAM/Stunting'] == 'RH';
-  formData['sam_Refer_SDH'] = referralOptions['SAM/Stunting'] == 'SDH';
-  formData['sam_Refer_DH'] = referralOptions['SAM/Stunting'] == 'DH';
-  formData['sam_Refer_GMC'] = referralOptions['SAM/Stunting'] == 'GMC';
-  formData['sam_Refer_IGMC'] = referralOptions['SAM/Stunting'] == 'IGMC';
-  formData['sam_Refer_MJMJYAndMOUY'] = referralOptions['SAM/Stunting'] == 'MJMJY & MOUY';
-  formData['sam_Refer_DEIC'] = referralOptions['SAM/Stunting'] == 'DEIC';
-  formData['saM_Stunting_Note'] = _noteControllers['SAM/Stunting']?.text ?? '';
+    // SAM/Stunting
+    formData['saM_Stunting'] = deficiencies['SAM/Stunting'] ?? false;
+    formData['samTreated'] = deficiencyTreatment['SAM/Stunting'] == 'Treated';
+    formData['samRefer'] = deficiencyTreatment['SAM/Stunting'] == 'Refer';
+    formData['samRefer_SKNagpur'] =
+        referralOptions['SAM/Stunting'] == 'SK Nagpur';
+    formData['sam_Refer_RH'] = referralOptions['SAM/Stunting'] == 'RH';
+    formData['sam_Refer_SDH'] = referralOptions['SAM/Stunting'] == 'SDH';
+    formData['sam_Refer_DH'] = referralOptions['SAM/Stunting'] == 'DH';
+    formData['sam_Refer_GMC'] = referralOptions['SAM/Stunting'] == 'GMC';
+    formData['sam_Refer_IGMC'] = referralOptions['SAM/Stunting'] == 'IGMC';
+    formData['sam_Refer_MJMJYAndMOUY'] =
+        referralOptions['SAM/Stunting'] == 'MJMJY & MOUY';
+    formData['sam_Refer_DEIC'] = referralOptions['SAM/Stunting'] == 'DEIC';
+    formData['saM_Stunting_Note'] =
+        _noteControllers['SAM/Stunting']?.text ?? '';
 
-  // Goiter
-  formData['goiter'] = deficiencies['Goiter'] ?? false;
-  formData['goiterTreated'] = deficiencyTreatment['Goiter'] == 'Treated';
-  formData['goiterRefer'] = deficiencyTreatment['Goiter'] == 'Refer';
-  formData['goiterRefer_SKNagpur'] = referralOptions['Goiter'] == 'SK Nagpur';
-  formData['g_Refer_RH'] = referralOptions['Goiter'] == 'RH';
-  formData['g_Refer_SDH'] = referralOptions['Goiter'] == 'SDH';
-  formData['g_Refer_DH'] = referralOptions['Goiter'] == 'DH';
-  formData['g_Refer_GMC'] = referralOptions['Goiter'] == 'GMC';
-  formData['g_Refer_IGMC'] = referralOptions['Goiter'] == 'IGMC';
-  formData['g_Refer_MJMJYAndMOUY'] = referralOptions['Goiter'] == 'MJMJY & MOUY';
-  formData['g_Refer_DEIC'] = referralOptions['Goiter'] == 'DEIC';
-  formData['goiter_Note'] = _noteControllers['Goiter']?.text ?? '';
+    // Goiter
+    formData['goiter'] = deficiencies['Goiter'] ?? false;
+    formData['goiterTreated'] = deficiencyTreatment['Goiter'] == 'Treated';
+    formData['goiterRefer'] = deficiencyTreatment['Goiter'] == 'Refer';
+    formData['goiterRefer_SKNagpur'] = referralOptions['Goiter'] == 'SK Nagpur';
+    formData['g_Refer_RH'] = referralOptions['Goiter'] == 'RH';
+    formData['g_Refer_SDH'] = referralOptions['Goiter'] == 'SDH';
+    formData['g_Refer_DH'] = referralOptions['Goiter'] == 'DH';
+    formData['g_Refer_GMC'] = referralOptions['Goiter'] == 'GMC';
+    formData['g_Refer_IGMC'] = referralOptions['Goiter'] == 'IGMC';
+    formData['g_Refer_MJMJYAndMOUY'] =
+        referralOptions['Goiter'] == 'MJMJY & MOUY';
+    formData['g_Refer_DEIC'] = referralOptions['Goiter'] == 'DEIC';
+    formData['goiter_Note'] = _noteControllers['Goiter']?.text ?? '';
 
-  // Vitamin B complex def
-  formData['vitaminBcomplexDef'] = deficiencies['Vitamin B complex def'] ?? false;
-  formData['vitaminBTreated'] = deficiencyTreatment['Vitamin B complex def'] == 'Treated';
-  formData['vitaminBRefer'] = deficiencyTreatment['Vitamin B complex def'] == 'Refer';
-  formData['vitaminBRefer_SKNagpur'] = referralOptions['Vitamin B complex def'] == 'SK Nagpur';
-  formData['vB_Refer_RH'] = referralOptions['Vitamin B complex def'] == 'RH';
-  formData['vB_Refer_SDH'] = referralOptions['Vitamin B complex def'] == 'SDH';
-  formData['vB_Refer_DH'] = referralOptions['Vitamin B complex def'] == 'DH';
-  formData['vB_Refer_GMC'] = referralOptions['Vitamin B complex def'] == 'GMC';
-  formData['vB_Refer_IGMC'] = referralOptions['Vitamin B complex def'] == 'IGMC';
-  formData['vB_Refer_MJMJYAndMOUY'] = referralOptions['Vitamin B complex def'] == 'MJMJY & MOUY';
-  formData['vB_Refer_DEIC'] = referralOptions['Vitamin B complex def'] == 'DEIC';
-  formData['vitaminBcomplexDef_Note'] = _noteControllers['Vitamin B complex def']?.text ?? '';
+    // Vitamin B complex def
+    formData['vitaminBcomplexDef'] =
+        deficiencies['Vitamin B complex def'] ?? false;
+    formData['vitaminBTreated'] =
+        deficiencyTreatment['Vitamin B complex def'] == 'Treated';
+    formData['vitaminBRefer'] =
+        deficiencyTreatment['Vitamin B complex def'] == 'Refer';
+    formData['vitaminBRefer_SKNagpur'] =
+        referralOptions['Vitamin B complex def'] == 'SK Nagpur';
+    formData['vB_Refer_RH'] = referralOptions['Vitamin B complex def'] == 'RH';
+    formData['vB_Refer_SDH'] =
+        referralOptions['Vitamin B complex def'] == 'SDH';
+    formData['vB_Refer_DH'] = referralOptions['Vitamin B complex def'] == 'DH';
+    formData['vB_Refer_GMC'] =
+        referralOptions['Vitamin B complex def'] == 'GMC';
+    formData['vB_Refer_IGMC'] =
+        referralOptions['Vitamin B complex def'] == 'IGMC';
+    formData['vB_Refer_MJMJYAndMOUY'] =
+        referralOptions['Vitamin B complex def'] == 'MJMJY & MOUY';
+    formData['vB_Refer_DEIC'] =
+        referralOptions['Vitamin B complex def'] == 'DEIC';
+    formData['vitaminBcomplexDef_Note'] =
+        _noteControllers['Vitamin B complex def']?.text ?? '';
 
-  // Others
-  formData['othersSpecify'] = deficiencies['Others'] ?? false;
-  formData['othersTreated'] = deficiencyTreatment['Others'] == 'Treated';
-  formData['othersRefer'] = deficiencyTreatment['Others'] == 'Refer';
-  formData['othersRefer_SKNagpur'] = referralOptions['Others'] == 'SK Nagpur';
-  formData['ot_Refer_RH'] = referralOptions['Others'] == 'RH';
-  formData['ot_Refer_SDH'] = referralOptions['Others'] == 'SDH';
-  formData['ot_Refer_DH'] = referralOptions['Others'] == 'DH';
-  formData['ot_Refer_GMC'] = referralOptions['Others'] == 'GMC';
-  formData['ot_Refer_IGMC'] = referralOptions['Others'] == 'IGMC';
-  formData['ot_Refer_MJMJYAndMOUY'] = referralOptions['Others'] == 'MJMJY & MOUY';
-  formData['ot_Refer_DEIC'] = referralOptions['Others'] == 'DEIC';
-  formData['othersSpecify_Note'] = _noteControllers['Others']?.text ?? '';
+    // Others
+    formData['othersSpecify'] = deficiencies['Others'] ?? false;
+    formData['othersTreated'] = deficiencyTreatment['Others'] == 'Treated';
+    formData['othersRefer'] = deficiencyTreatment['Others'] == 'Refer';
+    formData['othersRefer_SKNagpur'] = referralOptions['Others'] == 'SK Nagpur';
+    formData['ot_Refer_RH'] = referralOptions['Others'] == 'RH';
+    formData['ot_Refer_SDH'] = referralOptions['Others'] == 'SDH';
+    formData['ot_Refer_DH'] = referralOptions['Others'] == 'DH';
+    formData['ot_Refer_GMC'] = referralOptions['Others'] == 'GMC';
+    formData['ot_Refer_IGMC'] = referralOptions['Others'] == 'IGMC';
+    formData['ot_Refer_MJMJYAndMOUY'] =
+        referralOptions['Others'] == 'MJMJY & MOUY';
+    formData['ot_Refer_DEIC'] = referralOptions['Others'] == 'DEIC';
+    formData['othersSpecify_Note'] = _noteControllers['Others']?.text ?? '';
 
-  return formData;
-}
+    return formData;
+  }
 }

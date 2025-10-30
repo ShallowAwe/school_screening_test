@@ -26,11 +26,11 @@ class AddSchoolScreen extends StatefulWidget {
 }
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
-  //image
+  // Image
   File? selectedImage;
   String? base64Image;
 
-  //DateTime
+  //  Date of Visit
   DateTime? dateOfBirth;
 
   final _formKey = GlobalKey<FormState>();
@@ -430,16 +430,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                   maxLength: 10,
                 ),
                 SizedBox(height: 20),
-
-                // Text(
-                //   'Location',
-                //   style: TextStyle(
-                //     fontSize: 18,
-                //     fontWeight: FontWeight.w600,
-                //     color: Colors.black87,
-                //   ),
-                // ),
-                // SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -520,7 +510,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
                 SizedBox(height: 20),
                 _buildRequiredLabel('District/Block'),
                 SizedBox(height: 8),
@@ -833,7 +822,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         schoolCode: _schoolIdController.text,
                         schoolPrincipalName: _principalNameController.text,
                         schoolContactNo: _contactNoController.text,
-                        visitDate: dateOfBirth,
+                        VisitDate: dateOfBirth,
                         districtId: selectedDistrict?.districtId,
                         districtName: selectedDistrict?.districtName,
                         talukaId: selectedTaluka?.talukaId,

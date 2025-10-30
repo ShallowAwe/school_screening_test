@@ -85,10 +85,10 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
     {'display': 'RH', 'field': 'RH'},
     {'display': 'SDH', 'field': 'SDH'},
     {'display': 'DH', 'field': 'DH'},
-    {'display': 'GMC', 'field': 'GMC'},
-    {'display': 'IGMC', 'field': 'IGMC'},
-    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
-    {'display': 'DEIC', 'field': 'DEIC'},
+    // {'display': 'GMC', 'field': 'GMC'},
+    // {'display': 'IGMC', 'field': 'IGMC'},
+    // {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    // {'display': 'DEIC', 'field': 'DEIC'},
   ];
 
   // State management
@@ -177,163 +177,190 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
     );
   }
 
- Map<String, dynamic> _buildOutputData() {
-  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
-  
-  outputData['diseases'] = hasYesDiseases;
-  
-  for (var diseaseConf in diseaseConfig) {
-    String field = diseaseConf['field']!;
-    String prefix = diseaseConf['prefix']!;
-    String treatedField = diseaseConf['treatedField']!;
-    String referField = diseaseConf['referField']!;
-    
-    // Only set to true if "Yes" is selected AND this specific disease is checked
-    if (hasYesDiseases && diseases[field] == true) {
-      outputData[field] = true;
-      outputData[treatedField] = treatmentOptions[field] == true;
-      outputData[referField] = treatmentOptions[field] == false;
-      
-      String selectedReferral = referralOptions[field] ?? '';
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = selectedReferral == referral['display'];
+  Map<String, dynamic> _buildOutputData() {
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(
+      widget.previousData,
+    );
+
+    outputData['diseases'] = hasYesDiseases;
+
+    for (var diseaseConf in diseaseConfig) {
+      String field = diseaseConf['field']!;
+      String prefix = diseaseConf['prefix']!;
+      String treatedField = diseaseConf['treatedField']!;
+      String referField = diseaseConf['referField']!;
+
+      // Only set to true if "Yes" is selected AND this specific disease is checked
+      if (hasYesDiseases && diseases[field] == true) {
+        outputData[field] = true;
+        outputData[treatedField] = treatmentOptions[field] == true;
+        outputData[referField] = treatmentOptions[field] == false;
+
+        String selectedReferral = referralOptions[field] ?? '';
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] =
+              selectedReferral == referral['display'];
+        }
+
+        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
+      } else {
+        outputData[field] = false;
+        outputData[treatedField] = false;
+        outputData[referField] = false;
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] = false;
+        }
+
+        outputData['${field}_Note'] = '';
       }
-      
-      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-    } else {
-      outputData[field] = false;
-      outputData[treatedField] = false;
-      outputData[referField] = false;
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = false;
-      }
-      
-      outputData['${field}_Note'] = '';
     }
+
+    return outputData;
   }
-  
-  return outputData;
-}
 
   String _getReferralFieldName(
-  String prefix,
-  String referralField,
-  String diseaseField,
-) {
-  // Handle SKNagpur referrals
-  if (referralField == 'SKNagpur') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'skinRefer_SKNagpur';
-    if (diseaseField == 'otitisMedia') return 'otitisMediaRefer_SKNagpur';
-    if (diseaseField == 'rehumaticHeartDisease') return 'rehumaticRefer_SKNagpur';
-    if (diseaseField == 'reactiveAirwayDisease') return 'reactiveRefer_SKNagpur';
-    if (diseaseField == 'dentalConditions') return 'dentalRefer_SKNagpur';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'childhoodRefer_SKNagpur';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTuberculosisRefer_SKNagpur';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtraRefer_SKNagpur';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_SKNagpur';
-  }
-  
-  // Handle RH referrals
-  if (referralField == 'RH') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_RH';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_RH';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_RH';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_RH';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_RH';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_RH';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_RH';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_RH';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_RH';
-  }
-  
-  // Handle SDH referrals
-  if (referralField == 'SDH') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_SDH';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_SDH';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_SDH';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_SDH';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_SDH';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_SDH';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_SDH';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_SDH';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_SDH';
-  }
-  
-  // Handle DH referrals
-  if (referralField == 'DH') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_DH';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_DH';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_DH';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_DH';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_DH';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DH';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DH';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_DH';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_DH';
-  }
-  
-  // Handle GMC referrals
-  if (referralField == 'GMC') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_GMC';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_GMC';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_GMC';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_GMC';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_GMC';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_GMC';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_GMC';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_GMC';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_GMC';
-  }
-  
-  // Handle IGMC referrals
-  if (referralField == 'IGMC') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_IGMC';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_IGMC';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_IGMC';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_IGMC';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_IGMC';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_IGMC';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_IGMC';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_IGMC';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_IGMC';
-  }
-  
-  // Handle MJMJYAndMOUY referrals
-  if (referralField == 'MJMJYAndMOUY') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_MJMJYAndMOUY';
-    if (diseaseField == 'other_disease') return 'other_diseaseMJMJYAndMOUY';
-  }
-  
-  // Handle DEIC referrals
-  if (referralField == 'DEIC') {
-    if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_DEIC';
-    if (diseaseField == 'otitisMedia') return 'otm_Refer_DEIC';
-    if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_DEIC';
-    if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_DEIC';
-    if (diseaseField == 'dentalConditions') return 'de_Refer_DEIC';
-    if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DEIC';
-    if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DEIC';
-    if (diseaseField == 'childhoodTuberculosisExtraPulmonary') return 'cTuExtra_Refer_DEIC';
-    if (diseaseField == 'other_disease') return 'other_diseaseRefer_DEIC';
-  }
-  
-  return '';
-}
+    String prefix,
+    String referralField,
+    String diseaseField,
+  ) {
+    // Handle SKNagpur referrals
+    if (referralField == 'SKNagpur') {
+      if (diseaseField == 'skinConditionsNotLeprosy')
+        return 'skinRefer_SKNagpur';
+      if (diseaseField == 'otitisMedia') return 'otitisMediaRefer_SKNagpur';
+      if (diseaseField == 'rehumaticHeartDisease')
+        return 'rehumaticRefer_SKNagpur';
+      if (diseaseField == 'reactiveAirwayDisease')
+        return 'reactiveRefer_SKNagpur';
+      if (diseaseField == 'dentalConditions') return 'dentalRefer_SKNagpur';
+      if (diseaseField == 'childhoodLeprosyDisease')
+        return 'childhoodRefer_SKNagpur';
+      if (diseaseField == 'childhoodTuberculosis')
+        return 'cTuberculosisRefer_SKNagpur';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtraRefer_SKNagpur';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_SKNagpur';
+    }
 
+    // Handle RH referrals
+    if (referralField == 'RH') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_RH';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_RH';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_RH';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_RH';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_RH';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_RH';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_RH';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_RH';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_RH';
+    }
 
+    // Handle SDH referrals
+    if (referralField == 'SDH') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_SDH';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_SDH';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_SDH';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_SDH';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_SDH';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_SDH';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_SDH';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_SDH';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_SDH';
+    }
+
+    // Handle DH referrals
+    if (referralField == 'DH') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_DH';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_DH';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_DH';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_DH';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_DH';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DH';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DH';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_DH';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_DH';
+    }
+
+    // Handle GMC referrals
+    if (referralField == 'GMC') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_GMC';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_GMC';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_GMC';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_GMC';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_GMC';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_GMC';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_GMC';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_GMC';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_GMC';
+    }
+
+    // Handle IGMC referrals
+    if (referralField == 'IGMC') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_IGMC';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_IGMC';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_IGMC';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_IGMC';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_IGMC';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_IGMC';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_IGMC';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_IGMC';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_IGMC';
+    }
+
+    // Handle MJMJYAndMOUY referrals
+    if (referralField == 'MJMJYAndMOUY') {
+      if (diseaseField == 'skinConditionsNotLeprosy')
+        return 'sk_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'rehumaticHeartDisease')
+        return 're_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'reactiveAirwayDisease')
+        return 'ra_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'childhoodLeprosyDisease')
+        return 'ch_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'childhoodTuberculosis')
+        return 'cTu_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_MJMJYAndMOUY';
+      if (diseaseField == 'other_disease') return 'other_diseaseMJMJYAndMOUY';
+    }
+
+    // Handle DEIC referrals
+    if (referralField == 'DEIC') {
+      if (diseaseField == 'skinConditionsNotLeprosy') return 'sk_Refer_DEIC';
+      if (diseaseField == 'otitisMedia') return 'otm_Refer_DEIC';
+      if (diseaseField == 'rehumaticHeartDisease') return 're_Refer_DEIC';
+      if (diseaseField == 'reactiveAirwayDisease') return 'ra_Refer_DEIC';
+      if (diseaseField == 'dentalConditions') return 'de_Refer_DEIC';
+      if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DEIC';
+      if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DEIC';
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+        return 'cTuExtra_Refer_DEIC';
+      if (diseaseField == 'other_disease') return 'other_diseaseRefer_DEIC';
+    }
+
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -657,7 +684,7 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
 
             // Navigation Buttons
             Padding(
-              padding: const EdgeInsets.fromLTRB(8.0,8,8,25),
+              padding: const EdgeInsets.fromLTRB(8.0, 8, 8, 25),
               child: Row(
                 children: [
                   Expanded(
@@ -690,11 +717,12 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Map<String, dynamic> combinedData = _buildOutputData();
-              
+                          Map<String, dynamic> combinedData =
+                              _buildOutputData();
+
                           // Debug print
                           print('Combined Data: $combinedData');
-              
+
                           // Navigate to next page with combined data
                           Navigator.of(context).push(
                             MaterialPageRoute(

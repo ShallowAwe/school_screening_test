@@ -328,14 +328,14 @@ class _AnganWadiScreeningFormSevenState
     // Special case for Disability (uses unique pattern)
     if (prefix == 'disibility') {
       hospitalMap = {
-        'disibilityRefer_SKNagpur': 'SK Nagpur',
+        // 'disibilityRefer_SKNagpur': 'SK Nagpur',
         'disibility_RH': 'RH',
         'disibility_SDH': 'SDH',
         'disibility_DH': 'DH',
         'disibility_GMC': 'GMC',
-        'disibility_IGMC': 'IGMC',
-        'disibility_MJMJYAndMOUY': 'MJMJY',
-        'disibility_DEIC': 'DEIC',
+        // 'disibility_IGMC': 'IGMC',
+        // 'disibility_MJMJYAndMOUY': 'MJMJY',
+        // 'disibility_DEIC': 'DEIC',
       };
     }
     // Special case for other_disease

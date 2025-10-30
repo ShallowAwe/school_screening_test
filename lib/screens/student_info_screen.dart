@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:logger/web.dart';
+import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
 import 'package:school_test/screens/home_screen.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:geolocator/geolocator.dart';
@@ -43,6 +44,9 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
 
   String? schoolLatitude;
   String? schoolLongitude;
+
+  // validating Ux
+  bool isValidatingLocation = false;
   @override
   void initState() {
     super.initState();
@@ -476,8 +480,33 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () async {
+            // Show loading snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: const [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Verifying location...'),
+                  ],
+                ),
+                duration: const Duration(seconds: 30),
+                backgroundColor: Colors.blue[700],
+              ),
+            );
+
             // Verify location before navigating
             final isLocationValid = await verifySchoolLocation();
+
+            // Clear the loading snackbar
+            ScaffoldMessenger.of(context).clearSnackBars();
 
             if (!isLocationValid) {
               if (mounted) {
@@ -491,23 +520,44 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
               return;
             }
 
-            // Navigate to screening form
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ScreeningFormScreenOne(
-                  schoolName: widget.schoolName!,
-                  doctorId: widget.doctorId,
-                  schoolId: widget.schoolId!,
-                  className: widget.className,
-                  doctorName: widget.teamName,
-                  childName: student['childName'],
-                  aadhaarNo: student['aadhaarNo'],
-                  fatherName: student['fathersName'],
-                  contactNo: student['fathersContactNo'],
-                  dateOfBirth: student['dateOfBirth'],
+            // Navigate based on isSchool flag
+            if (widget.isSchool) {
+              // Navigate to School Screening Form
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ScreeningFormScreenOne(
+                    schoolName: widget.schoolName!,
+                    doctorId: widget.doctorId,
+                    schoolId: widget.schoolId!,
+                    className: widget.className,
+                    doctorName: widget.teamName,
+                    childName: student['childName'],
+                    aadhaarNo: student['aadhaarNo'],
+                    fatherName: student['fathersName'],
+                    contactNo: student['fathersContactNo'],
+                    dateOfBirth: student['dateOfBirth'],
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              // Navigate to Anganwadi Screening Form
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ScreeningForAnganWadiFormOne(
+                    schoolName: widget.schoolName!,
+                    doctorId: widget.doctorId,
+                    schoolId: widget.schoolId!,
+                    className: widget.className,
+                    doctorName: widget.teamName,
+                    childName: student['childName'],
+                    aadhaarNo: student['aadhaarNo'],
+                    fatherName: student['fathersName'],
+                    contactNo: student['fathersContactNo'],
+                    dateOfBirth: student['dateOfBirth'],
+                  ),
+                ),
+              );
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(14),

@@ -93,10 +93,10 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
     {'display': 'RH', 'field': 'RH'},
     {'display': 'SDH', 'field': 'SDH'},
     {'display': 'DH', 'field': 'DH'},
-    {'display': 'GMC', 'field': 'GMC'},
-    {'display': 'IGMC', 'field': 'IGMC'},
-    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
-    {'display': 'DEIC', 'field': 'DEIC'},
+    // {'display': 'GMC', 'field': 'GMC'},
+    // {'display': 'IGMC', 'field': 'IGMC'},
+    // {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    // {'display': 'DEIC', 'field': 'DEIC'},
   ];
 
   // State management

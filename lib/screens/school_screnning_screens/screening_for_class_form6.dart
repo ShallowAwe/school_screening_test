@@ -87,10 +87,10 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
     {'display': 'RH', 'field': 'RH'},
     {'display': 'SDH', 'field': 'SDH'},
     {'display': 'DH', 'field': 'DH'},
-    {'display': 'GMC', 'field': 'GMC'},
-    {'display': 'IGMC', 'field': 'IGMC'},
-    {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
-    {'display': 'DEIC', 'field': 'DEIC'},
+    // {'display': 'GMC', 'field': 'GMC'},
+    // {'display': 'IGMC', 'field': 'IGMC'},
+    // {'display': 'MJMJY & MOUY', 'field': 'MJMJYAndMOUY'},
+    // {'display': 'DEIC', 'field': 'DEIC'},
   ];
 
   // State management
@@ -180,66 +180,81 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
   }
 
   Map<String, dynamic> _buildOutputData() {
-  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
-  
-  outputData['adolescentSpecificQuestionnare'] = hasYesIssues;
-  
-  for (var issueConf in adolescentConfig) {
-    String field = issueConf['field']!;
-    String prefix = issueConf['prefix']!;
-    String treatedField = issueConf['treatedField']!;
-    String referField = issueConf['referField']!;
-    
-    if (adolescentIssues[field] == true) {
-      outputData[field] = true;
-      outputData[treatedField] = treatmentOptions[field] == true;
-      outputData[referField] = treatmentOptions[field] == false;
-      
-      String selectedReferral = referralOptions[field] ?? '';
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = selectedReferral == referral['display'];
-      }
-      
-      outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
-    } else {
-      outputData[field] = false;
-      outputData[treatedField] = false;
-      outputData[referField] = false;
-      
-      for (var referral in referralList) {
-        String referralFieldName = referral['field']!;
-        String fullReferralField = _getReferralFieldName(prefix, referralFieldName, field);
-        outputData[fullReferralField] = false;
-      }
-      
-      outputData['${field}_Note'] = '';
-    }
-  }
-  
-  return outputData;
-}
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(
+      widget.previousData,
+    );
 
- String _getReferralFieldName(String prefix, String referralField, String issueField) {
-  if (referralField == 'SKNagpur') {
-    if (prefix == 'other_asq') {
-      return 'other_asqRefer_SKNagpur';
+    outputData['adolescentSpecificQuestionnare'] = hasYesIssues;
+
+    for (var issueConf in adolescentConfig) {
+      String field = issueConf['field']!;
+      String prefix = issueConf['prefix']!;
+      String treatedField = issueConf['treatedField']!;
+      String referField = issueConf['referField']!;
+
+      if (adolescentIssues[field] == true) {
+        outputData[field] = true;
+        outputData[treatedField] = treatmentOptions[field] == true;
+        outputData[referField] = treatmentOptions[field] == false;
+
+        String selectedReferral = referralOptions[field] ?? '';
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] =
+              selectedReferral == referral['display'];
+        }
+
+        outputData['${field}_Note'] = noteControllers[field]?.text ?? '';
+      } else {
+        outputData[field] = false;
+        outputData[treatedField] = false;
+        outputData[referField] = false;
+
+        for (var referral in referralList) {
+          String referralFieldName = referral['field']!;
+          String fullReferralField = _getReferralFieldName(
+            prefix,
+            referralFieldName,
+            field,
+          );
+          outputData[fullReferralField] = false;
+        }
+
+        outputData['${field}_Note'] = '';
+      }
     }
-    return '${issueField}Refer_SKNagpur';
-  } else if (referralField == 'MJMJYAndMOUY') {
-    if (prefix == 'other_asq') {
-      return 'other_asqMJMJYAndMOUY';
-    }
-    return '${prefix}_Refer_MJMJYAndMOUY';
-  } else {
-    if (prefix == 'other_asq') {
-      return 'other_asqRefer_$referralField';
-    }
-    return '${prefix}_Refer_$referralField';
+
+    return outputData;
   }
-}
+
+  String _getReferralFieldName(
+    String prefix,
+    String referralField,
+    String issueField,
+  ) {
+    if (referralField == 'SKNagpur') {
+      if (prefix == 'other_asq') {
+        return 'other_asqRefer_SKNagpur';
+      }
+      return '${issueField}Refer_SKNagpur';
+    } else if (referralField == 'MJMJYAndMOUY') {
+      if (prefix == 'other_asq') {
+        return 'other_asqMJMJYAndMOUY';
+      }
+      return '${prefix}_Refer_MJMJYAndMOUY';
+    } else {
+      if (prefix == 'other_asq') {
+        return 'other_asqRefer_$referralField';
+      }
+      return '${prefix}_Refer_$referralField';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -504,7 +519,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                                       referralOptions[issueKey]!,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        
+
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -563,7 +578,7 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
 
             // Navigation Buttons
             Padding(
-              padding: const EdgeInsets.fromLTRB(8.0,8,8,25),
+              padding: const EdgeInsets.fromLTRB(8.0, 8, 8, 25),
               child: Row(
                 children: [
                   Expanded(
@@ -596,14 +611,15 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Map<String, dynamic> combinedData = _buildOutputData();
-              
+                          Map<String, dynamic> combinedData =
+                              _buildOutputData();
+
                           // Debug print
                           print('Combined Data from Form 6: $combinedData');
-              
+
                           // Navigate to next page with combined data
                           // Uncomment when you create the next screen
-              
+
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => ScreeningForClassFormSeven(
@@ -611,8 +627,6 @@ class _ScreeningForClassFormSixState extends State<ScreeningForClassFormSix> {
                               ),
                             ),
                           );
-              
-                        
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF4A5568),
