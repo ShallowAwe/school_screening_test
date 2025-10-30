@@ -1,25 +1,22 @@
-class Doctor {
-  final int doctorId;
-  final String doctorName;
+class Team {
+  final int teamId;
+  final String teamName;
   final String email;
-  final String doctorMobileNo;
-  final String post;
+  final String password;
 
-  Doctor({
-    required this.doctorId,
-    required this.doctorName,
+  Team({
+    required this.teamId,
+    required this.teamName,
     required this.email,
-    required this.doctorMobileNo,
-    required this.post,
+    required this.password,
   });
 
-  factory Doctor.fromJson(Map<String, dynamic> json) {
-    return Doctor(
-      doctorId: json['doctorId'],
-      doctorName: json['doctorname'],
-      email: json['email'],
-      doctorMobileNo: json['doctormobileno'],
-      post: json['post'],
+  factory Team.fromJson(Map<String, dynamic> json) {
+    return Team(
+      teamId: json['teamId'],
+      teamName: json['teamName'],
+      email: json['email'] ?? '',
+      password: json['password'] ?? '',
     );
   }
 }

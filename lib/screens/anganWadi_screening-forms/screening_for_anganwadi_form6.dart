@@ -229,20 +229,9 @@ String _getReferralFieldName(String referralField) {
                           hasDisability = false;
                         });
                       },
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: hasNoDiseases ? Color(0xFF2196F3) : Colors.transparent,
-                          border: Border.all(
-                            color: hasNoDiseases ? Color(0xFF2196F3) : Colors.grey,
-                          ),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                        child: hasNoDiseases
-                            ? Icon(Icons.check, color: Colors.white, size: 16)
-                            : null,
-                      ),
+                      child: hasNoDiseases
+                          ? Icon(Icons.check, color: Colors.white, size: 16)
+                          : null,
                     ),
                     SizedBox(width: 16),
                     Text('Yes', style: TextStyle(fontSize: 16)),

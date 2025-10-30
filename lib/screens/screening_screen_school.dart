@@ -12,7 +12,8 @@ import 'package:school_test/models/grampanchayat_model.dart';
 import 'package:school_test/models/school.dart';
 import 'package:school_test/models/school_model.dart';
 import 'package:school_test/models/taluka_model.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
+import 'package:school_test/screens/add_student_screen_school.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
 
@@ -21,15 +22,18 @@ class ScreenningSchoolScreen extends StatefulWidget {
   final String doctorName;
   // final String? className;
   // final String? schoolName;
-  const ScreenningSchoolScreen({super.key, this.doctorId, required  this.doctorName, });
+  const ScreenningSchoolScreen({
+    super.key,
+    this.doctorId,
+    required this.doctorName,
+  });
 
   @override
   State<ScreenningSchoolScreen> createState() => _ScreenningSchoolScreenState();
 }
 
 class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
-
-  //intializing the logger 
+  //intializing the logger
   Logger logger = Logger();
   District? selectedDistrict;
   Taluka? selectedTaluka;
@@ -38,6 +42,8 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   String? selectedClass;
   SchoolDetails? schoolDetails;
   String? schoolDetailsError;
+
+  late String className;
 
   //school data
   Map<String, Map<String, dynamic>> schoolData = {};
@@ -91,8 +97,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
           logger.e('⚠️ Unexpected JSON format');
         }
       } else {
-        logger.f
-        ('❌ Server error: ${response.statusCode}');
+        logger.f('❌ Server error: ${response.statusCode}');
       }
     } on SocketException {
       logger.f('❌ Network error: No Internet connection');
@@ -621,7 +626,6 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   }
 
   Widget _buildSchoolInformation() {
-    // TODO: Replace with API call to fetch school information
     final schoolInfo = schoolData[selectedSchool];
 
     if (schoolInfo == null) return const SizedBox.shrink();
@@ -764,6 +768,28 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                'Latitude: ${schoolDetails!.latitude}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Text(
+                'longitude: ${schoolDetails!.longitude}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ],
         Divider(color: Colors.grey[300], thickness: 1),
 
@@ -793,6 +819,8 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => StudentInfoScreen(
+                      schoolName: selectedSchool!.schoolName,
+                      teamName: widget.doctorName,
                       isSchool: true,
                       schoolId: selectedSchool!.schoolId,
                       className: selectedClass!,
@@ -932,22 +960,38 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
                   logger.d('Screened Children: $screenedData');
                   logger.i('Selected Class: $selectedClass');
-
-                  // Navigate to the next screen and pass the data
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ScreeningFormScreenOne(
-                        // school: selectedSchool!,
-                        doctorId: widget.doctorId!,
+                      builder: (context) => AddStudent(
+                        className: selectedClass!,
                         schoolId: selectedSchool!.schoolId,
                         schoolName: selectedSchool!.schoolName,
-                        doctorName: widget.doctorName,
-                        className: selectedClass!,
-                        // screenedChildren: screenedData,
+                        talukaName: selectedTaluka!.talukaName,
+                        talukaId: selectedTaluka!.talukaId,
+                        districtName: selectedDistrict!.districtName,
+                        districtId: selectedDistrict!.districtId,
+                        gramPanchayatName: selectedVillage!.grampanchayatName,
+                        gramPanchayatId: selectedVillage!.grampanchayatId,
                       ),
                     ),
                   );
+
+                  // Navigate to the next screen and pass the data
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => ScreeningFormScreenOne(
+                  //       // school: selectedSchool!,
+                  //       doctorId: widget.doctorId!,
+                  //       schoolId: selectedSchool!.schoolId,
+                  //       schoolName: selectedSchool!.schoolName,
+                  //       doctorName: widget.doctorName,
+                  //       className: selectedClass!,
+                  //       // screenedChildren: screenedData,
+                  //     ),
+                  //   ),
+                  // );
                 }
               : null,
 
@@ -960,7 +1004,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
             elevation: 0,
           ),
           child: const Text(
-            'Start Screening',
+            'Add Student',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),

@@ -12,14 +12,15 @@ import 'package:school_test/models/grampanchayat_model.dart';
 import 'package:school_test/models/school.dart';
 import 'package:school_test/models/school_model.dart';
 import 'package:school_test/models/taluka_model.dart';
-import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
+import 'package:school_test/screens/add_student_screen_anganwadi.dart';
 import 'package:http/http.dart' as http;
 import 'package:school_test/screens/student_info_screen.dart';
+import 'package:school_test/utils/error_popup.dart';
 
 class ScreenningAngnwadiScreen extends StatefulWidget {
   // final String schoolName;
 
-  final int doctorId;
+  final int? doctorId;
   final String doctorName;
   // final int schoolId;
   // final String className;
@@ -27,7 +28,8 @@ class ScreenningAngnwadiScreen extends StatefulWidget {
   const ScreenningAngnwadiScreen({
     super.key,
     // required this.schoolName,
-    required this.doctorId, required this.doctorName,
+    required this.doctorId,
+    required this.doctorName,
     // required this.schoolId,
     // required this.className,
   });
@@ -38,7 +40,7 @@ class ScreenningAngnwadiScreen extends StatefulWidget {
 }
 
 class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
-  //logger class initialioztion 
+  //logger class initialioztion
   Logger _logger = Logger();
   // gllobal form key
   final _formKey = GlobalKey<FormState>();
@@ -358,6 +360,11 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
 
       // Show error to user
       if (mounted) {
+        showErrorPopup(
+          context,
+          message: "No Scchool Added Yet",
+          isSuccess: false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(schoolFetchError ?? 'Failed to load schools'),
@@ -503,7 +510,13 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                       hint: "Select School",
                       value: selectedSchool,
                       // Filter the items here
-                      items: schools.where((s) => s.flag == 'Anganwadi' || s.flag =='miniAnganwadi').toList(),
+                      items: schools
+                          .where(
+                            (s) =>
+                                s.flag == 'Anganwadi' ||
+                                s.flag == 'MiniAnganwadi',
+                          )
+                          .toList(),
                       getLabel: (school) => school.schoolName,
                       onChanged: (School? newValue) async {
                         if (newValue == null) return;
@@ -523,7 +536,9 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                           setState(() {
                             schoolDetails = details;
                             isLoadingSchoolDetails = false;
-                            _logger.i("schoolDetails Api response : ${details}");
+                            _logger.i(
+                              "schoolDetails Api response : ${details}",
+                            );
                           });
                         } catch (e) {
                           setState(() {
@@ -648,7 +663,6 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
   }
 
   Widget _buildSchoolInformation() {
-   
     final schoolInfo = schoolData[selectedSchool];
 
     if (schoolInfo == null) return const SizedBox.shrink();
@@ -716,23 +730,23 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
     );
   }
 
- List<String> getAvailableClasses() {
-  if (schoolDetails == null) return [];
-  
-  List<String> classes = [];
-  
-  // Dynamically check which anganwadi type is true
-  if (schoolDetails!.miniAnganwadi == true) {
-    classes.add('Mini Anganwadi');
-  }
-  if (schoolDetails!.anganwadi == true) {
-    classes.add('Anganwadi');
-  }
-  
-  return classes;
-}
+  List<String> getAvailableClasses() {
+    if (schoolDetails == null) return [];
 
-  Widget _buildClassSelection(int doctorId) {
+    List<String> classes = [];
+
+    // Dynamically check which anganwadi type is true
+    if (schoolDetails!.miniAnganwadi == true) {
+      classes.add('MiniAnganwadi');
+    }
+    if (schoolDetails!.anganwadi == true) {
+      classes.add('Anganwadi');
+    }
+
+    return classes;
+  }
+
+  Widget _buildClassSelection(int? doctorId) {
     final availableClasses = getAvailableClasses();
     return Form(
       key: _formKey,
@@ -782,7 +796,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                 ),
                 const SizedBox(width: 40),
                 Text(
-                  'Total Girsl: ${schoolDetails!.totalNoOfGirls}',
+                  'Total Girls: ${schoolDetails!.totalNoOfGirls}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.black87,
@@ -821,10 +835,12 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => StudentInfoScreen(
+                        schoolName: selectedSchool!.schoolName,
+                        teamName: widget.doctorName,
                         isSchool: false,
                         schoolId: selectedSchool!.schoolId,
                         className: selectedClass!,
-                        doctorId: doctorId,
+                        doctorId: doctorId!,
                       ),
                     ),
                   );
@@ -963,13 +979,24 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ScreeningForAnganWadiFormOne(
-                  doctorId: widget.doctorId,
-                  doctorName: widget.doctorName,
+                builder: (context) => AddStudentScreenAnganwadi(
+                  className: selectedClass!,
                   schoolId: selectedSchool!.schoolId,
                   schoolName: selectedSchool!.schoolName,
-                  className: selectedClass!,
+                  talukaName: selectedTaluka!.talukaName,
+                  talukaId: selectedTaluka!.talukaId,
+                  districtName: selectedDistrict!.districtName,
+                  districtId: selectedDistrict!.districtId,
+                  gramPanchayatName: selectedVillage!.grampanchayatName,
+                  gramPanchayatId: selectedVillage!.grampanchayatId,
                 ),
+                // builder: (context) => ScreeningForAnganWadiFormOne(
+                //   doctorId: widget.doctorId,
+                //   doctorName: widget.doctorName,
+                //   schoolId: selectedSchool!.schoolId,
+                //   schoolName: selectedSchool!.schoolName,
+                //   className: selectedClass!,
+                // ),
               ),
             );
           },

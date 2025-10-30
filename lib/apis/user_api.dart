@@ -3,12 +3,11 @@ import 'package:school_test/utils/api_client.dart';
 
 import '../config/endpoints.dart';
 
-
 class UserApi {
   final ApiClient _apiClient = ApiClient();
 
   Future<dynamic> login(String email, String password) async {
-    final Doctor user = await _apiClient.post(
+    final Team user = await _apiClient.post(
       Endpoints.userLogin,
       body: {'email': email, 'password': password},
     );

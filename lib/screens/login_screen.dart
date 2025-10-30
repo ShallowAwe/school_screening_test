@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   final String baseUrl = ApiConfig.baseUrl;
-  final String endpoint = Endpoints.doctorLogin;
+  final String endpoint = Endpoints.teamLogin;
 
   @override
   void dispose() {
@@ -32,46 +32,70 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login(String email, String password) async {
     final url = Uri.parse("$baseUrl$endpoint");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "password": password}),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
+      );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
 
-      if (json['success'] == true && json['doctorData'] != null) {
-        final Doctor doctor = Doctor.fromJson(json['doctorData']);
-        final String message = json['responseMessage'] ?? 'Login successful!';
+        if (json['success'] == true && json['teamData'] != null) {
+          final Team doctor = Team.fromJson(json['teamData']);
+          final String message =
+              json['responseMessage']?.toString() ?? 'Login successful!';
 
-        _showSnackBar(message);
-        showErrorPopup(context, isSuccess: true, message: "Login successful.");
-        Future.delayed(Duration(seconds: 1), () {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(
-                doctorId: doctor.doctorId,
-                doctorName: doctor.doctorName,
-              ),
-            ),
+          showErrorPopup(context, isSuccess: true, message: message);
+
+          Future.delayed(Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => HomeScreen(
+                    doctorId: doctor.teamId,
+                    doctorName: doctor.teamName,
+                  ),
+                ),
+              );
+            }
+          });
+        } else {
+          print(response.body);
+          showErrorPopup(
+            context,
+            isSuccess: false,
+            message:
+                json['responseMessage']?.toString() ??
+                "Login failed. Please check your credentials and try again.",
           );
-        });
+        }
       } else {
-        // _showSnackBar(json['responseMessage'] ?? 'Login failed');
-        showErrorPopup(
-          context,
-          isSuccess: false,
-          message: "Login failed. Please check your credentials and try again.",
-        );
+        try {
+          final Map<String, dynamic> errorJson = jsonDecode(response.body);
+          showErrorPopup(
+            context,
+            isSuccess: false,
+            message:
+                errorJson['responseMessage']?.toString() ??
+                "Login failed. Please check your credentials and try again.",
+          );
+        } catch (e) {
+          showErrorPopup(
+            context,
+            isSuccess: false,
+            message:
+                "Login failed. Please check your credentials and try again.",
+          );
+        }
       }
-    } else {
-      final Map<String, dynamic> errorJson = jsonDecode(response.body);
-      // _showSnackBar(errorJson['responseMessage'] ?? 'Login failed');
+    } catch (e) {
+      print("Login error: $e");
       showErrorPopup(
         context,
         isSuccess: false,
-        message: "Login failed. Please check your credentials and try again.",
+        message: "An error occurred. Please try again.",
       );
     }
   }
@@ -81,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
     String password = _passwordController.text.trim();
 
     if (email.isEmpty) {
-      _showSnackBar('Please enter your Team ID');
+      _showSnackBar('Please enter your email');
       return;
     }
 
@@ -100,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await login(email, password);
     } catch (e) {
+      print(e);
       _showSnackBar('Error: ${e.toString()}');
     } finally {
       if (mounted) {
@@ -181,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  height: size.width * 0.25,
+                                  height: size.width * 0.30,
                                   child: Image.asset(
                                     'assets/images/rbskLogo.png',
                                     fit: BoxFit.contain,
@@ -189,21 +214,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 SizedBox(height: contentSpacing * 2),
                                 Text(
-                                  "Doctor's Login",
+                                  "Team Login",
                                   style: TextStyle(
                                     fontSize: size.width * 0.06,
                                     fontWeight: FontWeight.w400,
                                     color: Colors.white,
                                   ),
                                 ),
-                                // SizedBox(height: titleSpacing),
-                                //
-                                // Team ID field
+                                SizedBox(height: contentSpacing),
+                                // Email field
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Team ID',
+                                      'Email',
                                       style: TextStyle(
                                         fontSize: size.width * 0.04,
                                         fontWeight: FontWeight.w400,
@@ -223,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         textInputAction: TextInputAction.next,
                                         enabled: !_isLoading,
                                         decoration: InputDecoration(
-                                          hintText: 'Enter Your Team ID',
+                                          hintText: 'Enter Your Email ID',
                                           hintStyle: TextStyle(
                                             color: Colors.grey[400],
                                             fontSize: size.width * 0.04,
@@ -303,7 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: buttonSpacing),
+                                SizedBox(height: buttonSpacing * 0.8),
                                 Container(
                                   width: double.infinity,
                                   height: 56,
@@ -354,8 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Application privacy policy',
                                 style: TextStyle(
                                   color: Colors.white.withAlpha(204),
-                                  fontSize: size.width * 0.035,
-                                  decoration: TextDecoration.underline,
+                                  fontSize: size.width * 0.040,
                                 ),
                               ),
                             ),

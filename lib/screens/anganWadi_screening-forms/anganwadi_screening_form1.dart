@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/screening_for_anganwadi_form_2.dart';
+import 'package:school_test/screens/home_screen.dart';
 
 class ScreeningForAnganWadiFormOne extends StatefulWidget {
   final String? schoolName;
@@ -147,7 +148,9 @@ class _ScreeningForAnganWadiFormOneState
         backgroundColor: const Color(0xFF2196F3),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) =>  HomeScreen(doctorId: widget.doctorId ,doctorName:widget.doctorName ,)),
+          ),
         ),
         title: const Text(
           'Screening For Angan Wadi',
@@ -223,6 +226,17 @@ class _ScreeningForAnganWadiFormOneState
                   ),
                 ),
               ),
+              if (selectedDate != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      "Age: ${_calculateAge(selectedDate!)} years",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
               const SizedBox(height: 20),
 
               // Gender

@@ -517,7 +517,7 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
         vitASupplementationProgram: vitASupplementation,
 
         SchoolPhoto: base64Image,
-        DoctorId: widget.DoctorId ?? 1,
+        TeamId: widget.DoctorId ?? 1,
       );
 
       final url = Uri.parse("$baseUrl${Endpoints.addSchool}");

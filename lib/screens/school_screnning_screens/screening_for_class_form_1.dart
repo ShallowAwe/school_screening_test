@@ -10,6 +10,12 @@ class ScreeningFormScreenOne extends StatefulWidget {
   final int schoolId;
   final String className;
 
+  final String? childName;
+  final String? aadhaarNo;
+  final String? fatherName;
+  final String? contactNo;
+  final String? dateOfBirth;
+
   const ScreeningFormScreenOne({
     super.key,
     required this.schoolName,
@@ -17,6 +23,11 @@ class ScreeningFormScreenOne extends StatefulWidget {
     required this.schoolId,
     required this.className,
     required this.doctorName,
+    this.childName,
+    this.aadhaarNo,
+    this.fatherName,
+    this.contactNo,
+    this.dateOfBirth,
   });
 
   @override
@@ -24,29 +35,23 @@ class ScreeningFormScreenOne extends StatefulWidget {
 }
 
 class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
+  // Instantiating
+  final _logger = Logger();
 
-  // Instantiating 
-    final _logger = Logger(); 
-  // data to be thrown forward
-  late final String? schoolName;
   DateTime? selectedDob;
-  late final String? doctorName;
-  late final int? doctorId;
-  late final int? schoolId;
-  late final String? className;
 
   final _formKey = GlobalKey<FormState>();
-  final _childNameController = TextEditingController();
-  final _aadhaarController = TextEditingController();
-  final _fatherNameController = TextEditingController();
-  final _contactController = TextEditingController();
+  // Use late to initialize in initState
+  late TextEditingController _childNameController;
+  late TextEditingController _aadhaarController;
+  late TextEditingController _fatherNameController;
+  late TextEditingController _contactController;
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   final _leftEyeController = TextEditingController();
   final _rightEyeController = TextEditingController();
 
-  ///input formmaters
-
+  ///input formatters
   final _aadhaarFormatter = FilteringTextInputFormatter.digitsOnly;
   final _contactFormatter = FilteringTextInputFormatter.digitsOnly;
   final _eyeFormatter = FilteringTextInputFormatter.allow(
@@ -86,23 +91,47 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
 
   @override
   void initState() {
-   
     super.initState();
+
+    // Initialize controllers with data from widget (previous page)
+    _childNameController = TextEditingController(text: widget.childName ?? '');
+    _aadhaarController = TextEditingController(text: widget.aadhaarNo ?? '');
+    _fatherNameController = TextEditingController(
+      text: widget.fatherName ?? '',
+    );
+    _contactController = TextEditingController(text: widget.contactNo ?? '');
+
+    // Set the date of birth if provided
+    if (widget.dateOfBirth != null) {
+      try {
+        // Parse the date string to DateTime
+        // Adjust the format based on your date string format
+        // Example formats:
+        // "2020-05-15" use: DateTime.parse(widget.dateOfBirth!)
+        // "15/05/2020" use: DateFormat('dd/MM/yyyy').parse(widget.dateOfBirth!)
+
+        selectedDob = DateTime.parse(
+          widget.dateOfBirth!,
+        ); // For "yyyy-MM-dd" format
+
+        // OR if your date is in "dd/MM/yyyy" format, uncomment below and import intl package:
+        // selectedDob = DateFormat('dd/MM/yyyy').parse(widget.dateOfBirth!);
+      } catch (e) {
+        _logger.e("Error parsing date: $e");
+        selectedDob = null;
+      }
+    }
+
     _weightController.addListener(_updateBMI);
     _heightController.addListener(_updateBMI);
-    doctorId = widget.doctorId;
-    doctorName = widget.doctorName;
-    schoolId = widget.schoolId;
-    className = widget.className;
-    schoolName = widget.schoolName;
 
     _logger.i(
-       "Current object page 1=> "
-        "ClassName: ${widget.className}, "
-        "DoctorName: ${widget.doctorName}, "
-        "SchoolId: ${widget.schoolId} "
-        "SchoolName: ${widget.schoolName}, "
-        "DoctorId: ${widget.doctorId}"
+      "Current object page 1=> "
+      "ClassName: ${widget.className}, "
+      "DoctorName: ${widget.doctorName}, "
+      "SchoolId: ${widget.schoolId}, "
+      "SchoolName: ${widget.schoolName}, "
+      "TeamId: ${widget.doctorId}",
     );
   }
 
@@ -180,7 +209,6 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                 ),
                 const SizedBox(height: 20),
 
-                // _buildRequiredLabel('Select Age'),
                 const SizedBox(height: 8),
                 _buildRequiredLabel('Date of Birth'),
                 const SizedBox(height: 8),
@@ -190,11 +218,11 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                       context: context,
                       initialDate: DateTime.now().subtract(
                         const Duration(days: 365 * 5),
-                      ), // default 5 years ago
+                      ),
                       firstDate: DateTime.now().subtract(
                         const Duration(days: 365 * 20),
-                      ), // max 15 years ago
-                      lastDate: DateTime.now(), // cannot pick future date
+                      ),
+                      lastDate: DateTime.now(),
                     );
 
                     if (pickedDate != null) {
@@ -245,15 +273,6 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                   ),
                 const SizedBox(height: 20),
 
-                // if (selectedAge == null)
-                //   Padding(
-                //     padding: const EdgeInsets.only(top: 4),
-                //     child: Text(
-                //       'Select Age',
-                //       style: TextStyle(color: Colors.red, fontSize: 14),
-                //     ),
-                //   ),
-                // const SizedBox(height: 20),
                 Text(
                   'Gender',
                   style: TextStyle(
@@ -316,7 +335,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                 const SizedBox(height: 8),
                 _buildTextField(
                   controller: _fatherNameController,
-                  hintText: 'Enter Name of Fatherchandu/Guardian',
+                  hintText: 'Enter Name of Father/Guardian',
                   isRequired: true,
                 ),
                 const SizedBox(height: 20),
@@ -665,14 +684,20 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                           );
                           return;
                         }
-                       _logger.i("School Name: $schoolName");
+
+                        _logger.i("School Name: ${widget.schoolName}");
+                        _logger.i("Doctor Name: ${widget.doctorName}");
+                        _logger.i("Doctor ID: ${widget.doctorId}");
+                        _logger.i("School ID: ${widget.schoolId}");
+                        _logger.i("Class Name: ${widget.className}");
+
                         final formData = {
-                          // IDs (PascalCase)
-                          'SchoolId': schoolId,
-                          'DoctorId': doctorId,
-                          'DoctorName': doctorName,
-                          'SchoolName':schoolName,
-                          'ClassName': className,
+                          // Use widget properties directly
+                          'SchoolId': widget.schoolId,
+                          'TeamId': widget.doctorId,
+                          'DoctorName': widget.doctorName,
+                          'SchoolName': widget.schoolName,
+                          'ClassName': widget.className,
 
                           // Class flags
                           'anganwadi': false,
@@ -714,7 +739,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                               .toLowerCase()
                               .contains('12th'),
 
-                          // Demographics (PascalCase)
+                          // Demographics
                           'ChildName': _childNameController.text.trim(),
                           'Age': age.toString(),
                           'Gender': selectedGender,
@@ -753,7 +778,6 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                           MaterialPageRoute(
                             builder: (context) => ScreeningFormScreenTwo(
                               previousFormData: formData,
-                              
                             ),
                           ),
                         );
@@ -768,7 +792,6 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
                         );
                       }
                     },
-
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4A5568),
                       shape: RoundedRectangleBorder(
@@ -837,7 +860,7 @@ class _ScreeningFormScreenOneState extends State<ScreeningFormScreenOne> {
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey[500]),
           border: InputBorder.none,
-          counterText: '', // Hide character counter
+          counterText: '',
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

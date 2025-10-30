@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+
 import 'package:school_test/screens/login_screen.dart';
+import 'package:school_test/services/database_service.dart';
+
   
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+    await DatabaseService.init();
   runApp(const MyApp());
 }
 
@@ -14,7 +20,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 228, 220, 242)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 228, 220, 242) ),
       ),
       home:  LoginScreen()
     );

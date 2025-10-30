@@ -5,7 +5,7 @@ import 'package:school_test/screens/screening_screen_school.dart';
 import 'package:school_test/screens/add_angan_wadi_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final int doctorId;
+  final int? doctorId;
   final String doctorName;
 
   const HomeScreen({
@@ -19,34 +19,66 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /* 
+  for later cause in_ap_update is not working as we want it to be working 
+ */
+  //  final _updateChecker = InappUpdate();
+
+  // initState() async {
+  //   super.initState();
+  //   // You can add any initialization code here if needed
+  //   /// checking if  updates ar avialable
+  //   // await _updateChecker.checkForAppUpdate();
+  // }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
-    
+
     // Responsive sizing
     final isSmallScreen = width < 360;
     final isMediumScreen = width >= 360 && width < 600;
     final isLargeScreen = width >= 600;
-    
+
     // Dynamic padding
     final horizontalPadding = width * 0.05;
     final verticalPadding = height * 0.02;
-    
+
     // Dynamic font sizes
-    final titleFontSize = isSmallScreen ? 18.0 : isMediumScreen ? 20.0 : 24.0;
-    final subtitleFontSize = isSmallScreen ? 10.0 : isMediumScreen ? 12.0 : 14.0;
+    final titleFontSize = isSmallScreen
+        ? 18.0
+        : isMediumScreen
+        ? 20.0
+        : 24.0;
+    final subtitleFontSize = isSmallScreen
+        ? 10.0
+        : isMediumScreen
+        ? 12.0
+        : 14.0;
     final sectionFontSize = isSmallScreen ? 16.0 : 18.0;
     final cardTitleFontSize = isSmallScreen ? 14.0 : 16.0;
     final cardSubtitleFontSize = isSmallScreen ? 10.0 : 12.0;
-    
+
     // Dynamic icon sizes
-    final headerIconSize = isSmallScreen ? 32.0 : isMediumScreen ? 36.0 : 40.0;
-    final cardIconSize = isSmallScreen ? 28.0 : isMediumScreen ? 32.0 : 36.0;
-    
+    final headerIconSize = isSmallScreen
+        ? 32.0
+        : isMediumScreen
+        ? 36.0
+        : 40.0;
+    final cardIconSize = isSmallScreen
+        ? 28.0
+        : isMediumScreen
+        ? 32.0
+        : 36.0;
+
     // Dynamic card height
-    final cardHeight = isSmallScreen ? 140.0 : isMediumScreen ? 160.0 : 180.0;
+    final cardHeight = isSmallScreen
+        ? 140.0
+        : isMediumScreen
+        ? 160.0
+        : 180.0;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -63,11 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Text(
-              'Dr. ${widget.doctorName}',
+              'Team A',
               style: TextStyle(
                 fontSize: subtitleFontSize,
                 fontWeight: FontWeight.w400,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withAlpha(200),
               ),
             ),
           ],
@@ -113,7 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             'Welcome Back!',
                             style: TextStyle(
-                              fontSize: isSmallScreen ? 18 : isMediumScreen ? 22 : 24,
+                              fontSize: isSmallScreen
+                                  ? 18
+                                  : isMediumScreen
+                                  ? 22
+                                  : 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -315,11 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                size: iconSize,
-                color: color,
-              ),
+              child: Icon(icon, size: iconSize, color: color),
             ),
             SizedBox(height: height * 0.075),
             Text(

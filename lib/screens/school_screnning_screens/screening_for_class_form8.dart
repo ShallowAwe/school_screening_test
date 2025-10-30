@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
+import 'package:school_test/screens/student_info_screen.dart';
 import 'package:school_test/utils/api_client.dart';
 import 'package:school_test/config/endpoints.dart';
 import 'package:school_test/utils/error_popup.dart';
@@ -23,7 +24,8 @@ class _ScreeningForClassFormEightState
 
   bool _isLoading = false;
 
-  TextEditingController _doctorNameController = TextEditingController();
+  // TextEditingController _doctorNameController = TextEditingController();
+  final _doctorNameController = TextEditingController();
 
   /// instnace of Logger
   final _logger = Logger();
@@ -251,17 +253,17 @@ class _ScreeningForClassFormEightState
     _logger.i(
       "Current object => "
       "ClassName: ${widget.combinedData['ClassName']}, "
-      "DoctorName: ${widget.combinedData['DoctorName']}, "
+      "DoctorName: $_doctorNameController, "
       "SchoolId: ${widget.combinedData['SchoolId']}, "
       "SchoolName: ${widget.combinedData['SchoolName']}, "
-      "DoctorId: ${widget.combinedData['DoctorId']}",
+      "TeamId: ${widget.combinedData['DoctorId']}",
     );
 
-    _doctorNameController =
-        widget.combinedData['DoctorName'] != null &&
-            widget.combinedData['DoctorName'] != 'string'
-        ? TextEditingController(text: widget.combinedData['DoctorName'])
-        : TextEditingController();
+    // _doctorNameController =
+    //     widget.combinedData['DoctorName'] != null &&
+    //         widget.combinedData['DoctorName'] != 'string'
+    //     ? TextEditingController(text: widget.combinedData['DoctorName'])
+    //     : TextEditingController();
     // Debug: _logger received data
     _logger.i('=== COMBINED DATA RECEIVED IN FORM 8 ===');
     _logger.i(json.encode(widget.combinedData));
@@ -770,7 +772,6 @@ class _ScreeningForClassFormEightState
       return;
     }
 
-    // Validation - Location
     if (_currentPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -789,7 +790,6 @@ class _ScreeningForClassFormEightState
         ),
       );
 
-      // Try to get location one more time
       if (!_isLoadingLocation) {
         await _getCurrentLocation();
       }
@@ -816,27 +816,22 @@ class _ScreeningForClassFormEightState
         ),
       ),
     );
+
     try {
       setState(() => _isLoading = true);
 
-      // Prepare a clean payload copy
+      // Prepare payload
       Map<String, dynamic> payload = Map<String, dynamic>.from(
         widget.combinedData,
       );
 
-      // Remove temporary fields (like "_schoolId", "_doctorId" etc.)
-      // payload.removeWhere((key, value) => key.toString().startsWith('_'));
-
-      // Added required fields from the form
-      payload['DoctorId'] = _toInt(widget.combinedData['doctorId']);
+      payload['TeamId'] = _toInt(widget.combinedData['TeamId']);
       payload['UserId'] = _toInt(widget.combinedData['userId']);
       payload['SchoolId'] = _toInt(widget.combinedData['SchoolId']);
-
       payload['ClassName'] = widget.combinedData['className'];
       payload['Latitude'] = _currentPosition!.latitude.toString();
       payload['Longitude'] = _currentPosition!.longitude.toString();
 
-      //  Clean note fields (replace "string" or null with empty)
       payload.forEach((key, value) {
         if (key.endsWith('_Note')) {
           payload[key] = (value == null || value == 'string')
@@ -845,7 +840,6 @@ class _ScreeningForClassFormEightState
         }
       });
 
-      // 🩺 Hardcoded screening status and reference suggestion fields
       payload.addAll({
         "investigationStatus": "string",
         "diagnosisStatus": "string",
@@ -873,27 +867,24 @@ class _ScreeningForClassFormEightState
         "skNagpur_Refer_Note_Suggestion": "string",
       });
 
-      // 🧾 Debug _logger before API call
       _logger.i("=== FINAL PAYLOAD ===");
       payload.forEach(
         (key, value) => _logger.i('$key => ${value.runtimeType} : $value'),
       );
 
-      // 🛰️ Send to API
       final api = ApiClient();
       final response = await api.post(
         Endpoints.addScreeningSchool,
         body: payload,
       );
 
-      // Log API response
       _logger.i("=== RESPONSE === $response");
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-      // Check response
+
+      // ✅ Close loading dialog safely
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+
       if (response['responseCode'] == 200) {
-        // ✅ Show success popup and AWAIT it
+        // ✅ Show success popup
         if (context.mounted) {
           await showErrorPopup(
             context,
@@ -902,42 +893,39 @@ class _ScreeningForClassFormEightState
           );
         }
 
-        if (!context.mounted) return;
-
-        // ✅ Navigate immediately after popup closes
-        // ✅ Navigate immediately after popup closes
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => ScreeningFormScreenOne(
-              className:
-                  widget.combinedData['ClassName']?.toString() ?? 'Unknown',
-              doctorName:
-                  widget.combinedData['DoctorName']?.toString() ?? 'Unknown',
-              schoolId: widget.combinedData['SchoolId'] ?? 0,
-              schoolName:
-                  widget.combinedData['SchoolName']?.toString() ?? 'Unknown',
-              doctorId: widget.combinedData['DoctorId'] ?? 0,
+        // ✅ Navigate cleanly after popup closes
+        if (context.mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => StudentInfoScreen(
+                className:
+                    widget.combinedData['ClassName']?.toString() ?? 'Unknown',
+                isSchool: true,
+                teamName: widget.combinedData['DoctorName'],
+                schoolId: widget.combinedData['SchoolId'] ?? 0,
+                schoolName:
+                    widget.combinedData['SchoolName']?.toString() ?? 'Unknown',
+                doctorId: widget.combinedData['DoctorId'] ?? 0,
+              ),
             ),
-          ),
-          (Route<dynamic> route) => false, // 👈 removes all previous routes
-        );
+            (Route<dynamic> route) => false,
+          );
+        }
       } else {
         if (context.mounted) {
           await showErrorPopup(
             context,
             isSuccess: false,
-            message: response['responseMessage'] ?? 'Unknown error',
+            message: response['responseMessage'] ?? 'Unknown error occurred.',
           );
         }
       }
     } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
+      // ✅ Close dialog before showing popup
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
 
       _logger.f("Error submitting form: $e");
 
-      // ✅ Show error popup
       if (context.mounted) {
         await showErrorPopup(
           context,
@@ -945,6 +933,8 @@ class _ScreeningForClassFormEightState
           message: 'Something went wrong. Please try again later.',
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

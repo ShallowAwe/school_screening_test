@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
+
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:school_test/config/api_config.dart';
 import 'package:school_test/config/endpoints.dart';
 import 'package:school_test/models/api_response.dart';
@@ -29,15 +30,17 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   File? selectedImage;
   String? base64Image;
 
+  //DateTime
+  DateTime? dateOfBirth;
+
   final _formKey = GlobalKey<FormState>();
   final _schoolNameController = TextEditingController();
   final _schoolIdController = TextEditingController();
   final _principalNameController = TextEditingController();
   final _contactNoController = TextEditingController();
-
-  //Location variables
-  double? _currentLatitude;
-  double? _currentLongitude;
+  // final _visitDateController = TextEditingController();
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
 
   bool isLoadingDistricts = false;
   bool isLoadingTalukas = false;
@@ -48,6 +51,35 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   List<Grampanchayat> villages = [];
 
   String baseUrl = ApiConfig.baseUrl;
+
+  //Date Selection
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue[800]!,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.blue[800]!,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != dateOfBirth) {
+      setState(() {
+        dateOfBirth = picked;
+      });
+    }
+  }
 
   // radio button
   Widget _buildServiceRadioBool(
@@ -99,48 +131,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
         ],
       ),
     );
-  }
-
-  // fetch the  current locations
-  Future<void> _getCurrentLocation() async {
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please enable location services')),
-        );
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Location permission denied')));
-          return;
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _currentLatitude = position.latitude;
-        _currentLongitude = position.longitude;
-      });
-
-      print('Location obtained: $_currentLatitude, $_currentLongitude');
-    } catch (e) {
-      print('Location error: $e');
-      showErrorPopup(
-        context,
-        message: "failed to get location: $e",
-        isSuccess: false,
-      );
-    }
   }
 
   //fetch Disctrict, Taluka , Village from api and populate in dropdowns
@@ -296,8 +286,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
 
     //calling district api to populate dropdown
     fetchDistricts();
-    // calling the location service to et th current location
-    _getCurrentLocation();
+
     // getTalukas(selectedDistrict != null ? districts.firstWhere((d) => d.districtName == selectedDistrict!).districtId : 0);
     // getGrampanchayats(selectedTaluka != null ? talukas.firstWhere((element) => element.talukaName == selec!,).talukaId : 0);
   }
@@ -335,6 +324,8 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     _schoolIdController.dispose();
     _principalNameController.dispose();
     _contactNoController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
   }
 
@@ -436,10 +427,101 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                   hintText: 'Enter Contact No',
                   isRequired: true,
                   keyboardType: TextInputType.phone,
-                  maxLength: 10
+                  maxLength: 10,
                 ),
                 SizedBox(height: 20),
 
+                // Text(
+                //   'Location',
+                //   style: TextStyle(
+                //     fontSize: 18,
+                //     fontWeight: FontWeight.w600,
+                //     color: Colors.black87,
+                //   ),
+                // ),
+                // SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildRequiredLabel('Latitude'),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _latitudeController,
+                            hintText: 'Enter Latitude',
+                            isRequired: true,
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildRequiredLabel('Longitude'),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _longitudeController,
+                            hintText: 'Enter Longitude',
+                            isRequired: true,
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                _buildRequiredLabel('Visit Date'),
+                SizedBox(height: 8),
+                // Date of Birth
+                InkWell(
+                  onTap: () => _selectDate(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          color: Colors.grey[600],
+                          size: 20,
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            dateOfBirth == null
+                                ? 'Select Visit Date'
+                                : DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(dateOfBirth!),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: dateOfBirth == null
+                                  ? Colors.grey[500]
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildRequiredLabel('District/Block'),
                 SizedBox(height: 8),
 
@@ -743,21 +825,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         );
                         return;
                       }
-                      if (_currentLatitude == null ||
-                          _currentLongitude == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Location not available. Please enable GPS and try again.',
-                            ),
-                            action: SnackBarAction(
-                              label: 'Retry',
-                              onPressed: () => _getCurrentLocation(),
-                            ),
-                          ),
-                        );
-                        return;
-                      }
 
                       // 3️⃣ Create School object
                       final school = SchoolDetails(
@@ -766,7 +833,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         schoolCode: _schoolIdController.text,
                         schoolPrincipalName: _principalNameController.text,
                         schoolContactNo: _contactNoController.text,
-
+                        visitDate: dateOfBirth,
                         districtId: selectedDistrict?.districtId,
                         districtName: selectedDistrict?.districtName,
                         talukaId: selectedTaluka?.talukaId,
@@ -774,8 +841,8 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         grampanchayatId: selectedVillage?.grampanchayatId,
                         grampanchayatName: selectedVillage?.grampanchayatName,
 
-                        latitude: _currentLatitude?.toString(),
-                        longitude: _currentLongitude?.toString(),
+                        latitude: _latitudeController.text,
+                        longitude: _longitudeController.text,
 
                         // Classes
                         firstClass: classSelections[0],
@@ -811,7 +878,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         SchoolPhoto:
                             base64Image, // converted uploaded image to Base64
 
-                        DoctorId: widget.DoctorId!, // logged-in user ID
+                        TeamId: widget.DoctorId!, // logged-in user ID
                       );
 
                       try {
@@ -837,8 +904,6 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           nationalDeworming = false;
                           anemiaMukt = false;
                           vitASupplement = false;
-                          _currentLatitude = null;
-                          _currentLongitude = null;
                         });
 
                         Navigator.pop(context);
@@ -895,47 +960,44 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     );
   }
 
-
-
-Widget _buildTextField({
-  required TextEditingController controller,
-  required String hintText,
-  bool isRequired = false,
-  TextInputType? keyboardType,
-  int? maxLength, // 👈 new optional parameter
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: Colors.grey[300]!),
-    ),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      inputFormatters: [
-        if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
-        if (keyboardType == TextInputType.phone)
-          FilteringTextInputFormatter.digitsOnly, // 👈 only digits for phone
-      ],
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey[500]),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    bool isRequired = false,
+    TextInputType? keyboardType,
+    int? maxLength, // 👈 new optional parameter
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
       ),
-      validator: isRequired
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return 'This field is required';
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: [
+          if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+          if (keyboardType == TextInputType.phone)
+            FilteringTextInputFormatter.digitsOnly, // 👈 only digits for phone
+        ],
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey[500]),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        validator: isRequired
+            ? (value) {
+                if (value == null || value.isEmpty) {
+                  return 'This field is required';
+                }
+                return null;
               }
-              return null;
-            }
-          : null,
-    ),
-  );
-}
-
+            : null,
+      ),
+    );
+  }
 
   Widget _buildDropdown<T>({
     required T? value,
