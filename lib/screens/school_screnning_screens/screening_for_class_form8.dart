@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
-import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:school_test/screens/student_info_screen.dart';
 import 'package:school_test/utils/api_client.dart';
 import 'package:school_test/config/endpoints.dart';
@@ -268,7 +267,7 @@ class _ScreeningForClassFormEightState
     _logger.i('=== COMBINED DATA RECEIVED IN FORM 8 ===');
     _logger.i(json.encode(widget.combinedData));
     _logger.i('=== Motor Delay Debug ===');
-    _logger.i('defects keys: ${widget.combinedData?.keys.toList()}');
+    _logger.i('defects keys: ${widget.combinedData.keys.toList()}');
 
     // Automatically get location when page loads
     _getCurrentLocation();

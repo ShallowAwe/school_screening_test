@@ -75,41 +75,57 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
   // fetch school data from api and populate the school information section
   Future<SchoolDetails?> fetchSchoolDetails(int schoolId) async {
     final url = Uri.parse(
-      "$baseUrl/api/Rbsk/GetAllSchoolDataWithSchoolId?SchoolId=$schoolId",
+      "$baseUrl/api/Rbsk/GetAllSchoolDataWithSchoolId?schoolId=$schoolId",
     );
+
+    logger.i("📡 Fetching school details for ID: $schoolId");
+    logger.i("📨 GET $url");
+
     try {
-      final response = await http
-          .get(url)
-          .timeout(const Duration(seconds: 180)); // ⏱ Timeout protection
+      final response = await http.get(url).timeout(const Duration(seconds: 20));
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
+      logger.d("🔍 Raw Response: ${response.body}");
 
-        if (decoded is Map<String, dynamic>) {
-          if (decoded['success'] == true && decoded['schools'] != null) {
-            return SchoolDetails.fromJson(
-              decoded['schools'],
-            ); // ✅ Direct object, no [0]
-          } else {
-            logger.e('⚠️ No schools found or success=false:${response.body}');
-          }
-        } else {
-          logger.e('⚠️ Unexpected JSON format');
-        }
-      } else {
-        logger.f('❌ Server error: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        logger.e("❌ Server error: ${response.statusCode}");
+        return null;
       }
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is! Map<String, dynamic>) {
+        logger.e("⚠️ Unexpected JSON format.");
+        return null;
+      }
+
+      if (decoded['success'] != true) {
+        logger.w("⚠️ API returned success=false.");
+        return null;
+      }
+
+      // FIX: Correct key name (school, NOT schools)
+      if (decoded['school'] == null) {
+        logger.w("⚠️ No school object found in response.");
+        return null;
+      }
+
+      logger.i("📦 Parsing school details object...");
+      final schoolDetails = SchoolDetails.fromJson(decoded['school']);
+
+      logger.i("✅ School details loaded successfully.");
+      return schoolDetails;
+    }
+    // Structured error catching
+    on TimeoutException {
+      logger.e("⛔ Timeout: No response from server.");
     } on SocketException {
-      logger.f('❌ Network error: No Internet connection');
+      logger.e("⛔ Network error: No internet connection.");
     } on FormatException {
-      logger.f('❌ Invalid JSON format');
+      logger.e("⛔ Invalid JSON format.");
     } on HttpException {
-      logger.f('❌ HTTP error occurred');
-    } on TimeoutException {
-      logger.f('❌ Request timed out');
+      logger.e("⛔ HTTP protocol error.");
     } catch (e, stack) {
-      logger.f('❌ Unexpected error: $e');
-      logger.i(stack);
+      logger.e("❌ Unexpected error: $e", stackTrace: stack);
     }
 
     return null;
@@ -289,6 +305,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
         isLoadingVillages = false;
       });
       logger.e('Error fetching villages: $e');
+      logger.d('Returning empty villages list for talukaId: $talukaId');
       return []; // return empty list on error
     }
   }
@@ -306,56 +323,68 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
 
     try {
       final uri = Uri.parse(
-        "https://api.rbsknagpur.in/api/Rbsk/GetSchoolByGrampanchayatId?grampanchayatId=$grampanchayatId",
+        "https://NewAPIS.rbsknagpur.in/api/Rbsk/GetSchoolByGrampanchayatId?grampanchayatId=$grampanchayatId",
       );
+
+      logger.i("📡 Fetching Schools for GP ID: $grampanchayatId");
+      logger.i("📨 GET $uri");
 
       final response = await http
           .get(uri)
           .timeout(
-            const Duration(seconds: 180), // Add timeout
+            const Duration(seconds: 20),
             onTimeout: () {
-              throw Exception(
-                'Request timed out. Please check your internet connection.',
-              );
+              throw Exception("Timeout: No response from server.");
             },
           );
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
+      logger.d("🔍 Raw Response: ${response.body}");
 
-        logger.d('Schools API Response: $decoded');
-
-        if (decoded is List) {
-          final fetchedSchools = decoded
-              .map((e) => School.fromJson(e))
-              .toList();
-
-          setState(() {
-            schools = fetchedSchools;
-            isLoadingSchools = false;
-          });
-
-          return fetchedSchools;
-        } else {
-          throw Exception('Unexpected response format');
-        }
-      } else {
-        throw Exception('Failed: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        throw Exception(
+          "HTTP ${response.statusCode}: Failed to fetch schools.",
+        );
       }
-    } catch (e) {
-      logger.e('❌ Error fetching schools: $e');
+
+      final decoded = jsonDecode(response.body);
+
+      logger.d("📦 Decoded JSON: $decoded");
+
+      // Extract "data" regardless of API wrapper format
+      final List<dynamic> data = decoded is Map<String, dynamic>
+          ? decoded['data'] ?? []
+          : decoded;
+
+      if (data.isEmpty) {
+        logger.w("⚠️ Schools list is empty for GP ID $grampanchayatId");
+      }
+
+      final fetchedSchools = data.map((e) => School.fromJson(e)).toList();
+
       setState(() {
+        schools = fetchedSchools;
         isLoadingSchools = false;
-        schoolFetchError = e.toString().contains('timeout')
-            ? "Request timed out. Check internet connection."
-            : "Error: $e";
       });
 
-      // Show error to user
+      logger.i("✅ Loaded ${fetchedSchools.length} schools.");
+      return fetchedSchools;
+    } catch (e, stack) {
+      logger.e("❌ School Fetch Error: $e", stackTrace: stack);
+
+      final isTimeout = e.toString().contains("Timeout");
+      final message = isTimeout
+          ? "Request timed out. Check your internet connection."
+          : "Error loading schools.";
+
+      setState(() {
+        isLoadingSchools = false;
+        schoolFetchError = message;
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(schoolFetchError ?? 'Failed to load schools'),
+            content: Text(message),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -365,22 +394,6 @@ class _ScreenningSchoolScreenState extends State<ScreenningSchoolScreen> {
       return [];
     }
   }
-  // Mock data for school information - will be replaced with API data in future
-
-  final List<String> classes = [
-    '1st Class',
-    '2st Class',
-    '3st Class',
-    '4st Class',
-    '5st Class',
-    '6st Class',
-    '7st Class',
-    '8st Class',
-    '9st Class',
-    '10st Class',
-    '11st Class',
-    '12st Class',
-  ];
 
   @override
   Widget build(BuildContext context) {

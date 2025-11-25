@@ -168,7 +168,7 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
                         Divider(height: 1, color: Colors.grey[300]),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -239,20 +239,26 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
   ) {
     // Handle SKNagpur referrals
     if (referralField == 'SKNagpur') {
-      if (diseaseField == 'skinConditionsNotLeprosy')
+      if (diseaseField == 'skinConditionsNotLeprosy') {
         return 'skinRefer_SKNagpur';
+      }
       if (diseaseField == 'otitisMedia') return 'otitisMediaRefer_SKNagpur';
-      if (diseaseField == 'rehumaticHeartDisease')
+      if (diseaseField == 'rehumaticHeartDisease') {
         return 'rehumaticRefer_SKNagpur';
-      if (diseaseField == 'reactiveAirwayDisease')
+      }
+      if (diseaseField == 'reactiveAirwayDisease') {
         return 'reactiveRefer_SKNagpur';
+      }
       if (diseaseField == 'dentalConditions') return 'dentalRefer_SKNagpur';
-      if (diseaseField == 'childhoodLeprosyDisease')
+      if (diseaseField == 'childhoodLeprosyDisease') {
         return 'childhoodRefer_SKNagpur';
-      if (diseaseField == 'childhoodTuberculosis')
+      }
+      if (diseaseField == 'childhoodTuberculosis') {
         return 'cTuberculosisRefer_SKNagpur';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      }
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtraRefer_SKNagpur';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_SKNagpur';
     }
 
@@ -265,8 +271,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_RH';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_RH';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_RH';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_RH';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_RH';
     }
 
@@ -279,8 +286,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_SDH';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_SDH';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_SDH';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_SDH';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_SDH';
     }
 
@@ -293,8 +301,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_DH';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DH';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DH';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_DH';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_DH';
     }
 
@@ -307,8 +316,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_GMC';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_GMC';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_GMC';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_GMC';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_GMC';
     }
 
@@ -321,27 +331,34 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_IGMC';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_IGMC';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_IGMC';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_IGMC';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_IGMC';
     }
 
     // Handle MJMJYAndMOUY referrals
     if (referralField == 'MJMJYAndMOUY') {
-      if (diseaseField == 'skinConditionsNotLeprosy')
+      if (diseaseField == 'skinConditionsNotLeprosy') {
         return 'sk_Refer_MJMJYAndMOUY';
+      }
       if (diseaseField == 'otitisMedia') return 'otm_Refer_MJMJYAndMOUY';
-      if (diseaseField == 'rehumaticHeartDisease')
+      if (diseaseField == 'rehumaticHeartDisease') {
         return 're_Refer_MJMJYAndMOUY';
-      if (diseaseField == 'reactiveAirwayDisease')
+      }
+      if (diseaseField == 'reactiveAirwayDisease') {
         return 'ra_Refer_MJMJYAndMOUY';
+      }
       if (diseaseField == 'dentalConditions') return 'de_Refer_MJMJYAndMOUY';
-      if (diseaseField == 'childhoodLeprosyDisease')
+      if (diseaseField == 'childhoodLeprosyDisease') {
         return 'ch_Refer_MJMJYAndMOUY';
-      if (diseaseField == 'childhoodTuberculosis')
+      }
+      if (diseaseField == 'childhoodTuberculosis') {
         return 'cTu_Refer_MJMJYAndMOUY';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      }
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_MJMJYAndMOUY';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseMJMJYAndMOUY';
     }
 
@@ -354,8 +371,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
       if (diseaseField == 'dentalConditions') return 'de_Refer_DEIC';
       if (diseaseField == 'childhoodLeprosyDisease') return 'ch_Refer_DEIC';
       if (diseaseField == 'childhoodTuberculosis') return 'cTu_Refer_DEIC';
-      if (diseaseField == 'childhoodTuberculosisExtraPulmonary')
+      if (diseaseField == 'childhoodTuberculosisExtraPulmonary') {
         return 'cTuExtra_Refer_DEIC';
+      }
       if (diseaseField == 'other_disease') return 'other_diseaseRefer_DEIC';
     }
 
@@ -677,7 +695,7 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
                     ],
                   ],
                 );
-              }).toList(),
+              }),
             ],
 
             SizedBox(height: 40),
@@ -688,7 +706,7 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -713,7 +731,7 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -760,9 +778,9 @@ class _ScreeningForClassFormFourState extends State<ScreeningForClassFormFour> {
 
   @override
   void dispose() {
-    noteControllers.values.forEach((controller) {
+    for (var controller in noteControllers.values) {
       controller.dispose();
-    });
+    }
     super.dispose();
   }
 }

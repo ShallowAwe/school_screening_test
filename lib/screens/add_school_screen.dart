@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,20 +40,24 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
   final _schoolIdController = TextEditingController();
   final _principalNameController = TextEditingController();
   final _contactNoController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   // final _visitDateController = TextEditingController();
-  final _latitudeController = TextEditingController();
-  final _longitudeController = TextEditingController();
+  // final _latitudeController = TextEditingController();
+  // final _longitudeController = TextEditingController();
 
+  bool _isLoadingLocation = false;
+  bool _locationFetched = false;
   bool isLoadingDistricts = false;
   bool isLoadingTalukas = false;
   bool isLoadingVillages = false;
-
+  bool? isPrivateSchool;
   List<District> districts = [];
   List<Taluka> talukas = [];
   List<Grampanchayat> villages = [];
 
   String baseUrl = ApiConfig.baseUrl;
-
+  String? _latitude;
+  String? _longitude;
   //Date Selection
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -68,7 +74,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
               surface: Colors.white,
               onSurface: Colors.blue[800]!,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -78,6 +84,147 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
       setState(() {
         dateOfBirth = picked;
       });
+    }
+  }
+
+  // current location
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationFetched = false; // ✅ Reset on new fetch
+    });
+
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please enable location services'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        setState(() => _isLoadingLocation = false);
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Location permissions are denied'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isLoadingLocation = false);
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Location permissions are permanently denied'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => Geolocator.openLocationSettings(),
+              ),
+            ),
+          );
+        }
+        setState(() => _isLoadingLocation = false);
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _latitude = position.latitude.toStringAsFixed(6);
+        _longitude = position.longitude.toStringAsFixed(6);
+      });
+
+      // Get address from coordinates
+      try {
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          Placemark place = placemarks[0];
+          String address = '';
+
+          if (place.street != null && place.street!.isNotEmpty) {
+            address += '${place.street}, ';
+          }
+          if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+            address += '${place.subLocality}, ';
+          }
+          if (place.locality != null && place.locality!.isNotEmpty) {
+            address += '${place.locality}, ';
+          }
+          if (place.subAdministrativeArea != null &&
+              place.subAdministrativeArea!.isNotEmpty) {
+            address += '${place.subAdministrativeArea}, ';
+          }
+          if (place.administrativeArea != null &&
+              place.administrativeArea!.isNotEmpty) {
+            address += '${place.administrativeArea} ';
+          }
+          if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+            address += '- ${place.postalCode}';
+          }
+
+          setState(() {
+            _addressController.text = address.trim().replaceAll(
+              RegExp(r',\s*$'),
+              '',
+            );
+            _locationFetched = true; // ✅ Mark as successfully fetched
+          });
+        }
+      } catch (e) {
+        print('Error getting address: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not fetch address, but coordinates are saved',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        setState(() {
+          _locationFetched =
+              true; // ✅ Still mark as fetched (we have coordinates)
+        });
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to get location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoadingLocation = false);
     }
   }
 
@@ -279,16 +426,19 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     }
   }
 
+  @override
   void initState() {
     super.initState();
     _boysController.addListener(_updateTotal);
     _girlsController.addListener(_updateTotal);
 
-    //calling district api to populate dropdown
+    // Calling district api to populate dropdown
     fetchDistricts();
 
-    // getTalukas(selectedDistrict != null ? districts.firstWhere((d) => d.districtName == selectedDistrict!).districtId : 0);
-    // getGrampanchayats(selectedTaluka != null ? talukas.firstWhere((element) => element.talukaName == selec!,).talukaId : 0);
+    // ✅ Auto-fetch location when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCurrentLocation();
+    });
   }
 
   District? selectedDistrict;
@@ -324,8 +474,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
     _schoolIdController.dispose();
     _principalNameController.dispose();
     _contactNoController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
+    _addressController.dispose(); // ✅ Add this line
     super.dispose();
   }
 
@@ -429,45 +578,229 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                 ),
+
                 SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildRequiredLabel('Latitude'),
-                          SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _latitudeController,
-                            hintText: 'Enter Latitude',
-                            isRequired: true,
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
+                _buildRequiredLabel('Location'),
+                SizedBox(height: 8),
+
+                // Location Container with dynamic border color
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _locationFetched
+                          ? Colors
+                                .green // ✅ Green border when successfully fetched
+                          : (_isLoadingLocation
+                                ? Colors.blue[300]!
+                                : Colors.grey[300]!),
+                      width: _locationFetched
+                          ? 2
+                          : 1, // ✅ Thicker border when fetched
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Loading indicator or success message
+                      if (_isLoadingLocation)
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.blue,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Fetching your location...',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.blue[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (_locationFetched)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 22,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Location fetched successfully',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Spacer(),
+                            // Retry button
+                            IconButton(
+                              icon: Icon(
+                                Icons.refresh,
+                                color: Colors.blue[700],
+                                size: 22,
+                              ),
+                              onPressed: _getCurrentLocation,
+                              tooltip: 'Refresh location',
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_off,
+                              color: Colors.orange,
+                              size: 22,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Unable to fetch location',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.orange[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            // Retry button
+                            TextButton.icon(
+                              onPressed: _getCurrentLocation,
+                              icon: Icon(Icons.refresh, size: 18),
+                              label: Text('Retry'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.blue[700],
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      // Show coordinates if available
+                      if (_latitude != null && _longitude != null) ...[
+                        SizedBox(height: 16),
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _locationFetched
+                                ? Colors.green[50]
+                                : Colors.blue[50],
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _locationFetched
+                                  ? Colors.green[200]!
+                                  : Colors.blue[200]!,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildRequiredLabel('Longitude'),
-                          SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _longitudeController,
-                            hintText: 'Enter Longitude',
-                            isRequired: true,
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                color: _locationFetched
+                                    ? Colors.green[700]
+                                    : Colors.blue[700],
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Coordinates',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _locationFetched
+                                            ? Colors.green[700]
+                                            : Colors.blue[700],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Lat: $_latitude, Long: $_longitude',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Address TextField (editable)
+                        Text(
+                          'Address',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        TextFormField(
+                          controller: _addressController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Address will appear here (editable)',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Colors.blue,
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please get location or enter address manually';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 SizedBox(height: 20),
                 _buildRequiredLabel('Visit Date'),
@@ -595,6 +928,168 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                   ),
                 ),
                 SizedBox(height: 16),
+
+                SizedBox(height: 20),
+
+                _buildRequiredLabel('School Type'),
+                SizedBox(height: 8),
+
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      // Private School Checkbox
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isPrivateSchool = true;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isPrivateSchool == true
+                                  ? Colors.blue[50]
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isPrivateSchool == true
+                                    ? Colors.blue
+                                    : Colors.grey[300]!,
+                                width: isPrivateSchool == true ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: isPrivateSchool == true
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: isPrivateSchool == true
+                                          ? Colors.blue
+                                          : Colors.grey[400]!,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: isPrivateSchool == true
+                                      ? Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        )
+                                      : null,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Private',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: isPrivateSchool == true
+                                          ? Colors.blue
+                                          : Colors.black87,
+                                      fontWeight: isPrivateSchool == true
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: 12),
+
+                      // Government School Checkbox
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isPrivateSchool = false;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isPrivateSchool == false
+                                  ? Colors.blue[50]
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isPrivateSchool == false
+                                    ? Colors.blue
+                                    : Colors.grey[300]!,
+                                width: isPrivateSchool == false ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: isPrivateSchool == false
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: isPrivateSchool == false
+                                          ? Colors.blue
+                                          : Colors.grey[400]!,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: isPrivateSchool == false
+                                      ? Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        )
+                                      : null,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Government',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: isPrivateSchool == false
+                                          ? Colors.blue
+                                          : Colors.black87,
+                                      fontWeight: isPrivateSchool == false
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 30),
 
                 GridView.builder(
                   shrinkWrap: true,
@@ -821,7 +1316,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         schoolName: _schoolNameController.text,
                         schoolCode: _schoolIdController.text,
                         schoolPrincipalName: _principalNameController.text,
-                        schoolContactNo: _contactNoController.text,
+                        schoolContactNumber: _contactNoController.text,
                         VisitDate: dateOfBirth,
                         districtId: selectedDistrict?.districtId,
                         districtName: selectedDistrict?.districtName,
@@ -830,9 +1325,9 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         grampanchayatId: selectedVillage?.grampanchayatId,
                         grampanchayatName: selectedVillage?.grampanchayatName,
 
-                        latitude: _latitudeController.text,
-                        longitude: _longitudeController.text,
-
+                        latitude: _latitude ?? '',
+                        longitude: _longitude ?? '',
+                        SchoolAddress: _addressController.text,
                         // Classes
                         firstClass: classSelections[0],
                         secondClass: classSelections[1],
@@ -846,7 +1341,10 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         tenthClass: classSelections[9],
                         eleventhClass: classSelections[10],
                         twelthClass: classSelections[11],
-
+                        // School Type
+                        schoolType: isPrivateSchool == true
+                            ? 'Private'
+                            : 'Government',
                         // Students
                         totalNoOFBoys: int.tryParse(_boysController.text),
                         totalNoOfGirls: int.tryParse(_girlsController.text),
@@ -867,7 +1365,8 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         SchoolPhoto:
                             base64Image, // converted uploaded image to Base64
 
-                        TeamId: widget.DoctorId!, // logged-in user ID
+                        TeamId: widget.DoctorId!,
+                        // logged-in user ID
                       );
 
                       try {
@@ -887,12 +1386,18 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                           selectedDistrict = null;
                           selectedTaluka = null;
                           selectedVillage = null;
+                          isPrivateSchool = null; // ✅ Add this
                           classSelections = List.filled(12, false);
                           _boysController.clear();
                           _girlsController.clear();
+                          _addressController.clear();
+                          _latitude = null;
+                          _longitude = null;
                           nationalDeworming = false;
                           anemiaMukt = false;
                           vitASupplement = false;
+                          selectedImage = null;
+                          base64Image = null;
                         });
 
                         Navigator.pop(context);

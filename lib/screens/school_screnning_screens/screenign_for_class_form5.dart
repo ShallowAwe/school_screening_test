@@ -176,7 +176,7 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
                         Divider(height: 1, color: Colors.grey[300]),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -577,7 +577,7 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
                     ],
                   ],
                 );
-              }).toList(),
+              }),
             ],
 
             SizedBox(height: 40),
@@ -588,7 +588,7 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -613,7 +613,7 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -660,9 +660,9 @@ class _ScreenignForClassFormFiveState extends State<ScreenignForClassFormFive> {
 
   @override
   void dispose() {
-    noteControllers.values.forEach((controller) {
+    for (var controller in noteControllers.values) {
       controller.dispose();
-    });
+    }
     super.dispose();
   }
 }

@@ -46,6 +46,7 @@ dependencies:
   path: ^1.9.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  geocoding: ^4.0.0
   # in_app_update: ^4.2.5
 
 dev_dependencies:

@@ -110,7 +110,7 @@ class _ScreeningForClassFormSevenState
                         Divider(height: 1, color: Colors.grey[300]),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -487,7 +487,7 @@ class _ScreeningForClassFormSevenState
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -512,7 +512,7 @@ class _ScreeningForClassFormSevenState
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {

@@ -35,8 +35,8 @@ class _ScreeningForAngnwadiFormTwoState
 
   final List<String> referralChoices = [
     'SK Nagpur',
-    'RH',
-    'SDH',
+    // 'RH',
+    // 'SDH',
     'DH',
     // 'GMC',
     // 'IGMC',
@@ -47,16 +47,18 @@ class _ScreeningForAngnwadiFormTwoState
   @override
   void initState() {
     super.initState();
-    defects.keys.forEach((defect) {
+    for (var defect in defects.keys) {
       defectTreatment[defect] = '';
       referralOptions[defect] = '';
       _noteControllers[defect] = TextEditingController();
-    });
+    }
   }
 
   @override
   void dispose() {
-    _noteControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _noteControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 

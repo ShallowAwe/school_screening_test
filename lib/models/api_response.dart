@@ -1,5 +1,3 @@
-import 'package:school_test/models/user_model.dart';
-
 class ApiResponse<T> {
   final int? responseCode;
   final bool? success;
@@ -27,8 +25,8 @@ class ApiResponse<T> {
       success: json['success'],
       responseMessage: json['responseMessage'],
       message: json['message'],
-      data: json[dataKey] != null && fromJsonT != null 
-          ? fromJsonT(json[dataKey]) 
+      data: json[dataKey] != null && fromJsonT != null
+          ? fromJsonT(json[dataKey])
           : json[dataKey],
       schools: json['schools'] != null && fromJsonT != null
           ? (json['schools'] as List).map((e) => fromJsonT(e)).toList()
@@ -36,5 +34,3 @@ class ApiResponse<T> {
     );
   }
 }
-
-// Usage in login function:

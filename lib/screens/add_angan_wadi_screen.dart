@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -23,7 +22,7 @@ class AddAnganWadiScreen extends StatefulWidget {
   const AddAnganWadiScreen({
     super.key,
     this.DoctorId,
-    required String this.doctorName,
+    required this.doctorName,
   });
 
   @override
@@ -118,7 +117,7 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
               surface: Colors.white,
               onSurface: Colors.blue[800]!,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -465,7 +464,7 @@ class _AddAnganWadiScreenState extends State<AddAnganWadiScreen> {
         schoolName: _nameController.text.trim(),
         schoolCode: _idController.text.trim(),
         schoolPrincipalName: _workerNameController.text.trim(),
-        schoolContactNo: _contactController.text.trim(),
+        schoolContactNumber: _contactController.text.trim(),
 
         districtId: selectedDistrict?.districtId,
         districtName: selectedDistrict?.districtName,

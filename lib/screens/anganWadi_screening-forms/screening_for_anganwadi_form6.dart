@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_form7.dart';
 
-
 class ScreeningForAngnwadiFormSix extends StatefulWidget {
-   final Map<String, dynamic> previousData;
+  final Map<String, dynamic> previousData;
   const ScreeningForAngnwadiFormSix({super.key, required this.previousData});
 
   @override
-  State<ScreeningForAngnwadiFormSix> createState() => _ScreeningForAngnwadiFormSixState();
+  State<ScreeningForAngnwadiFormSix> createState() =>
+      _ScreeningForAngnwadiFormSixState();
 }
 
-class _ScreeningForAngnwadiFormSixState extends State<ScreeningForAngnwadiFormSix> {
-   // Disability configuration with API field names
+class _ScreeningForAngnwadiFormSixState
+    extends State<ScreeningForAngnwadiFormSix> {
+  // Disability configuration with API field names
   final Map<String, String> disabilityConfig = {
-  'display': 'Disability',
-  'field': 'Disibility',           // Capital D
-  'treatedField': 'DisibilityTreated',  // Capital D
-  'referField': 'DisibilityRefer',      // Capital D
-};
+    'display': 'Disability',
+    'field': 'Disibility', // Capital D
+    'treatedField': 'DisibilityTreated', // Capital D
+    'referField': 'DisibilityRefer', // Capital D
+  };
 
   // Referral dropdown options with API field names
   final List<Map<String, String>> referralList = [
@@ -57,9 +58,7 @@ class _ScreeningForAngnwadiFormSixState extends State<ScreeningForAngnwadiFormSi
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
             padding: EdgeInsets.all(16),
@@ -93,7 +92,10 @@ class _ScreeningForAngnwadiFormSixState extends State<ScreeningForAngnwadiFormSi
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 8,
+                          ),
                           child: Text(
                             '${index + 1}. ${referral['display']}',
                             style: TextStyle(
@@ -107,7 +109,7 @@ class _ScreeningForAngnwadiFormSixState extends State<ScreeningForAngnwadiFormSi
                         Divider(height: 1, color: Colors.grey[300]),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -117,53 +119,56 @@ class _ScreeningForAngnwadiFormSixState extends State<ScreeningForAngnwadiFormSi
   }
 
   Map<String, dynamic> _buildOutputData() {
-  Map<String, dynamic> outputData = Map<String, dynamic>.from(widget.previousData);
-  
-  if (hasYesDiseases && hasDisability) {
-    // Disability is selected
-    outputData['disibility'] = true;
-    outputData['disibilityTreated'] = treatmentOption;
-    outputData['disibilityRefer'] = !treatmentOption;
-    
-    // Add referral options based on selection
-    for (var referral in referralList) {
-      String referralField = referral['field']!;
-      String fullReferralField = _getReferralFieldName(referralField);
-      outputData[fullReferralField] = (!treatmentOption && selectedReferral == referral['display']);
-    }
-    
-    // Add note
-    outputData['disibility_Note'] = noteController.text;
-  } else {
-    // No disability selected - set all to false
-    outputData['disibility'] = false;
-    outputData['disibilityTreated'] = false;
-    outputData['disibilityRefer'] = false;
-    
-    for (var referral in referralList) {
-      String referralField = referral['field']!;
-      String fullReferralField = _getReferralFieldName(referralField);
-      outputData[fullReferralField] = false;
-    }
-    
-    outputData['disibility_Note'] = '';
-  }
-  
-  return outputData;
-}
+    Map<String, dynamic> outputData = Map<String, dynamic>.from(
+      widget.previousData,
+    );
 
-String _getReferralFieldName(String referralField) {
-  // Based on model: disibilityRefer_SKNagpur, disibility_RH, disibility_SDH, etc.
-  // Exception: disibility_MJMJYAndMOUY (not disibility_Refer_MJMJYAndMOUY)
-  
-  if (referralField == 'SKNagpur') {
-    return 'disibilityRefer_SKNagpur';
-  } else if (referralField == 'MJMJYAndMOUY') {
-    return 'disibility_MJMJYAndMOUY';
-  } else {
-    return 'disibility_$referralField';
+    if (hasYesDiseases && hasDisability) {
+      // Disability is selected
+      outputData['disibility'] = true;
+      outputData['disibilityTreated'] = treatmentOption;
+      outputData['disibilityRefer'] = !treatmentOption;
+
+      // Add referral options based on selection
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(referralField);
+        outputData[fullReferralField] =
+            (!treatmentOption && selectedReferral == referral['display']);
+      }
+
+      // Add note
+      outputData['disibility_Note'] = noteController.text;
+    } else {
+      // No disability selected - set all to false
+      outputData['disibility'] = false;
+      outputData['disibilityTreated'] = false;
+      outputData['disibilityRefer'] = false;
+
+      for (var referral in referralList) {
+        String referralField = referral['field']!;
+        String fullReferralField = _getReferralFieldName(referralField);
+        outputData[fullReferralField] = false;
+      }
+
+      outputData['disibility_Note'] = '';
+    }
+
+    return outputData;
   }
-}
+
+  String _getReferralFieldName(String referralField) {
+    // Based on model: disibilityRefer_SKNagpur, disibility_RH, disibility_SDH, etc.
+    // Exception: disibility_MJMJYAndMOUY (not disibility_Refer_MJMJYAndMOUY)
+
+    if (referralField == 'SKNagpur') {
+      return 'disibilityRefer_SKNagpur';
+    } else if (referralField == 'MJMJYAndMOUY') {
+      return 'disibility_MJMJYAndMOUY';
+    } else {
+      return 'disibility_$referralField';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,9 +252,13 @@ String _getReferralFieldName(String referralField) {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: hasYesDiseases ? Color(0xFF2196F3) : Colors.transparent,
+                          color: hasYesDiseases
+                              ? Color(0xFF2196F3)
+                              : Colors.transparent,
                           border: Border.all(
-                            color: hasYesDiseases ? Color(0xFF2196F3) : Colors.grey,
+                            color: hasYesDiseases
+                                ? Color(0xFF2196F3)
+                                : Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -275,10 +284,7 @@ String _getReferralFieldName(String referralField) {
                       Expanded(
                         child: Text(
                           '1. ${disabilityConfig['display']}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
                         ),
                       ),
                       GestureDetector(
@@ -350,7 +356,11 @@ String _getReferralFieldName(String referralField) {
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: treatmentOption
-                                      ? Icon(Icons.check, color: Colors.white, size: 14)
+                                      ? Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        )
                                       : null,
                                 ),
                               ),
@@ -379,16 +389,23 @@ String _getReferralFieldName(String referralField) {
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: !treatmentOption
-                                      ? Icon(Icons.check, color: Colors.white, size: 14)
+                                      ? Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        )
                                       : null,
                                 ),
                               ),
-                              if (!treatmentOption && selectedReferral.isNotEmpty) ...[
+                              if (!treatmentOption &&
+                                  selectedReferral.isNotEmpty) ...[
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Color(0xFF2196F3).withOpacity(0.1),
                                       border: Border.all(
@@ -415,7 +432,10 @@ String _getReferralFieldName(String referralField) {
                             treatmentOption
                                 ? 'Enter Treated Note'
                                 : 'Enter Refer Note',
-                            style: TextStyle(fontSize: 16, color: Colors.black87),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
                           ),
                           SizedBox(height: 8),
                           Container(
@@ -432,8 +452,10 @@ String _getReferralFieldName(String referralField) {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Color(0xFF2196F3), width: 2),
+                                  borderSide: BorderSide(
+                                    color: Color(0xFF2196F3),
+                                    width: 2,
+                                  ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 contentPadding: EdgeInsets.all(12),
@@ -459,7 +481,7 @@ String _getReferralFieldName(String referralField) {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
@@ -484,15 +506,16 @@ String _getReferralFieldName(String referralField) {
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Map<String, dynamic> combinedData = _buildOutputData();
-                          
+                          Map<String, dynamic> combinedData =
+                              _buildOutputData();
+
                           // Debug print
                           print('Combined Data from Form 7: $combinedData');
-                          
+
                           // Navigate to next page with combined data
                           Navigator.of(context).push(
                             MaterialPageRoute(

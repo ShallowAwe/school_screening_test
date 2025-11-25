@@ -399,7 +399,7 @@ class _ScreeningForAnganWadiFormOneState
               // Next Button
               Padding(
                 padding: const EdgeInsets.only(bottom: 28.0),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
@@ -447,7 +447,7 @@ class _ScreeningForAnganWadiFormOneState
               surface: Colors.white,
               onSurface: Colors.black,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );

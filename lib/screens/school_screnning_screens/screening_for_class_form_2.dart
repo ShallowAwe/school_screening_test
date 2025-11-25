@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+import 'package:school_test/models/disease_category.dart';
+import 'package:school_test/models/diseases_model.dart';
+import 'package:school_test/models/hospitals_model.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_3.dart';
+import 'package:http/http.dart' as http;
 
 class ScreeningFormScreenTwo extends StatefulWidget {
   final Map<String, dynamic> previousFormData;
@@ -14,31 +21,24 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _noteControllers = {};
   bool hasDefect = false;
-  Map<String, bool> defects = {
-    'Neural Tube Defect': false,
-    'Down\'s Syndrome': false,
-    'Cleft Lip & Palate': false,
-    'Talipes (club foot)': false,
-    'Developmental Dysplasia of Hip': false,
-    'Congenital Cataract': false,
-    'Congenital Deafness': false,
-    'Congenital Heart Disease': false,
-    'Retinopathy of Prematurity': false,
-    'Other': false,
-  };
+  late List<DiseaseCategory> diseaseCategories = [];
+  final bool _isLoadingHospitals = false;
+  String? _hospitalError;
+
+  //Initializing the Logger for Logging the data
+  final _logger = Logger();
+
+  /// make a list of deseases from backend For model calss diseases whcih which will be fetched from backend by diseaseCategory id
+  List<Disease> diseases = [];
+  Map<int, bool> selectedDiseases = {}; // diseaseId -> selected
+  Map<int, String> diseaseTreatment = {}; // diseaseId -> 'Treated'/'Refer'
+  Map<int, int?> diseaseReferralHospital = {}; // diseaseId -> hospitalId
+  Map<int, TextEditingController> diseaseNoteControllers = {};
   Map<String, String> defectTreatment = {};
   Map<String, String> referralOptions = {};
 
-  final List<String> referralChoices = [
-    // 'SK Nagpur',
-    'RH',
-    'SDH',
-    'DH',
-    'GMC',
-    // 'IGMC',
-    // 'MJMJY & MOUY',
-    // 'DEIC',
-  ];
+  List<Hospital> hospitals = [];
+  String currentDeseaseCategory = '';
 
   @override
   void initState() {
@@ -50,18 +50,103 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
       "SchoolName: ${widget.previousFormData['SchoolName']}, "
       "DoctorId: ${widget.previousFormData['DoctorId']}",
     );
-
+    fetchDiseaseCategory();
+    fetchHospitals();
     super.initState();
-    defects.keys.forEach((defect) {
-      defectTreatment[defect] = '';
-      referralOptions[defect] = '';
-      _noteControllers[defect] = TextEditingController();
-    });
+  }
+
+  Future<void> fetchHospitals() async {
+    print('🔵 Starting fetchHospitals...');
+    final url = Uri.parse(
+      "https://NewAPIS.rbsknagpur.in/api/Rbsk/GetHospitals",
+    );
+    try {
+      print('🔵 Making request to: $url');
+      final response = await http.get(url);
+      print('🔵 Response status code: ${response.statusCode}');
+      print('🔵 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('🔵 Decoded data: $data');
+        print('🔵 Status field: ${data['status']}');
+
+        if (data['success'] == true) {
+          final hospitalsList = (data['data'] as List)
+              .map((e) => Hospital.fromJson(e))
+              .toList();
+          print('🔵 Parsed ${hospitalsList.length} hospitals');
+
+          setState(() {
+            hospitals = hospitalsList;
+            _logger.d("Hospitals: $hospitals");
+          });
+        } else {
+          print('❌ Status is not success: ${data['status']}');
+          _logger.e('API returned non-success status: ${data['status']}');
+        }
+      } else {
+        print('❌ Bad status code: ${response.statusCode}');
+        print('❌ Response body: ${response.body}');
+        _logger.e(response.body);
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception caught: $e');
+      print('❌ Stack trace: $stackTrace');
+      _logger.e('Error: $e\nStackTrace: $stackTrace');
+    }
+  }
+
+  Future<void> fetchDiseaseCategory() async {
+    print('🟢 Starting fetchDiseaseCategory...');
+    final url = Uri.parse(
+      "https://NewAPIS.rbsknagpur.in/api/Rbsk/GetDiseaseByCategoryId?categoryId=1",
+    );
+    try {
+      print('🟢 Making request to: $url');
+      final response = await http.get(url);
+      print('🟢 Response status code: ${response.statusCode}');
+      print('🟢 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('🟢 Decoded data: $data');
+
+        if (data['success'] == true) {
+          final categoryResponse = DiseaseCategoryResponse.fromJson(
+            data['data'],
+          );
+          print('🟢 Parsed ${categoryResponse.diseases.length} diseases');
+
+          setState(() {
+            currentDeseaseCategory = categoryResponse.categoryName;
+            diseases = categoryResponse.diseases;
+
+            // Initialize maps for each disease
+            for (var disease in diseases) {
+              selectedDiseases[disease.diseaseId] = false;
+              diseaseTreatment[disease.diseaseId] = '';
+              diseaseReferralHospital[disease.diseaseId] = null;
+              diseaseNoteControllers[disease.diseaseId] =
+                  TextEditingController();
+            }
+
+            _logger.d("Diseases loaded: ${diseases.length}");
+            _logger.i("Current Disease Category: $currentDeseaseCategory");
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception in fetchDiseaseCategory: $e');
+      _logger.e('Error: $e');
+    }
   }
 
   @override
   void dispose() {
-    _noteControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in diseaseNoteControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -102,7 +187,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'A. Defects at Birth',
+                  "A.$currentDeseaseCategory",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
@@ -127,7 +212,9 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                               setState(() {
                                 hasDefect = !(value ?? false);
                                 if (!hasDefect) {
-                                  defects.updateAll((key, value) => false);
+                                  selectedDiseases.updateAll(
+                                    (key, value) => false,
+                                  );
                                   defectTreatment.updateAll((key, value) => '');
                                   referralOptions.updateAll((key, value) => '');
                                 }
@@ -148,7 +235,9 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                               setState(() {
                                 hasDefect = value ?? false;
                                 if (!hasDefect) {
-                                  defects.updateAll((key, value) => false);
+                                  selectedDiseases.updateAll(
+                                    (key, value) => false,
+                                  );
                                   defectTreatment.updateAll((key, value) => '');
                                   referralOptions.updateAll((key, value) => '');
                                 }
@@ -163,9 +252,9 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                 ),
                 if (hasDefect) ...[
                   const SizedBox(height: 16),
-                  ...defects.keys.toList().asMap().entries.map((entry) {
+                  ...diseases.asMap().entries.map((entry) {
                     int index = entry.key;
-                    String defect = entry.value;
+                    Disease disease = entry.value;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -177,7 +266,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                             ),
                             Expanded(
                               child: Text(
-                                defect,
+                                disease.diseaseName,
                                 style: TextStyle(fontSize: 16),
                               ),
                             ),
@@ -185,14 +274,21 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                               width: 20,
                               height: 20,
                               child: Checkbox(
-                                value: defects[defect]!,
+                                value:
+                                    selectedDiseases[disease.diseaseId] ??
+                                    false,
                                 onChanged: (value) {
                                   setState(() {
-                                    defects[defect] = value ?? false;
-                                    if (!defects[defect]!) {
-                                      defectTreatment[defect] = '';
-                                      referralOptions[defect] = '';
-                                      _noteControllers[defect]?.clear();
+                                    selectedDiseases[disease.diseaseId] =
+                                        value ?? false;
+                                    if (!(selectedDiseases[disease.diseaseId] ??
+                                        false)) {
+                                      diseaseTreatment[disease.diseaseId] = '';
+                                      diseaseReferralHospital[disease
+                                              .diseaseId] =
+                                          null;
+                                      diseaseNoteControllers[disease.diseaseId]
+                                          ?.clear();
                                     }
                                   });
                                 },
@@ -202,7 +298,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                             ),
                           ],
                         ),
-                        if (defects[defect]!) ...[
+                        if (selectedDiseases[disease.diseaseId] ?? false) ...[
                           const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.only(left: 16.0),
@@ -217,14 +313,20 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                                   width: 20,
                                   height: 20,
                                   child: Checkbox(
-                                    value: defectTreatment[defect] == 'Treated',
+                                    value:
+                                        diseaseTreatment[disease.diseaseId] ==
+                                        'Treated',
                                     onChanged: (value) {
                                       setState(() {
                                         if (value ?? false) {
-                                          defectTreatment[defect] = 'Treated';
-                                          referralOptions[defect] = '';
+                                          diseaseTreatment[disease.diseaseId] =
+                                              'Treated';
+                                          diseaseReferralHospital[disease
+                                                  .diseaseId] =
+                                              null;
                                         } else {
-                                          defectTreatment[defect] = '';
+                                          diseaseTreatment[disease.diseaseId] =
+                                              '';
                                         }
                                       });
                                     },
@@ -241,55 +343,69 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                                   width: 20,
                                   height: 20,
                                   child: Checkbox(
-                                    value: defectTreatment[defect] == 'Refer',
+                                    value:
+                                        diseaseTreatment[disease.diseaseId] ==
+                                        'Refer',
                                     onChanged: (value) {
                                       setState(() {
                                         if (value ?? false) {
-                                          defectTreatment[defect] = 'Refer';
-                                          _showReferralOptions(defect);
+                                          diseaseTreatment[disease.diseaseId] =
+                                              'Refer';
+                                          _showReferralOptions(
+                                            disease.diseaseId,
+                                          );
                                         } else {
-                                          defectTreatment[defect] = '';
-                                          referralOptions[defect] = '';
+                                          diseaseTreatment[disease.diseaseId] =
+                                              '';
+                                          diseaseReferralHospital[disease
+                                                  .diseaseId] =
+                                              null;
                                         }
                                       });
                                     },
                                     activeColor: Colors.blue,
                                   ),
                                 ),
-                                if (referralOptions[defect]!.isNotEmpty) ...[
+                                if (diseaseReferralHospital[disease
+                                        .diseaseId] !=
+                                    null) ...[
                                   const SizedBox(width: 8),
                                   Text(
-                                    referralOptions[defect]!,
+                                    hospitals
+                                        .firstWhere(
+                                          (h) =>
+                                              h.hospitalId ==
+                                              diseaseReferralHospital[disease
+                                                  .diseaseId],
+                                        )
+                                        .hospitalName,
                                     style: TextStyle(fontSize: 16),
                                   ),
                                 ],
                               ],
                             ),
                           ),
-                          if (defectTreatment[defect] == 'Refer' &&
-                              referralOptions[defect]!.isNotEmpty) ...[
+                          if (diseaseTreatment[disease.diseaseId] == 'Refer' &&
+                              diseaseReferralHospital[disease.diseaseId] !=
+                                  null) ...[
                             const SizedBox(height: 8),
                             Padding(
                               padding: const EdgeInsets.only(left: 16.0),
                               child: TextFormField(
-                                controller: _noteControllers[defect],
+                                controller:
+                                    diseaseNoteControllers[disease.diseaseId],
                                 decoration: InputDecoration(
                                   labelText: 'Enter Refer Note',
                                   border: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Color(0xFF2196F3),
-                                    ),
-                                  ),
                                 ),
                                 validator: (value) {
-                                  if (defectTreatment[defect] == 'Refer' &&
-                                      referralOptions[defect]!.isNotEmpty &&
+                                  if (diseaseTreatment[disease.diseaseId] ==
+                                          'Refer' &&
+                                      diseaseReferralHospital[disease
+                                              .diseaseId] !=
+                                          null &&
                                       (value == null || value.isEmpty)) {
                                     return 'Please enter refer note';
                                   }
@@ -298,28 +414,23 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
                               ),
                             ),
                           ],
-                          if (defectTreatment[defect] == 'Treated') ...[
+                          if (diseaseTreatment[disease.diseaseId] ==
+                              'Treated') ...[
                             const SizedBox(height: 8),
                             Padding(
                               padding: const EdgeInsets.only(left: 16.0),
                               child: TextFormField(
-                                controller: _noteControllers[defect],
+                                controller:
+                                    diseaseNoteControllers[disease.diseaseId],
                                 decoration: InputDecoration(
                                   labelText: 'Enter Treated Note',
                                   border: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Color(0xFF2196F3),
-                                    ),
-                                  ),
                                 ),
                                 validator: (value) {
-                                  if (defectTreatment[defect] == 'Treated' &&
+                                  if (diseaseTreatment[disease.diseaseId] ==
+                                          'Treated' &&
                                       (value == null || value.isEmpty)) {
                                     return 'Please enter treated note';
                                   }
@@ -398,7 +509,7 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
     );
   }
 
-  void _showReferralOptions(String defect) {
+  void _showReferralOptions(int diseaseId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -411,38 +522,46 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Select Referral Option',
+                  'Select Referral Hospital',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                ...referralChoices.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  String option = entry.value;
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        referralOptions[defect] = option;
-                      });
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade300),
+                if (_isLoadingHospitals)
+                  Center(child: CircularProgressIndicator())
+                else if (_hospitalError != null)
+                  Text(_hospitalError!, style: TextStyle(color: Colors.red))
+                else if (hospitals.isEmpty)
+                  Text('No hospitals available')
+                else
+                  ...hospitals.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    Hospital hospital = entry.value;
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          diseaseReferralHospital[diseaseId] =
+                              hospital.hospitalId;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        child: Text(
+                          '${index + 1}. ${hospital.hospitalName}',
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      child: Text(
-                        '${index + 1}. $option',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerRight,
@@ -463,230 +582,47 @@ class _ScreeningFormScreenTwoState extends State<ScreeningFormScreenTwo> {
     Map<String, dynamic> formData = Map.from(widget.previousFormData);
 
     formData['defectsAtBirth'] = hasDefect;
+    formData['categoryId'] = 1; // DefectsAtBirth category
 
-    // Neural Tube Defects
-    formData['neuralTubeDefects'] = defects['Neural Tube Defect'] ?? false;
-    formData['neuralTreated'] =
-        defectTreatment['Neural Tube Defect'] == 'Treated';
-    formData['neuralRefer'] = defectTreatment['Neural Tube Defect'] == 'Refer';
-    formData['neuralRefer_SkNagpur'] =
-        referralOptions['Neural Tube Defect'] == 'SK Nagpur';
-    formData['neural_Refer_RH'] = referralOptions['Neural Tube Defect'] == 'RH';
-    formData['neural_Refer_SDH'] =
-        referralOptions['Neural Tube Defect'] == 'SDH';
-    formData['neural_Refer_DH'] = referralOptions['Neural Tube Defect'] == 'DH';
-    formData['neural_Refer_GMC'] =
-        referralOptions['Neural Tube Defect'] == 'GMC';
-    formData['neural_Refer_IGMC'] =
-        referralOptions['Neural Tube Defect'] == 'IGMC';
-    formData['neural_Refer_MJMJYAndMOUY'] =
-        referralOptions['Neural Tube Defect'] == 'MJMJY & MOUY';
-    formData['neural_Refer_DEIC'] =
-        referralOptions['Neural Tube Defect'] == 'DEIC';
-    formData['neuralTubeDefects_Note'] =
-        _noteControllers['Neural Tube Defect']?.text ?? '';
+    // Get existing detectedDiseases or initialize empty list
+    List<Map<String, dynamic>> detectedDiseases =
+        List<Map<String, dynamic>>.from(formData['detectedDiseases'] ?? []);
 
-    // Down's Syndrome
-    formData['downsSyndrome'] = defects['Down\'s Syndrome'] ?? false;
-    formData['downsTreated'] = defectTreatment['Down\'s Syndrome'] == 'Treated';
-    formData['downsRefer'] = defectTreatment['Down\'s Syndrome'] == 'Refer';
-    formData['downsRefer_SKNagpur'] =
-        referralOptions['Down\'s Syndrome'] == 'SK Nagpur';
-    formData['downs_Refer_RH'] = referralOptions['Down\'s Syndrome'] == 'RH';
-    formData['downs_Refer_SDH'] = referralOptions['Down\'s Syndrome'] == 'SDH';
-    formData['downs_Refer_DH'] = referralOptions['Down\'s Syndrome'] == 'DH';
-    formData['downs_Refer_GMC'] = referralOptions['Down\'s Syndrome'] == 'GMC';
-    formData['downs_Refer_IGMC'] =
-        referralOptions['Down\'s Syndrome'] == 'IGMC';
-    formData['downs_Refer_MJMJYAndMOUY'] =
-        referralOptions['Down\'s Syndrome'] == 'MJMJY & MOUY';
-    formData['downs_Refer_DEIC'] =
-        referralOptions['Down\'s Syndrome'] == 'DEIC';
-    formData['downsSyndrome_Note'] =
-        _noteControllers['Down\'s Syndrome']?.text ?? '';
+    // Process each selected disease
+    for (var disease in diseases) {
+      if (selectedDiseases[disease.diseaseId] == true) {
+        bool isTreated = diseaseTreatment[disease.diseaseId] == 'Treated';
+        int? hospitalId = diseaseReferralHospital[disease.diseaseId];
+        String notes = diseaseNoteControllers[disease.diseaseId]?.text ?? '';
 
-    // Cleft Lip & Palate
-    formData['cleftLipAndPalate'] = defects['Cleft Lip & Palate'] ?? false;
-    formData['cleftTreated'] =
-        defectTreatment['Cleft Lip & Palate'] == 'Treated';
-    formData['cleftRefer'] = defectTreatment['Cleft Lip & Palate'] == 'Refer';
-    formData['cleftRefer_SKNagpur'] =
-        referralOptions['Cleft Lip & Palate'] == 'SK Nagpur';
-    formData['cleft_Refer_RH'] = referralOptions['Cleft Lip & Palate'] == 'RH';
-    formData['cleft_Refer_SDH'] =
-        referralOptions['Cleft Lip & Palate'] == 'SDH';
-    formData['cleft_Refer_DH'] = referralOptions['Cleft Lip & Palate'] == 'DH';
-    formData['cleft_Refer_GMC'] =
-        referralOptions['Cleft Lip & Palate'] == 'GMC';
-    formData['cleft_Refer_IGMC'] =
-        referralOptions['Cleft Lip & Palate'] == 'IGMC';
-    formData['cleft_Refer_MJMJYAndMOUY'] =
-        referralOptions['Cleft Lip & Palate'] == 'MJMJY & MOUY';
-    formData['cleft_Refer_DEIC'] =
-        referralOptions['Cleft Lip & Palate'] == 'DEIC';
-    formData['cleftLipAndPalate_Note'] =
-        _noteControllers['Cleft Lip & Palate']?.text ?? '';
+        Map<String, dynamic> diseaseData = {
+          'diseaseId': disease.diseaseId,
+          'treatedAtScreening': isTreated,
+          'detectionNotes': notes,
+          'treatmentNotes': isTreated ? notes : null,
+        };
 
-    // Talipes (Note: C# model has "TalipesClubFoot" and "Talipse" typo for referrals)
-    formData['talipesClubFoot'] = defects['Talipes (club foot)'] ?? false;
-    formData['talipesTreated'] =
-        defectTreatment['Talipes (club foot)'] == 'Treated';
-    formData['talipseRefer'] =
-        defectTreatment['Talipes (club foot)'] ==
-        'Refer'; // Note typo in C# model
-    formData['talipseRefer_SKNagpur'] =
-        referralOptions['Talipes (club foot)'] == 'SK Nagpur';
-    formData['talipse_Refer_RH'] =
-        referralOptions['Talipes (club foot)'] == 'RH';
-    formData['talipse_Refer_SDH'] =
-        referralOptions['Talipes (club foot)'] == 'SDH';
-    formData['talipse_Refer_DH'] =
-        referralOptions['Talipes (club foot)'] == 'DH';
-    formData['talipse_Refer_GMC'] =
-        referralOptions['Talipes (club foot)'] == 'GMC';
-    formData['talipse_Refer_IGMC'] =
-        referralOptions['Talipes (club foot)'] == 'IGMC';
-    formData['talipse_Refer_MJMJYAndMOUY'] =
-        referralOptions['Talipes (club foot)'] == 'MJMJY & MOUY';
-    formData['talipse_Refer_DEIC'] =
-        referralOptions['Talipes (club foot)'] == 'DEIC';
-    formData['talipesClubFoot_Note'] =
-        _noteControllers['Talipes (club foot)']?.text ?? '';
+        // If referred, create referral object
+        if (!isTreated && hospitalId != null) {
+          diseaseData['referral'] = {
+            'hospitalId': hospitalId,
+            'referralDate': DateTime.now().toIso8601String(),
+            'referralNotes': notes,
+            'treatmentDate': null,
+            'treatmentNotes': null,
+            'referralDiseases': [
+              {'diseaseId': disease.diseaseId},
+            ],
+          };
+        } else {
+          diseaseData['referral'] = null;
+        }
 
-    // Developmental Dysplasia of Hip (Note typo in C#: "Dvelopmental")
-    formData['dvelopmentalDysplasiaOfHip'] =
-        defects['Developmental Dysplasia of Hip'] ?? false;
-    formData['hipTreated'] =
-        defectTreatment['Developmental Dysplasia of Hip'] == 'Treated';
-    formData['hipRefer'] =
-        defectTreatment['Developmental Dysplasia of Hip'] == 'Refer';
-    formData['hipRefer_SKNagpur'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'SK Nagpur';
-    formData['hip_Refer_RH'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'RH';
-    formData['hip_Refer_SDH'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'SDH';
-    formData['hip_Refer_DH'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'DH';
-    formData['hip_Refer_GMC'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'GMC';
-    formData['hip_Refer_IGMC'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'IGMC';
-    formData['hip_Refer_MJMJYAndMOUY'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'MJMJY & MOUY';
-    formData['hip_Refer_DEIC'] =
-        referralOptions['Developmental Dysplasia of Hip'] == 'DEIC';
-    formData['dvelopmentalDysplasiaOfHip_Note'] =
-        _noteControllers['Developmental Dysplasia of Hip']?.text ?? '';
+        detectedDiseases.add(diseaseData);
+      }
+    }
 
-    // Congenital Cataract (Note typo in C#: "Catract")
-    formData['congenitalCatract'] = defects['Congenital Cataract'] ?? false;
-    formData['congenitalTarget'] =
-        defectTreatment['Congenital Cataract'] == 'Treated';
-    formData['congenitalRefer'] =
-        defectTreatment['Congenital Cataract'] == 'Refer';
-    formData['congenitalRefer_SKNagpur'] =
-        referralOptions['Congenital Cataract'] == 'SK Nagpur';
-    formData['co_Refer_RH'] = referralOptions['Congenital Cataract'] == 'RH';
-    formData['co_Refer_SDH'] = referralOptions['Congenital Cataract'] == 'SDH';
-    formData['co_Refer_DH'] = referralOptions['Congenital Cataract'] == 'DH';
-    formData['co_Refer_GMC'] = referralOptions['Congenital Cataract'] == 'GMC';
-    formData['co_Refer_IGMC'] =
-        referralOptions['Congenital Cataract'] == 'IGMC';
-    formData['co_Refer_MJMJYAndMOUY'] =
-        referralOptions['Congenital Cataract'] == 'MJMJY & MOUY';
-    formData['co_Refer_DEIC'] =
-        referralOptions['Congenital Cataract'] == 'DEIC';
-    formData['congenitalCatract_Note'] =
-        _noteControllers['Congenital Cataract']?.text ?? '';
-
-    // Congenital Deafness
-    formData['congenitalDeafness'] = defects['Congenital Deafness'] ?? false;
-    formData['deafnessTarget'] =
-        defectTreatment['Congenital Deafness'] == 'Treated';
-    formData['deafnessRefer'] =
-        defectTreatment['Congenital Deafness'] == 'Refer';
-    formData['deafnessRefer_SKNagpur'] =
-        referralOptions['Congenital Deafness'] == 'SK Nagpur';
-    formData['cd_Refer_RH'] = referralOptions['Congenital Deafness'] == 'RH';
-    formData['cd_Refer_SDH'] = referralOptions['Congenital Deafness'] == 'SDH';
-    formData['cd_Refer_DH'] = referralOptions['Congenital Deafness'] == 'DH';
-    formData['cd_Refer_GMC'] = referralOptions['Congenital Deafness'] == 'GMC';
-    formData['cd_Refer_IGMC'] =
-        referralOptions['Congenital Deafness'] == 'IGMC';
-    formData['cd_Refer_MJMJYAndMOUY'] =
-        referralOptions['Congenital Deafness'] == 'MJMJY & MOUY';
-    formData['cd_Refer_DEIC'] =
-        referralOptions['Congenital Deafness'] == 'DEIC';
-    formData['congenitalDeafness_Note'] =
-        _noteControllers['Congenital Deafness']?.text ?? '';
-
-    // Congenital Heart Disease (Note: C# uses "Congential" typo)
-    formData['congentialHeartDisease'] =
-        defects['Congenital Heart Disease'] ?? false;
-    formData['heartDiseaseTarget'] =
-        defectTreatment['Congenital Heart Disease'] == 'Treated';
-    formData['heartDiseaseRefer'] =
-        defectTreatment['Congenital Heart Disease'] == 'Refer';
-    formData['heartDiseaseRefer_SKNagpur'] =
-        referralOptions['Congenital Heart Disease'] == 'SK Nagpur';
-    formData['hd_Refer_RH'] =
-        referralOptions['Congenital Heart Disease'] == 'RH';
-    formData['hd_Refer_SDH'] =
-        referralOptions['Congenital Heart Disease'] == 'SDH';
-    formData['hd_Refer_DH'] =
-        referralOptions['Congenital Heart Disease'] == 'DH';
-    formData['hd_Refer_GMC'] =
-        referralOptions['Congenital Heart Disease'] == 'GMC';
-    formData['hd_Refer_IGMC'] =
-        referralOptions['Congenital Heart Disease'] == 'IGMC';
-    formData['hd_Refer_MJMJYAndMOUY'] =
-        referralOptions['Congenital Heart Disease'] == 'MJMJY & MOUY';
-    formData['hd_Refer_DEIC'] =
-        referralOptions['Congenital Heart Disease'] == 'DEIC';
-    formData['congentialHeartDisease_Note'] =
-        _noteControllers['Congenital Heart Disease']?.text ?? '';
-
-    // Retinopathy of Prematurity
-    formData['retinopathyOfPrematurity'] =
-        defects['Retinopathy of Prematurity'] ?? false;
-    formData['retinopathyTreated'] =
-        defectTreatment['Retinopathy of Prematurity'] == 'Treated';
-    formData['retinopathyRefer'] =
-        defectTreatment['Retinopathy of Prematurity'] == 'Refer';
-    formData['retinopathyRefer_SKNagpur'] =
-        referralOptions['Retinopathy of Prematurity'] == 'SK Nagpur';
-    formData['rp_Refer_RH'] =
-        referralOptions['Retinopathy of Prematurity'] == 'RH';
-    formData['rp_Refer_SDH'] =
-        referralOptions['Retinopathy of Prematurity'] == 'SDH';
-    formData['rp_Refer_DH'] =
-        referralOptions['Retinopathy of Prematurity'] == 'DH';
-    formData['rp_Refer_GMC'] =
-        referralOptions['Retinopathy of Prematurity'] == 'GMC';
-    formData['rp_Refer_IGMC'] =
-        referralOptions['Retinopathy of Prematurity'] == 'IGMC';
-    formData['rp_Refer_MJMJYAndMOUY'] =
-        referralOptions['Retinopathy of Prematurity'] == 'MJMJY & MOUY';
-    formData['rp_Refer_DEIC'] =
-        referralOptions['Retinopathy of Prematurity'] == 'DEIC';
-    formData['retinopathyOfPrematurity_Note'] =
-        _noteControllers['Retinopathy of Prematurity']?.text ?? '';
-
-    // Other
-    formData['other'] = defects['Other'] ?? false;
-    formData['otherTreated'] = defectTreatment['Other'] == 'Treated';
-    formData['otherRefer'] = defectTreatment['Other'] == 'Refer';
-    formData['otherRefer_SKNagpur'] = referralOptions['Other'] == 'SK Nagpur';
-    formData['other_Refer_RH'] = referralOptions['Other'] == 'RH';
-    formData['other_Refer_SDH'] = referralOptions['Other'] == 'SDH';
-    formData['other_Refer_DH'] = referralOptions['Other'] == 'DH';
-    formData['other_Refer_GMC'] = referralOptions['Other'] == 'GMC';
-    formData['other_Refer_IGMC'] = referralOptions['Other'] == 'IGMC';
-    formData['other_Refer_MJMJYAndMOUY'] =
-        referralOptions['Other'] == 'MJMJY & MOUY';
-    formData['other_Refer_DEIC'] = referralOptions['Other'] == 'DEIC';
-    formData['other_Note'] = _noteControllers['Other']?.text ?? '';
+    formData['detectedDiseases'] = detectedDiseases;
 
     return formData;
   }

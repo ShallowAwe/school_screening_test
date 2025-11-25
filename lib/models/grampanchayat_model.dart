@@ -24,4 +24,4 @@ class Grampanchayat {
       'grampanchayatName': grampanchayatName,
     };
   }
-  }
+}

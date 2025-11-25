@@ -40,6 +40,7 @@ class _AddStudentState extends State<AddStudent> {
 
   // Controllers
   final TextEditingController studentNameController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
   final TextEditingController aadharCardController = TextEditingController();
   final TextEditingController parentNameController = TextEditingController();
   final TextEditingController parentContactController = TextEditingController();
@@ -51,6 +52,7 @@ class _AddStudentState extends State<AddStudent> {
   @override
   void dispose() {
     studentNameController.dispose();
+    addressController.dispose();
     aadharCardController.dispose();
     parentNameController.dispose();
     parentContactController.dispose();
@@ -83,7 +85,7 @@ class _AddStudentState extends State<AddStudent> {
               surface: Colors.white,
               onSurface: Colors.blue[800]!,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -156,17 +158,20 @@ class _AddStudentState extends State<AddStudent> {
           normalizedClassName == "11th" || normalizedClassName == "Eleventh",
       "twelfthClass":
           normalizedClassName == "12th" || normalizedClassName == "Twelfth",
-      "childName": studentNameController.text.trim(),
+      "fullName": studentNameController.text.trim(),
+      "studentAddress": addressController.text.trim(),
       "age": age,
       "dateOfBirth": dateOfBirth!.toIso8601String(),
       "gender": gender,
-      "aadhaarNo": aadharCardController.text.trim(),
-      "fathersName": parentNameController.text.trim(),
-      "fathersContactNo": parentContactController.text.trim(),
+      "aadhaarNumber": aadharCardController.text.trim(),
+      "guardianName": parentNameController.text.trim(),
+      "guardianContact": parentContactController.text.trim(),
     };
 
     try {
-      final url = Uri.parse('https://api.rbsknagpur.in/api/Rbsk/CreateStudent');
+      final url = Uri.parse(
+        'https://NewAPIS.rbsknagpur.in/api/Rbsk/CreateStudent',
+      );
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -371,7 +376,48 @@ class _AddStudentState extends State<AddStudent> {
                       },
                     ),
                     SizedBox(height: mediumSpacing),
+                    // Students Address
+                    TextFormField(
+                      controller: addressController,
+                      enabled: !_isSubmitting,
+                      style: TextStyle(
+                        fontSize: bodyFontSize.clamp(14.0, 16.0),
+                        color: const Color(0xFF1a1a1a),
+                      ),
 
+                      decoration: InputDecoration(
+                        labelText: 'Student Address',
+                        labelStyle: TextStyle(
+                          color: const Color(0xFF757575),
+                          fontSize: labelFontSize.clamp(13.0, 15.0),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.home_outlined,
+                          color: const Color(0xFF757575),
+                          size: iconSize.clamp(18.0, 22.0),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(borderRadius),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE0E0E0),
+                          ),
+                        ),
+                        // ... rest of decoration
+                      ),
+                      maxLines:
+                          2, // ✅ Consider adding this for multi-line address input
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter student address';
+                        }
+                        if (value.trim().length < 10) {
+                          // ✅ Increased minimum length
+                          return 'Address must be at least 10 characters'; // ✅ Fixed capitalization
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: mediumSpacing),
                     // Aadhar Card Number
                     TextFormField(
                       controller: aadharCardController,

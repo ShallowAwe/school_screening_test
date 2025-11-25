@@ -8,8 +8,10 @@ import 'package:intl/intl.dart';
 class SchoolDetails {
   String? schoolName;
   String? schoolCode;
+  String? schoolType;
   String? schoolPrincipalName;
-  String? schoolContactNo;
+  String? schoolContactNumber;
+  String? SchoolAddress;
   int? districtId;
   String? districtName;
   int? talukaId;
@@ -43,10 +45,12 @@ class SchoolDetails {
   DateTime? VisitDate;
 
   SchoolDetails({
+    this.SchoolAddress,
     this.schoolName,
+    this.schoolType,
     this.schoolCode,
     this.schoolPrincipalName,
-    this.schoolContactNo,
+    this.schoolContactNumber,
     this.districtId,
     this.districtName,
     this.talukaId,
@@ -81,10 +85,12 @@ class SchoolDetails {
   });
 
   SchoolDetails.fromJson(Map<String, dynamic> json) {
+    schoolType = json['schoolType'];
+    SchoolAddress = json['address'];
     schoolName = json['schoolName'];
     schoolCode = json['schoolCode'];
     schoolPrincipalName = json['schoolPrincipalName'];
-    schoolContactNo = json['schoolContactNo'];
+    schoolContactNumber = json['schoolContactNo'];
     districtId = json['districtId'];
     districtName = json['districtName'];
     VisitDate = json['visitDate'];
@@ -109,8 +115,8 @@ class SchoolDetails {
     totalNoOFBoys = json['totalNoOFBoys'];
     totalNoOfGirls = json['totalNoOfGirls'];
     total = json['total'];
-    latitude = json['latitude'];
-    longitude = json['longitude'];
+    latitude = json['latitude'].toString();
+    longitude = json['longitude'].toString();
     SchoolPhoto = json['SchoolPhoto'];
     TeamId = json['DoctorId'];
     nationalDeworingProgram = json['nationalDeworingProgram'];
@@ -119,11 +125,13 @@ class SchoolDetails {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['SchoolType'] = schoolType;
     data['schoolName'] = schoolName;
+    data['SchoolAddress'] = SchoolAddress;
     data['schoolCode'] = schoolCode;
     data['schoolPrincipalName'] = schoolPrincipalName;
-    data['schoolContactNo'] = schoolContactNo;
+    data['SchoolContactNumber'] = schoolContactNumber;
     data['districtId'] = districtId;
     data['districtName'] = districtName;
     data['talukaId'] = talukaId;

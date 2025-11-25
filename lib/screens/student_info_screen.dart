@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/web.dart';
 import 'package:school_test/screens/anganWadi_screening-forms/anganwadi_screening_form1.dart';
-import 'package:school_test/screens/home_screen.dart';
+// import 'package:school_test/screens/home_screen.dart';
 import 'package:school_test/screens/school_screnning_screens/screening_for_class_form_1.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' show cos, sqrt, asin;
@@ -34,7 +34,16 @@ class StudentInfoScreen extends StatefulWidget {
 }
 
 class _StudentInfoScreenState extends State<StudentInfoScreen> {
-  final _logger = Logger();
+  final _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 0,
+      errorMethodCount: 5,
+      lineLength: 120,
+      colors: true,
+      printEmojis: true,
+      printTime: true,
+    ),
+  );
   bool isLoading = true;
   String? errorMessage;
   List<dynamic> students = [];
@@ -60,6 +69,7 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
     });
     fetchSchoolLocation(); // Add this line
     fetchStudentsFromApi();
+    getCurrentLocation();
   }
 
   @override
@@ -95,49 +105,67 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse(
-          'https://api.rbsknagpur.in/api/Rbsk/GetStudentsBySchoolId?SchoolId=${widget.schoolId}',
-        ),
+      final normalizedClass = normalizeClassName(
+        widget.className,
+      ).toLowerCase();
+      final classKey = _getClassKeyForApi(normalizedClass);
+      final requestBody = {"schoolId": widget.schoolId, "class": classKey};
+
+      // ADD THIS LOGGING
+      final url =
+          'https://newapis.rbsknagpur.in/api/Rbsk/GetStudentBySchoolIdperClass';
+      _logger.i('🌐 API Call: Fetching Students');
+      _logger.d('URL: $url');
+      _logger.d('Method: POST');
+      _logger.d('Request Body: ${jsonEncode(requestBody)}');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody),
       );
+
+      // ADD THIS LOGGING
+      _logger.i('📥 Response received');
+      _logger.d('Status Code: ${response.statusCode}');
+      _logger.d('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        final List<dynamic> allStudents =
-            (jsonResponse['students'] ?? []) as List<dynamic>;
 
-        print("✅ Total students fetched: ${allStudents.length}");
+        if (jsonResponse['success'] == true) {
+          final List<dynamic> fetchedStudents =
+              (jsonResponse['data'] ?? []) as List<dynamic>;
 
-        final normalizedClass = normalizeClassName(
-          widget.className,
-        ).toLowerCase();
-        final classKey = _getClassKey(normalizedClass);
+          // ADD THIS LOGGING
+          _logger.i(
+            '✅ Students fetched successfully: ${fetchedStudents.length} students',
+          );
 
-        final filteredByClass = allStudents
-            .where((student) => student[classKey] == true)
-            .toList();
+          setState(() {
+            students = fetchedStudents;
+            filteredStudents = List.from(fetchedStudents);
+            isLoading = false;
 
-        print("✅ Filtered students (${classKey}): ${filteredByClass.length}");
+            if (fetchedStudents.isEmpty) {
+              errorMessage = "No students found for ${widget.className}.";
+            }
+          });
 
-        setState(() {
-          students = filteredByClass;
-          filteredStudents = List.from(filteredByClass);
-          isLoading = false;
-
-          if (filteredByClass.isEmpty) {
-            errorMessage = "No students found for ${widget.className}.";
+          if (searchController.text.isNotEmpty) {
+            filterStudents(searchController.text);
           }
-        });
-
-        // Reapply search filter if there's text in search box
-        if (searchController.text.isNotEmpty) {
-          filterStudents(searchController.text);
+        } else {
+          throw Exception(
+            jsonResponse['responseMessage'] ?? "Failed to fetch students",
+          );
         }
       } else {
         throw Exception("Server returned status code ${response.statusCode}");
       }
     } catch (e) {
-      print("❌ Exception while fetching: $e");
+      // ADD THIS LOGGING
+      _logger.e('❌ Error fetching students', error: e);
       setState(() {
         errorMessage =
             "Failed to fetch students. Please check your connection.";
@@ -148,34 +176,54 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
     }
   }
 
-  String _getClassKey(String normalizedClass) {
+  String _getClassKeyForApi(String normalizedClass) {
     switch (normalizedClass) {
       case '1st':
-        return 'firstClass';
+      case 'first':
+        return 'FirstClass';
       case '2nd':
-        return 'secondClass';
+      case 'second':
+        return 'SecondClass';
       case '3rd':
-        return 'thirdClass';
+      case 'third':
+        return 'ThirdClass';
       case '4th':
-        return 'fourthClass';
+      case 'fourth':
+        return 'FourthClass';
       case '5th':
-        return 'fifthClass';
+      case 'fifth':
+        return 'FifthClass';
       case '6th':
-        return 'sixthClass';
+      case 'sixth':
+        return 'SixthClass';
       case '7th':
-        return 'seventhClass';
+      case 'seventh':
+        return 'SeventhClass';
       case '8th':
-        return 'eighthClass';
+      case 'eighth':
+        return 'EighthClass';
       case '9th':
-        return 'ninthClass';
+      case 'ninth':
+        return 'NinthClass';
       case '10th':
-        return 'tenthClass';
+      case 'tenth':
+        return 'TenthClass';
       case '11th':
-        return 'eleventhClass';
+      case 'eleventh':
+        return 'EleventhClass';
       case '12th':
-        return 'twelthClass';
+      case 'twelfth':
+        return 'TwelfthClass';
+      case 'anganwadi':
+        return 'Anganwadi';
+      case 'mini anganwadi':
+        return 'MiniAnganwadi';
       default:
-        return normalizedClass;
+        // Fallback: capitalize first letter of each word
+        return normalizedClass
+            .split(' ')
+            .map((word) => word[0].toUpperCase() + word.substring(1))
+            .join('');
     }
   }
 
@@ -226,19 +274,32 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
 
   // Verify location match
   Future<bool> verifySchoolLocation() async {
+    _logger.i('📍 Starting location verification');
+
     if (schoolLatitude == null || schoolLongitude == null) {
-      _logger.e('School coordinates not available');
+      _logger.e('❌ School coordinates not available');
       return false;
     }
 
+    // ADD THIS LOGGING
+    _logger.d('School Location: Lat: $schoolLatitude, Long: $schoolLongitude');
+
     final currentPosition = await getCurrentLocation();
-    if (currentPosition == null) return false;
+    if (currentPosition == null) {
+      _logger.e('❌ Could not get current position');
+      return false;
+    }
+
+    // ADD THIS LOGGING
+    _logger.d(
+      'Current Location: Lat: ${currentPosition.latitude}, Long: ${currentPosition.longitude}',
+    );
 
     final schoolLat = double.tryParse(schoolLatitude!);
     final schoolLon = double.tryParse(schoolLongitude!);
 
     if (schoolLat == null || schoolLon == null) {
-      _logger.e('Invalid school coordinates');
+      _logger.e('❌ Invalid school coordinates - cannot parse to double');
       return false;
     }
 
@@ -249,33 +310,59 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
       schoolLon,
     );
 
-    _logger.d('Distance from school: ${distance.toStringAsFixed(2)} km');
+    // ADD THIS ENHANCED LOGGING
+    _logger.i('📏 Location Comparison:');
+    _logger.d('┌─────────────────────────────────────────');
+    _logger.d('│ Current Position:');
+    _logger.d('│   Latitude:  ${currentPosition.latitude}');
+    _logger.d('│   Longitude: ${currentPosition.longitude}');
+    _logger.d('├─────────────────────────────────────────');
+    _logger.d('│ School Position:');
+    _logger.d('│   Latitude:  $schoolLat');
+    _logger.d('│   Longitude: $schoolLon');
+    _logger.d('├─────────────────────────────────────────');
+    _logger.d('│ Distance: ${distance.toStringAsFixed(2)} km');
+    _logger.d('│ Threshold: 0.5 km');
+    _logger.d('│ Within Range: ${distance <= 0.5 ? "✅ YES" : "❌ NO"}');
+    _logger.d('└─────────────────────────────────────────');
 
-    // Allow 0.5 km radius (500 meters)
     return distance <= 0.5;
   }
 
   Future<void> fetchSchoolLocation() async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          'https://api.rbsknagpur.in/api/Rbsk/GetAllSchoolDataWithSchoolId?SchoolId=${widget.schoolId}',
-        ),
-      );
+      // ADD THIS LOGGING
+      final url =
+          'https://NewAPIS.rbsknagpur.in/api/Rbsk/GetAllSchoolDataWithSchoolId?SchoolId=${widget.schoolId}';
+      _logger.i('🌐 API Call: Fetching School Location');
+      _logger.d(' fetch sChool URL: $url');
+      _logger.d('Method: GET');
+      _logger.d('School ID: ${widget.schoolId}');
+
+      final response = await http.get(Uri.parse(url));
+
+      // ADD THIS LOGGING
+      _logger.i('📥 Response received');
+      _logger.d('Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        final schoolData = jsonResponse['schools'];
-
+        final schoolData = jsonResponse['school'];
+        _logger.d('Response Location Body: ${response.body}');
         setState(() {
-          schoolLatitude = schoolData['latitude'];
-          schoolLongitude = schoolData['longitude'];
+          schoolLatitude = schoolData['latitude'].toString();
+          schoolLongitude = schoolData['longitude'].toString();
         });
 
-        _logger.d('School location: $schoolLatitude, $schoolLongitude');
+        // ADD THIS LOGGING
+        _logger.i('✅ School location fetched successfully');
+        _logger.d(
+          'School Coordinates: Lat: $schoolLatitude, Long: $schoolLongitude',
+        );
       }
     } catch (e) {
-      _logger.e('Error fetching school location: $e');
+      // ADD THIS LOGGING
+      _logger.e('❌ Error fetching school location', error: e);
     }
   }
 
@@ -684,15 +771,17 @@ class _StudentInfoScreenState extends State<StudentInfoScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (context) => HomeScreen(
-                  doctorId: widget.doctorId,
-                  doctorName: widget.teamName,
-                ),
-              ),
-              (route) => false,
-            );
+            // Navigator.of(context).pushAndRemoveUntil(
+            //   MaterialPageRoute(
+            //     builder: (context) => HomeScreen(
+            //       doctorId: widget.doctorId,
+            //       doctorName: widget.teamName,
+            //     ),
+            //   ),
+            //   (route) => false,
+            // );
+
+            Navigator.of(context).pop();
           },
           icon: const Icon(Icons.arrow_back, color: Colors.white),
         ),

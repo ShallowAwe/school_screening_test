@@ -83,7 +83,7 @@ class _AddStudentState extends State<AddStudentScreenAnganwadi> {
               surface: Colors.white,
               onSurface: Colors.blue[800]!,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );

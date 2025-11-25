@@ -6,7 +6,7 @@ class Endpoints {
   static const String teamLogin = '/api/Rbsk/TeamLogin';
   static const String getDistrict = '/api/Rbsk/GetDistrict';
   static const String getTaluka = '/api/Rbsk/GetTalukaByDistrictId';
-  static const String getGrampanchayat = '/api/Rbsk/GetGrampanchayatByTalukaId';
+  static const String getGrampanchayat = '/api/Rbsk/GetGrampanchyatByTalukaId';
   static const String schoolByGrampanchayatId =
       '/api/Rbsk/GetSchoolByGrampanchayatId';
   static const String addScreeningSchool = '/api/Rbsk/AddScreeningSchool';

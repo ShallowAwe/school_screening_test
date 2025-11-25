@@ -46,16 +46,18 @@ class _ScreeningFormAngnwadiScreenThreeState
   @override
   void initState() {
     super.initState();
-    deficiencies.keys.forEach((deficiency) {
+    for (var deficiency in deficiencies.keys) {
       deficiencyTreatment[deficiency] = '';
       referralOptions[deficiency] = '';
       _noteControllers[deficiency] = TextEditingController();
-    });
+    }
   }
 
   @override
   void dispose() {
-    _noteControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _noteControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 

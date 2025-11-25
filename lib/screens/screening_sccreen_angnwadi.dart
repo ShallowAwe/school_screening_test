@@ -41,7 +41,7 @@ class ScreenningAngnwadiScreen extends StatefulWidget {
 
 class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
   //logger class initialioztion
-  Logger _logger = Logger();
+  final Logger _logger = Logger();
   // gllobal form key
   final _formKey = GlobalKey<FormState>();
 
@@ -536,9 +536,7 @@ class _ScreenningSchoolScreenState extends State<ScreenningAngnwadiScreen> {
                           setState(() {
                             schoolDetails = details;
                             isLoadingSchoolDetails = false;
-                            _logger.i(
-                              "schoolDetails Api response : ${details}",
-                            );
+                            _logger.i("schoolDetails Api response : $details");
                           });
                         } catch (e) {
                           setState(() {
